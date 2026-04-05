@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sentinel OS">
+<meta name="theme-color" content="#08080e">
+<link rel="manifest" href="manifest.json">
+<title>Sentinel OS: Carbon</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#08080e;--card:rgba(12,12,22,.9);--border:rgba(0,255,255,.18);--cyan:#0ff;--violet:#9b4dff;--green:#0f8;--red:#ff4d4d;--orange:#ffa040;--text:#d8e0ea;--muted:#6a8090}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
+body{padding-bottom:env(safe-area-inset-bottom)}
+
+/* ── HEADER ── */
+#app-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(0,255,255,.08),rgba(155,77,255,.06));border-bottom:1px solid var(--border);backdrop-filter:blur(20px);padding:12px 16px 0;padding-top:calc(12px + env(safe-area-inset-top))}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.logo{font-size:14px;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-acts{display:flex;gap:8px;align-items:center}
+.hdr-btn{background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.25);border-radius:8px;color:var(--cyan);padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px}
+
+/* ── TABS ── */
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;gap:0}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:9px 14px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(160,180,200,.5);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab.active{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+
+/* ── CONTENT ── */
+#app-content{padding:14px 14px 80px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid rgba(0,255,255,.11);border-radius:18px;padding:16px;margin-bottom:14px}
+.card.danger{border-color:rgba(255,77,77,.4);box-shadow:0 0 18px rgba(255,77,77,.08)}
+.card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);border-left:3px solid var(--cyan);padding-left:8px;margin-bottom:14px}
+
+/* ── TYPOGRAPHY ── */
+.big{font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:-1px;line-height:1}
+.big.ok{color:var(--green)}.big.warn{color:var(--orange)}.big.bad{color:var(--red)}
+.sub{font-size:11px;color:var(--muted);margin-top:5px}
+.lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.5px}
+
+/* ── INPUTS ── */
+input,select,textarea{width:100%;padding:10px 13px;background:rgba(0,0,0,.5);border:1px solid rgba(0,255,255,.2);border-radius:12px;color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border-color .2s;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+select option{background:#0a0a14}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+.ig{margin-bottom:10px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;font-size:12px;font-weight:700;border-radius:30px;cursor:pointer;border:1px solid;font-family:inherit;transition:all .2s;white-space:nowrap;letter-spacing:.5px}
+.btn.c{background:rgba(0,255,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.btn.c:active{background:rgba(0,255,255,.25)}
+.btn.v{background:rgba(155,77,255,.12);border-color:var(--violet);color:#bf9bff}
+.btn.v:active{background:rgba(155,77,255,.28)}
+.btn.g{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.4);color:var(--green)}
+.btn.r{background:rgba(255,77,77,.08);border-color:rgba(255,77,77,.4);color:#ff7070}
+.btn.full{width:100%;margin-top:10px}
+.btn:disabled{opacity:.35;pointer-events:none}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ── STAT BOXES ── */
+.stat{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;text-align:center}
+.stat .v{font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:3px}
+.stat .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+
+/* ── PROGRESS ── */
+.prog-track{height:7px;background:rgba(255,255,255,.07);border-radius:7px;overflow:hidden;margin:7px 0 5px}
+.prog-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .5s}
+.prog-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+/* ── TX LOG ── */
+.log-row{padding:10px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.log-row:last-child{border-bottom:none}
+.log-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.amt{font-size:13px;font-weight:700;white-space:nowrap}
+.amt.i{color:var(--green)}.amt.e{color:var(--red)}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(0,255,255,.1);color:var(--cyan);letter-spacing:.5px}
+.del-btn{background:none;border:1px solid rgba(255,80,80,.25);border-radius:7px;color:rgba(255,80,80,.5);font-size:13px;padding:3px 8px;cursor:pointer;flex-shrink:0;line-height:1;transition:color .2s,border-color .2s}
+.del-btn:active{color:var(--red);border-color:var(--red)}
+
+/* ── WEAR ── */
+.wear-row{margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.05)}
+.wear-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.wear-lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;color:#a0b0bf;align-items:center;gap:6px}
+.wear-bar{height:5px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden}
+.wear-fill{height:100%;border-radius:5px;transition:width .5s}
+.svc-notes{font-size:10px;color:#5a7080;font-style:italic;margin-top:3px}
+
+/* ── PILLS ── */
+.pill{display:inline-block;padding:2px 7px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.4px;margin-right:4px}
+.pill.crit{background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.3)}
+.pill.warn{background:rgba(255,160,64,.12);color:var(--orange);border:1px solid rgba(255,160,64,.25)}
+.pill.info{background:rgba(68,170,255,.1);color:#5af;border:1px solid rgba(68,170,255,.2)}
+
+/* ── BUDGET ROW ── */
+.b-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.b-row:last-child{border-bottom:none}
+.b-key{color:#7a90a0;font-size:11px}
+.b-val{font-weight:700}
+
+/* ── GOAL CARD ── */
+.goal-card{border-left:3px solid var(--gc,var(--cyan))}
+
+/* ── RECIPE ── */
+.recipe{background:rgba(0,0,0,.35);border:1px solid rgba(155,77,255,.15);border-radius:14px;padding:13px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.recipe:active{border-color:rgba(155,77,255,.4)}
+.recipe-hd{display:flex;justify-content:space-between;align-items:center}
+.recipe-name{font-size:12px;font-weight:700}
+.recipe-meta{font-size:10px;color:var(--muted);margin-top:3px}
+.recipe-body{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:#a0b8c8;line-height:1.75}
+.recipe-body.open{display:block}
+.recipe-body ol{margin:5px 0 0;padding-left:18px}
+.recipe-body li{margin-bottom:5px}
+.recipe-body .rsec{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:8px 0 4px}
+.recipe-body ul{margin:3px 0;padding-left:16px}
+
+/* ── TIPS ── */
+.tip{background:rgba(0,255,255,.04);border:1px solid rgba(0,255,255,.1);border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:11px;color:#9ab8cc;line-height:1.7}
+
+/* ── REMINDER ── */
+.reminder{background:rgba(255,160,64,.07);border:1px solid rgba(255,160,64,.3);border-radius:12px;padding:11px;margin-bottom:10px;font-size:12px;color:var(--orange);line-height:1.65}
+.reminder.red{background:rgba(255,77,77,.07);border-color:rgba(255,77,77,.3);color:#ff6060}
+.reminder.green{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);color:var(--green)}
+
+/* ── CALC RESULT ── */
+.calc-result{background:rgba(0,0,0,.4);border:1px solid rgba(0,255,255,.12);border-radius:12px;padding:13px;font-size:12px;line-height:2}
+.calc-total{font-size:16px;font-weight:700;color:var(--cyan);margin-top:8px;border-top:1px solid rgba(0,255,255,.15);padding-top:8px}
+
+/* ── CANVAS ── */
+.canvas-wrap{border-radius:12px;overflow:hidden;background:rgba(0,0,0,.3);margin-top:8px}
+.canvas-wrap canvas{display:block;width:100%}
+
+/* ── SECTION SEP ── */
+.sep{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5a7090;margin:14px 0 9px;display:flex;align-items:center;gap:8px}
+.sep::after{content:'';flex:1;height:1px;background:rgba(0,255,255,.08)}
+
+/* ── COND SELECT ── */
+.cond-sel{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:var(--text);font-size:10px;padding:3px 7px;cursor:pointer;outline:none;width:auto}
+
+/* ── PAYDAY TAG ── */
+.payday-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(155,77,255,.15);border:1px solid rgba(155,77,255,.3);color:#bf9bff;letter-spacing:.5px}
+
+/* ── DETAILS ── */
+details summary{font-size:11px;color:#5a8090;cursor:pointer;user-select:none;padding:6px 0}
+details summary::-webkit-details-marker{color:var(--violet)}
+
+/* ── SEARCH ── */
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+.search-row input{flex:1}
+.search-row select{flex:0 0 auto;width:auto;min-width:110px}
+
+/* ── GOAL MINI ── */
+.goal-mini{margin-bottom:12px}
+.goal-mini-title{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;align-items:center}
+
+/* ── SAFE AREA BOTTOM ── */
+.safe-bottom{height:env(safe-area-inset-bottom)}
+
+/* ── COLORS ── */
+.color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
+.color-dot.selected{border-color:white;box-shadow:0 0 8px rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+
+<div id="app-header">
+  <div class="header-top">
+    <div class="logo">SENTINEL OS</div>
+    <div class="header-acts">
+      <button class="hdr-btn" id="exp-btn">↓ БД</button>
+      <label class="hdr-btn" style="cursor:pointer">↑ БД<input type="file" id="imp-file" accept=".json" style="display:none"></label>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="finance">Финансы</div>
+    <div class="tab" data-tab="goals">Цели</div>
+    <div class="tab" data-tab="garage">Гараж</div>
+    <div class="tab" data-tab="print">3D Печать</div>
+    <div class="tab" data-tab="hub">Хаб</div>
+    <div class="tab" data-tab="stats">Статистика</div>
+  </div>
+</div>
+
+<div id="app-content"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════
+   ДАННЫЕ
+═══════════════════════════════════════════ */
+const DB_NAME = 'SentinelCarbonV3';
+const DB_VER  = 3;
+const S = { TX:'transactions', GARAGE:'garage_logs', ODO:'odo_history', CFG:'settings', SVC:'service_items', GOALS:'goals' };
+
+const DEFAULTS = {
+  balance:0, monthlyBudgetCap:15000, mandatoryPayments:0,
+  currentOdometer:0, lastOilOdo:0, lastTimingOdo:0, lastSparkOdo:0,
+  printHourRate:100, printSetupFee:200, printMinPrice:500,
+  advanceAmount:29000, salaryAmount:29000, carPartsNotes:'',
+};
+
+const SVC_ITEMS = [
+  {key:'oil',        label:'Масло + масляный фильтр',     km:8000,  crit:'critical',condOnly:false,notes:'5W-30 · 3.2 л · не реже раза в год'},
+  {key:'airfilter',  label:'Воздушный фильтр',            km:15000, crit:'warning', condOnly:false,notes:'Осматривать каждые 8к км'},
+  {key:'cabinfilter',label:'Фильтр салона',               km:15000, crit:'info',    condOnly:false,notes:'Раз в год минимум'},
+  {key:'spark',      label:'Свечи зажигания',             km:30000, crit:'critical',condOnly:false,notes:'NGK BPR5E · зазор 0.8мм · 4 шт.'},
+  {key:'brakefluid', label:'Тормозная жидкость',          km:30000, crit:'critical',condOnly:false,notes:'DOT-4 · каждые 2 года'},
+  {key:'brakef',     label:'Колодки тормозные передние',  km:30000, crit:'critical',condOnly:false,notes:'Остаток <3мм → замена срочно'},
+  {key:'braker',     label:'Колодки тормозные задние',    km:40000, crit:'warning', condOnly:false,notes:'Барабанные тормоза'},
+  {key:'timing',     label:'Ремень ГРМ + ролики + помпа', km:60000, crit:'critical',condOnly:false,notes:'ТОЛЬКО комплектом! Обрыв = капремонт'},
+  {key:'coolant',    label:'Охлаждающая жидкость',        km:60000, crit:'warning', condOnly:false,notes:'G11/G12 · не смешивать цвета! · 5.6 л'},
+  {key:'gearboxoil', label:'Масло в КПП',                 km:60000, crit:'info',    condOnly:false,notes:'75W-80 GL-4 · ~2 л'},
+  {key:'bearingfl',  label:'Подшипник ступицы пер. лев.', km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч, усиливается в поворотах'},
+  {key:'bearingfr',  label:'Подшипник ступицы пер. пр.',  km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч, усиливается в поворотах'},
+  {key:'stablink',   label:'Стойки стабилизатора',        km:0,     crit:'info',    condOnly:true, notes:'Стук на кочках и в поворотах ~500₽/пара'},
+  {key:'cvjoint',    label:'ШРУС наружный',               km:0,     crit:'warning', condOnly:true, notes:'Хруст при повороте в крайнее положение'},
+];
+
+const GOAL_COLORS = ['#ff4d4d','#ffa040','#0f8','#0ff','#9b4dff','#f06dff','#38c8f0','#ffeb40'];
+
+const CAT_EXP = ['Еда','Авто','Быт','Развлечения','Здоровье','3D-расходники','Другое'];
+const CAT_INC = ['ЗП','Аванс','Премия','3D-печать','Другое'];
+
+const CAR_TIPS = [
+  '🔧 ГРМ TU1JP: если не знаешь когда менялся — меняй сразу. Обрыв ремня при работающем двигателе = капремонт на 30–60к₽.',
+  '🌡️ Перегрев TU1JP — смерть. Стрелка к красному → сразу глуши. Жди полного остывания.',
+  '🔊 Гул на скорости 60+, меняется при смене полосы → передний подшипник умирает. Диагностика срочно.',
+  '🛑 Тормозные колодки: менее 3мм → замена. Иначе диск тоже под замену.',
+  '💨 Зимой давление шин падает 0.1 атм на каждые -10°C. Проверяй еженедельно.',
+  '🔩 ШРУС: хруст при вывернутом руле — рваный пыльник. Меняй пыльник сразу.',
+  '🔗 Стойки стаба — расходник ~500₽/пара. Стук на кочках = они.',
+  '⚙️ Масло в КПП часто забывают. Если не менялось после 60к км — пора.',
+  '🏎️ Диагностика перед зимой и весной — дешевле ремонта на трассе ночью.',
+  '🔋 АКБ служит 3–5 лет. Не помнишь когда меняли — проверь CCA.',
+  '💧 Уровень охлаждайки проверяй на холодном двигателе. Постоянно падает — утечка.',
+  '🛞 Вибрация руля 80–100 км/ч = дисбаланс колёс. Балансировка ~500₽.',
+  '🧊 Тормозная жидкость гигроскопична — меняй каждые 2 года без исключений.',
+  '🔌 TU1JP: катушка зажигания — частая проблема. Троит на холодную/в дождь = она.',
+  '💨 TU1JP: дроссель любит загрязняться. Плавающие обороты — промой очистителем.',
+  '⛽ TU1JP: только 95-й бензин. 92-й → детонация и прогорание клапанов.',
+  '🌡️ TU1JP: термостат на 89°C. Долго греется / перегрев в пробке — менять.',
+  '💡 Если печка дует холодным на горячем двигателе — проверь кран отопителя (~800₽).',
+  '⚡ Peugeot 206: блокировка дверей живёт своей жизнью. Чаще виноват концевик в двери.',
+  '🔦 Задние фонари: раз в год чисти и смазывай контакты.',
+  '🌡️ TU1JP: датчик температуры часто врёт. Вентилятор включается поздно — замени.',
+];
+
+const PRINT_TIPS = [
+  '🧵 PETG — лучший для прочных деталей. Хорошая адгезия, минимальная усадка, до ~70°C.',
+  '🔥 ABS без закрытого корпуса — не трать время. Усадка 2–3%, стол 100°C+.',
+  '🌿 PLA — самый простой, но не для деталей под нагрузку и жару.',
+  '⚡ PC: самый прочный. Требует 250–280°C сопла и сухого пластика.',
+  '🌊 Влажный пластик: пузыри, нити, плохая слоистость. Хранить в герметике с силикагелем.',
+  '📏 Первый слой — 90% успеха. Зазор: лист бумаги должен чуть тереться.',
+  '💸 Брак снижает прибыль: 300г PETG = ~450₽. Тест первых 20 мин = правильное решение.',
+  '📦 Carbon/Glass: убивает латунное сопло за 100–200г. Нужно закалённое (hardened) сопло.',
+];
+
+const RECIPES = [
+  {name:'Гречка с тушёнкой',cat:'Обед',time:'15 мин',cal:'~450 ккал',
+   ingr:['Гречка сухая — 150г','Вода — 300мл','Тушёнка говяжья — 325г (1 банка)','Соль — 0.5 ч.л.'],
+   steps:['Гречку промыть до прозрачной воды','Залить кипятком 1:2, посолить, накрыть крышкой','Минимальный огонь 12–15 мин — не открывать!','Тушёнку разогреть или выложить прямо из банки','Смешать с гречкой, подать с чёрным перцем']},
+  {name:'Яичница с колбасой',cat:'Завтрак',time:'7 мин',cal:'~380 ккал',
+   ingr:['Яйца — 3 шт','Колбаса/сосиски — 80–100г','Масло — 1 ст.л.','Соль, перец'],
+   steps:['Сковороду разогреть с маслом','Колбасу нарезать кружками, обжарить 2–3 мин','Разбить яйца, посолить','Накрыть крышкой: 3–4 мин — мягкий желток, 5–6 — твёрдый']},
+  {name:'Паста с маслом и сыром',cat:'Обед',time:'12 мин',cal:'~520 ккал',
+   ingr:['Паста — 120г','Масло сливочное — 20г','Сыр твёрдый — 50г','Соль — 1 ч.л. в воду','Чёрный перец'],
+   steps:['Вскипятить воду, хорошо посолить','Варить пасту по инструкции на упаковке','За 30 сек зачерпнуть 3 ст.л. воды из кастрюли — нужно!','Слить пасту, вернуть в кастрюлю','Добавить масло + сохранённую воду + тёртый сыр','Быстро перемешать — подавать горячей']},
+  {name:'Рис жареный с яйцом',cat:'Обед',time:'10 мин',cal:'~420 ккал',
+   ingr:['Варёный рис — 200г (холодный)','Яйца — 2 шт','Соевый соус — 1 ст.л.','Масло — 1 ст.л.'],
+   steps:['Сковороду хорошо раскалить с маслом','Рис выложить, жарить 3–4 мин не трогая','Яйца разбить рядом с рисом, перемешать через 1–2 мин','Смешать всё, влить соевый соус, ещё 1 мин']},
+  {name:'Омлет классический',cat:'Завтрак',time:'8 мин',cal:'~360 ккал',
+   ingr:['Яйца — 3 шт','Молоко — 3 ст.л.','Масло сливочное — 15г','Соль — 2 щепотки'],
+   steps:['Взбить яйца с молоком вилкой 30 сек, посолить','Разогреть сковороду, растопить масло (не жарить)','Вылить смесь, ждать 20 сек — края схватятся','Убавить огонь до минимума, накрыть крышкой','4–5 мин — готово. Сложить пополам, подавать сразу']},
+  {name:'Картошка в мундире',cat:'Ужин',time:'25 мин',cal:'~280 ккал',
+   ingr:['Картофель — 4–5 шт','Соль — 1 ч.л. в воду','Сметана/масло/укроп'],
+   steps:['Картошку хорошо вымыть щёткой','Залить холодной водой, посолить','Варить 20–25 мин на среднем огне','Проверить зубочисткой: входит легко = готова','Подать со сметаной и укропом']},
+  {name:'Паста Карбонара (быстрая)',cat:'Ужин',time:'15 мин',cal:'~600 ккал',
+   ingr:['Спагетти — 200г','Ветчина/бекон — 100г','Яйца — 2 шт','Сыр твёрдый — 2 ст.л.','Перец'],
+   steps:['Варить спагетти в подсоленной воде строго по инструкции','Пока варятся: обжарить бекон до золотистого, выключить огонь','Взбить 2 яйца + тёртый сыр + перец','Слить пасту, оставить 3 ст.л. воды','Добавить пасту к бекону, вылить яичную смесь','Быстро мешать 1–2 мин добавляя воду — яйца не должны свернуться!']},
+  {name:'Куриный суп с лапшой',cat:'Обед',time:'25 мин',cal:'~280 ккал',
+   ingr:['Куриное филе — 200г','Вода — 1 л','Морковь — 1 шт','Картофель — 1 шт','Вермишель — 50г','Соль, зелень'],
+   steps:['Куриное филе варить в воде 15 мин, вынуть и нарезать','Добавить нарезанные морковь и картофель, варить 10 мин','Засыпать вермишель, 3–4 мин','Вернуть курицу, посолить, добавить зелень']},
+  {name:'Пицца на сковородке',cat:'Ужин',time:'15 мин',cal:'~520 ккал',
+   ingr:['Мука — 4 ст.л.','Молоко — 4 ст.л.','Яйца — 2 шт','Томатная паста — 2 ст.л.','Колбаса — 70г','Сыр — 60г','Соль'],
+   steps:['Смешать муку + молоко + яйца + соль вилкой до однородности','Разогреть сковороду с маслом, вылить тесто','Накрыть крышкой, 5–7 мин на среднем огне','Намазать томатной пастой, выложить колбасу и сыр','Накрыть крышкой ещё 3–4 мин до расплавления сыра']},
+  {name:'Сырники из творога',cat:'Завтрак',time:'15 мин',cal:'~410 ккал',
+   ingr:['Творог — 200г','Яйцо — 1 шт','Мука — 2 ст.л. + немного для обвалки','Сахар — 1 ст.л.','Соль — щепотка'],
+   steps:['Разомнуть творог вилкой, добавить яйцо, муку, сахар, соль','Перемешать до однородности','Сформировать лепёшки, обвалять в муке','Жарить на масле 2–3 мин с каждой стороны до корочки','Подать со сметаной или вареньем']},
+];
+
+/* ═══════════════════════════════════════════
+   INDEXEDDB
+═══════════════════════════════════════════ */
+class DB {
+  constructor(){ this.ready = this._open(); }
+  _open(){
+    return new Promise((res,rej)=>{
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        const mk = (n,opts,idx=[])=>{
+          if (!db.objectStoreNames.contains(n)){
+            const st = db.createObjectStore(n,opts);
+            idx.forEach(([a,b])=>st.createIndex(a,b));
+          }
+        };
+        mk(S.TX,    {keyPath:'id',autoIncrement:true},[['date','date'],['category','category']]);
+        mk(S.GARAGE,{keyPath:'id',autoIncrement:true},[['date','date']]);
+        mk(S.ODO,   {keyPath:'id',autoIncrement:true},[['date','date']]);
+        mk(S.CFG,   {keyPath:'key'});
+        mk(S.SVC,   {keyPath:'id',autoIncrement:true},[['key','key']]);
+        mk(S.GOALS, {keyPath:'id',autoIncrement:true});
+      };
+      req.onsuccess = e => { this.db=e.target.result; this._seed().then(res).catch(rej); };
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+  async _seed(){
+    for(const [k,v] of Object.entries(DEFAULTS)){
+      if(await this.get(S.CFG,k)===null) await this.set(S.CFG,{key:k,value:v});
+    }
+    if(!(await this.all(S.SVC)).length){
+      for(const it of SVC_ITEMS) await this.add(S.SVC,{...it,lastServiceOdo:0,conditionStatus:'ok',enabled:true});
+    }
+    if(!(await this.all(S.GOALS)).length){
+      await this.add(S.GOALS,{name:'Долг Сабине',targetAmount:100000,deadline:'2026-06-15',priority:1,monthlyAllocation:15000,color:GOAL_COLORS[0],active:true});
+    }
+  }
+  _st(n,m='readonly'){return this.db.transaction(n,m).objectStore(n);}
+  get(s,k){return new Promise((r,e)=>{const q=this._st(s).get(k);q.onsuccess=()=>r(q.result!==undefined?q.result:null);q.onerror=()=>e(q.error);});}
+  set(s,o){return new Promise((r,e)=>{const q=this._st(s,'readwrite').put(o);q.onsuccess=()=>r();q.onerror=()=>e(q.error);});}
+  add(s,o){return new Promise((r,e)=>{const q=this._st(s,'readwrite').add(o);q.onsuccess=()=>r(q.result);q.onerror=()=>e(q.error);});}
+  all(s){return new Promise((r,e)=>{const q=this._st(s).getAll();q.onsuccess=()=>r(q.result||[]);q.onerror=()=>e(q.error);});}
+  del(s,k){return new Promise((r,e)=>{const q=this._st(s,'readwrite').delete(k);q.onsuccess=()=>r();q.onerror=()=>e(q.error);});}
+  async cfg(k){const r=await this.get(S.CFG,k);return r!==null?r.value:DEFAULTS[k];}
+  async setCfg(k,v){await this.set(S.CFG,{key:k,value:v});}
+}
+
+/* ═══════════════════════════════════════════
+   УТИЛИТЫ
+═══════════════════════════════════════════ */
+const fmt   = n => Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtI  = n => Number(n||0).toLocaleString('ru-RU');
+const dStr  = d => new Date(d).toLocaleDateString('ru-RU');
+const today = () => new Date().toISOString().split('T')[0];
+const wCol  = p => p<60?'#0ff':p<85?'#ffa040':'#ff4d4d';
+const cCol  = c => ({ok:'#0f8',watch:'#ffa040',replace:'#ff8040',critical:'#ff4d4d'}[c]||'#0f8');
+
+function adjustedDate(y,m,d){
+  const dt=new Date(y,m,d);
+  const dow=dt.getDay();
+  if(dow===0) dt.setDate(dt.getDate()-2);
+  if(dow===6) dt.setDate(dt.getDate()-1);
+  return dt;
+}
+
+function calcNextPayday(txs){
+  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+  const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-50);
+  const recent=(txs||[]).filter(t=>t.type==='income'&&['ЗП','Аванс','Премия'].includes(t.category)&&new Date(t.date)>=cutoff);
+  const mStart=new Date(y,m,1);
+  const thisZP   =recent.some(t=>t.category==='ЗП'   &&new Date(t.date)>=mStart);
+  const thisAvans=recent.some(t=>t.category==='Аванс' &&new Date(t.date)>=mStart);
+  if(thisZP&&!thisAvans){
+    const av=new Date(y,m,20);
+    if(av>now) return{date:av,days:Math.max(1,Math.ceil((av-now)/86400000)),label:'Аванс'};
+    const zp=adjustedDate(y,m+1,5);
+    return{date:zp,days:Math.max(1,Math.ceil((zp-now)/86400000)),label:'ЗП'};
+  }
+  if(thisAvans&&!thisZP){
+    const zp=adjustedDate(y,m+1,5);
+    return{date:zp,days:Math.max(1,Math.ceil((zp-now)/86400000)),label:'ЗП'};
+  }
+  if(thisZP&&thisAvans){
+    const pr=new Date(y,m+1,22);
+    return{date:pr,days:Math.max(1,Math.ceil((pr-now)/86400000)),label:'Премия 🎉'};
+  }
+  const d=now.getDate();
+  const zp5=adjustedDate(y,m,5), av20=new Date(y,m,20), zpN=adjustedDate(y,m+1,5);
+  if(now<zp5) return{date:zp5, days:Math.max(1,Math.ceil((zp5-now)/86400000)), label:'ЗП'};
+  if(now<av20) return{date:av20,days:Math.max(1,Math.ceil((av20-now)/86400000)),label:'Аванс'};
+  return          {date:zpN,  days:Math.max(1,Math.ceil((zpN-now)/86400000)),  label:'ЗП'};
+}
+
+function confirmDel(btn, cb){
+  if(btn._c){cb();return;}
+  btn._c=true;
+  const orig=btn.textContent;
+  btn.textContent='✓?';
+  btn.style.cssText+=';color:#ff4d4d;border-color:#ff4d4d';
+  btn.onclick=()=>{btn._ok=true;cb();};
+  setTimeout(()=>{if(!btn._ok){btn._c=false;btn.textContent=orig;btn.style.color='';btn.style.borderColor='';btn.onclick=()=>confirmDel(btn,cb);}},3000);
+}
+
+function calc3DPrice(wg,th,mat,hr,sf,mp){
+  wg=parseFloat(wg)||0; th=parseFloat(th)||0;
+  hr=parseFloat(hr)||100; sf=parseFloat(sf)||200; mp=parseFloat(mp)||500;
+  let price=0,formula='',breakdown=[];
+  if(wg<=50){
+    const r=mat==='composite'?25:15;
+    price=wg*r; formula=`Вес × ${r} (мелкий ≤50г)`;
+    breakdown=[`${wg}г × ${r} ₽/г = ${fmt(price)} ₽`];
+  } else {
+    if(mat==='flex'){
+      const labor=th*hr,mat_c=wg*10;
+      price=labor+mat_c; formula=`(Ч × ${hr}) + (Вес × 10)`;
+      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`TPU/Flex: ${wg}г × 10 = ${fmt(mat_c)} ₽`];
+    } else if(mat==='composite'){
+      const labor=th*hr,mat_c=wg*20;
+      price=labor+mat_c; formula=`(Ч × ${hr}) + (Вес × 20)`;
+      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`Carbon/Glass: ${wg}г × 20 = ${fmt(mat_c)} ₽`,`⚠ Закалённое сопло (учтено)`];
+    } else {
+      const labor=th*hr,mat_c=wg*5;
+      price=labor+mat_c+sf; formula=`(Ч × ${hr}) + (Вес × 5) + ${sf}`;
+      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`Пластик+брак: ${wg}г × 5 = ${fmt(mat_c)} ₽`,`Подготовка: ${fmt(sf)} ₽`];
+    }
+  }
+  if(price<mp){breakdown.push(`Применена минималка: ${fmtI(mp)} ₽`);price=mp;}
+  return{price,formula,breakdown};
+}
+
+/* ═══════════════════════════════════════════
+   APP
+═══════════════════════════════════════════ */
+class App {
+  constructor(){
+    this.db=new DB();
+    this.tab='finance';
+    this.statsStart=null; this.statsEnd=null;
+    this.db.ready.then(()=>this._init()).catch(e=>console.error(e));
+  }
+  _init(){
+    document.getElementById('tabs').addEventListener('click', e=>{
+      const t=e.target.dataset.tab; if(!t) return;
+      this.tab=t;
+      document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));
+      this._render();
+    });
+    document.getElementById('exp-btn').onclick=()=>this._export();
+    document.getElementById('imp-file').onchange=e=>this._import(e.target.files[0]);
+    this._render();
+  }
+  _render(){
+    const c=document.getElementById('app-content');
+    c.innerHTML='';
+    const map={finance:()=>this._finance(c),goals:()=>this._goals(c),garage:()=>this._garage(c),print:()=>this._print(c),hub:()=>this._hub(c),stats:()=>this._stats(c)};
+    (map[this.tab]||map.finance)();
+  }
+  _card(extra=''){const el=document.createElement('div');el.className='card'+extra;return el;}
+
+  /* ── FINANCE ── */
+  async _finance(c){
+    const balance=await this.db.cfg('balance');
+    const budgetCap=await this.db.cfg('monthlyBudgetCap');
+    const mandatory=await this.db.cfg('mandatoryPayments');
+    const txs=await this.db.all(S.TX);
+    const goals=(await this.db.all(S.GOALS)).filter(g=>g.active);
+    const now=new Date(), todayStr=today();
+    const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+
+    const isGoal=t=>t.type==='expense'&&(t.category==='Цель'||(t.category==='Цель/Долг'&&goals.some(g=>g.name===t.comment)));
+    const spentMonth=txs.filter(t=>t.type==='expense'&&new Date(t.date)>=mStart&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
+    const todaySpent=txs.filter(t=>t.type==='expense'&&t.date.startsWith(todayStr)&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
+    const payday=calcNextPayday(txs);
+    const budRem=Math.max(0,budgetCap-(spentMonth-todaySpent));
+    const dInM=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const dRem=Math.max(1,dInM-now.getDate()+1);
+    const maxBal=payday.days>0?Math.max(0,(balance-mandatory)/payday.days):0;
+    const dailyBudget=Math.min(budRem/dRem,maxBal);
+    const remainToday=dailyBudget-todaySpent;
+    const exceeded=remainToday<0;
+    const survRes=dailyBudget*payday.days;
+    const freeCash=Math.max(0,balance-survRes-mandatory-1000);
+
+    /* Balance card */
+    const balCard=this._card(exceeded?' danger':'');
+    const bCol=balance<=0?'bad':balance<survRes?'warn':'ok';
+    balCard.innerHTML=`<div class="card-title">Текущий баланс</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="big ${bCol}">${fmt(balance)} ₽</div>
+        <button class="btn c" id="set-bal">Изменить</button>
+      </div>
+      ${exceeded?`<div class="reminder red" style="margin-top:10px">⚠ Лимит превышен на ${fmt(Math.abs(remainToday))} ₽</div>`:''}
+      ${freeCash>500?`<div class="reminder green" style="margin-top:10px">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b></div>`:''}
+      <div id="bal-ed"></div>`;
+    c.appendChild(balCard);
+    balCard.querySelector('#set-bal').onclick=()=>{
+      const ed=balCard.querySelector('#bal-ed');
+      if(ed.innerHTML){ed.innerHTML='';return;}
+      ed.innerHTML=`<div style="display:flex;gap:8px;margin-top:12px"><input type="number" id="bi" step="0.01" value="${balance}" style="flex:1"><button class="btn c" id="bs">OK</button></div>`;
+      ed.querySelector('#bs').onclick=async()=>{const v=parseFloat(ed.querySelector('#bi').value);if(!isNaN(v)){await this.db.setCfg('balance',v);this._render();}};
+    };
+
+    /* Budget card */
+    const dayCol=remainToday<0?'#ff4d4d':remainToday<200?'#ffa040':'#0f8';
+    const budCard=this._card();
+    budCard.innerHTML=`<div class="card-title">Бюджет и выплаты</div>
+      <div class="b-row"><div class="b-key">Следующая выплата</div><div class="b-val"><span class="payday-tag">${payday.label} · ${dStr(payday.date)}</span> <span style="color:var(--violet);margin-left:4px"><b>${payday.days}</b> дн.</span></div></div>
+      <div class="b-row"><div class="b-key">Остаток на сегодня</div><div class="b-val" style="color:${dayCol}">${fmt(remainToday)} ₽ <span style="opacity:.5;font-size:10px">/ ${fmt(dailyBudget)}</span></div></div>
+      <div class="b-row"><div class="b-key">Потрачено сегодня</div><div class="b-val">${fmt(todaySpent)} ₽</div></div>
+      <div class="b-row"><div class="b-key">За этот месяц</div><div class="b-val" style="color:${spentMonth>budgetCap?'#ff4d4d':'#ffa040'}">${fmt(spentMonth)} / ${fmtI(budgetCap)} ₽</div></div>
+      <details><summary>⚙ Настройки бюджета</summary>
+        <div class="g2" style="margin-top:8px">
+          <div class="ig"><label class="lbl">Бюджет/месяц (₽)</label><input type="number" id="budcap" value="${budgetCap}"></div>
+          <div class="ig"><label class="lbl">Обяз. платежи (₽/мес)</label><input type="number" id="mand" value="${mandatory}"></div>
+        </div>
+        <button class="btn c full" id="bud-save">Сохранить</button>
+      </details>`;
+    c.appendChild(budCard);
+    budCard.querySelector('#bud-save').onclick=async()=>{
+      const cap=parseFloat(budCard.querySelector('#budcap').value);
+      const m=parseFloat(budCard.querySelector('#mand').value)||0;
+      if(cap>0){await this.db.setCfg('monthlyBudgetCap',cap);await this.db.setCfg('mandatoryPayments',m);this._render();}
+    };
+
+    /* Goals mini */
+    if(goals.length){
+      const gCard=this._card();
+      gCard.innerHTML='<div class="card-title">Цели</div>';
+      goals.sort((a,b)=>a.priority-b.priority).forEach(goal=>{
+        const saved=txs.filter(t=>t.type==='expense'&&((t.category==='Цель'&&t.comment===goal.name)||(t.category==='Цель/Долг'&&t.comment===goal.name))).reduce((s,t)=>s+t.amount,0);
+        const pct=Math.min(100,(saved/goal.targetAmount)*100);
+        const left=Math.max(0,goal.targetAmount-saved);
+        const dLeft=Math.ceil((new Date(goal.deadline)-now)/86400000);
+        const col=goal.color||'#0ff';
+        gCard.insertAdjacentHTML('beforeend',`<div class="goal-mini">
+          <div class="goal-mini-title"><span style="color:${col};font-weight:700">${goal.name}</span><span style="font-size:10px;color:var(--muted)">${pct.toFixed(0)}% · ост. ${fmt(left)} ₽ · ${dLeft>0?dLeft+' дн.':'⏰'}</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
+        </div>`);
+      });
+      c.appendChild(gCard);
+    }
+
+    /* Add tx */
+    const txCard=this._card();
+    const allGoals=(await this.db.all(S.GOALS)).filter(g=>g.active);
+    txCard.innerHTML=`<div class="card-title">Новая транзакция</div>
+      <div class="ig"><label class="lbl">Тип</label><select id="tx-type"><option value="expense">Расход</option><option value="income">Доход</option></select></div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Сумма (₽)</label><input type="number" id="tx-amt" placeholder="0.00" step="0.01"></div>
+        <div class="ig"><label class="lbl">Категория</label><select id="tx-cat"></select></div>
+      </div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Дата</label><input type="date" id="tx-date" value="${todayStr}"></div>
+        <div class="ig"><label class="lbl">Комментарий</label><input type="text" id="tx-comment" placeholder="Необязательно"></div>
+      </div>
+      <button class="btn c full" id="tx-add">Добавить транзакцию</button>`;
+    c.appendChild(txCard);
+    const typeEl=txCard.querySelector('#tx-type'), catEl=txCard.querySelector('#tx-cat');
+    const fillCats=()=>{
+      if(typeEl.value==='income'){catEl.innerHTML=CAT_INC.map(x=>`<option value="${x}">${x}</option>`).join('');}
+      else{
+        let html=CAT_EXP.map(x=>`<option value="${x}">${x}</option>`).join('');
+        if(allGoals.length){html+='<option disabled>── Цели ──</option>';allGoals.forEach(g=>{html+=`<option value="ЦЕЛЬ:${g.name}">🎯 ${g.name}</option>`;});}
+        catEl.innerHTML=html;
+      }
+    };
+    fillCats(); typeEl.onchange=fillCats;
+    txCard.querySelector('#tx-add').onclick=async()=>{
+      const amt=parseFloat(txCard.querySelector('#tx-amt').value);
+      if(!amt||amt<=0) return;
+      const type=typeEl.value;
+      let cat=catEl.value, comment=txCard.querySelector('#tx-comment').value.trim();
+      const dt=txCard.querySelector('#tx-date').value||todayStr;
+      if(cat.startsWith('ЦЕЛЬ:')){comment=cat.substring(5);cat='Цель';}
+      await this.db.add(S.TX,{amount:amt,type,category:cat,comment,date:new Date(dt+'T12:00:00').toISOString()});
+      let bal=await this.db.cfg('balance');
+      await this.db.setCfg('balance',type==='income'?bal+amt:bal-amt);
+      txCard.querySelector('#tx-amt').value='';
+      txCard.querySelector('#tx-comment').value='';
+      this._render();
+    };
+
+    /* History */
+    const sorted=[...txs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const histCard=this._card();
+    histCard.innerHTML=`<div class="card-title">Операции</div>
+      <div class="search-row"><input type="text" id="tx-q" placeholder="Поиск..."><select id="tx-fc"><option value="">Все</option>${[...new Set([...CAT_EXP,...CAT_INC])].map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
+      <div id="tx-list"></div>`;
+    c.appendChild(histCard);
+    const renderList=(q='',fc='')=>{
+      let fil=sorted;
+      if(q) fil=fil.filter(t=>(t.comment||'').toLowerCase().includes(q)||t.category.toLowerCase().includes(q));
+      if(fc) fil=fil.filter(t=>t.category===fc);
+      const listEl=histCard.querySelector('#tx-list'); listEl.innerHTML='';
+      if(!fil.length){listEl.innerHTML='<div style="color:var(--muted);text-align:center;padding:16px">Нет операций</div>';return;}
+      fil.slice(0,30).forEach(tx=>{
+        const row=document.createElement('div'); row.className='log-row';
+        const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
+        row.innerHTML=`<div style="min-width:0;flex:1"><span class="badge">${tx.category}</span><div class="log-meta">${dStr(tx.date)}${tx.comment?' · '+tx.comment:''}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span class="amt ${tx.type==='income'?'i':'e'}">${tx.type==='income'?'+':'−'}${fmt(tx.amount)} ₽</span></div>`;
+        row.querySelector('div:last-child').appendChild(del);
+        del.onclick=()=>confirmDel(del,async()=>{del._ok=true;await this.db.del(S.TX,tx.id);let bal=await this.db.cfg('balance');await this.db.setCfg('balance',tx.type==='income'?bal-tx.amount:bal+tx.amount);this._render();});
+        listEl.appendChild(row);
+      });
+    };
+    renderList();
+    histCard.querySelector('#tx-q').oninput=e=>renderList(e.target.value.toLowerCase(),histCard.querySelector('#tx-fc').value);
+    histCard.querySelector('#tx-fc').onchange=e=>renderList(histCard.querySelector('#tx-q').value.toLowerCase(),e.target.value);
+  }
+
+  /* ── GOALS ── */
+  async _goals(c){
+    const txs=await this.db.all(S.TX);
+    const goals=await this.db.all(S.GOALS);
+    const now=new Date();
+
+    for(const goal of goals){
+      const saved=txs.filter(t=>t.type==='expense'&&((t.category==='Цель'&&t.comment===goal.name)||(t.category==='Цель/Долг'&&t.comment===goal.name))).reduce((s,t)=>s+t.amount,0);
+      const left=Math.max(0,goal.targetAmount-saved);
+      const pct=Math.min(100,(saved/goal.targetAmount)*100);
+      const dl=new Date(goal.deadline);
+      const dLeft=Math.ceil((dl-now)/86400000);
+      const mLeft=Math.max(0.5,dLeft/30);
+      const needPM=left/mLeft;
+      const col=goal.color||'#0ff';
+
+      const gc=this._card();
+      gc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div><div style="font-size:14px;font-weight:700;color:${col}">${goal.name}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Приоритет ${'★'.repeat(goal.priority||1)}${'☆'.repeat(3-(goal.priority||1))} · до ${dStr(goal.deadline)}</div></div>
+          <button class="del-btn" data-gid="${goal.id}">×</button></div>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="stat"><div class="v" style="color:${col}">${fmt(saved)} ₽</div><div class="l">Накоплено</div></div>
+          <div class="stat"><div class="v" style="color:var(--orange)">${fmt(left)} ₽</div><div class="l">Осталось</div></div>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${col},${col}88)"></div></div>
+        <div class="prog-meta"><span>${pct.toFixed(1)}%</span><span style="color:${dLeft<0?'var(--red)':'inherit'}">${dLeft>0?dLeft+' дн. до срока':'⏰ Просрочено'}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.8">
+          Нужно/мес: <b style="color:var(--orange)">${fmt(needPM)} ₽</b>
+          · Откладываю: <b style="color:${col}">${fmtI(goal.monthlyAllocation||0)} ₽/мес</b>
+        </div>
+        <details style="margin-top:10px"><summary>✏ Редактировать</summary>
+          <div style="margin-top:10px" class="g2">
+            <div class="ig"><label class="lbl">Название</label><input id="ge-n-${goal.id}" value="${goal.name}"></div>
+            <div class="ig"><label class="lbl">Сумма цели (₽)</label><input type="number" id="ge-t-${goal.id}" value="${goal.targetAmount}"></div>
+            <div class="ig"><label class="lbl">Дедлайн</label><input type="date" id="ge-d-${goal.id}" value="${goal.deadline}"></div>
+            <div class="ig"><label class="lbl">₽/мес на цель</label><input type="number" id="ge-a-${goal.id}" value="${goal.monthlyAllocation||0}"></div>
+            <div class="ig"><label class="lbl">Приоритет</label><select id="ge-p-${goal.id}">
+              <option value="1" ${goal.priority===1?'selected':''}>1 — Высокий</option>
+              <option value="2" ${goal.priority===2?'selected':''}>2 — Средний</option>
+              <option value="3" ${goal.priority===3?'selected':''}>3 — Низкий</option>
+            </select></div>
+            <div class="ig"><label class="lbl">Цвет</label><div id="ge-cols-${goal.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+              ${GOAL_COLORS.map(cl=>`<div class="color-dot${goal.color===cl?' selected':''}" data-col="${cl}" style="background:${cl}"></div>`).join('')}
+            </div></div>
+          </div>
+          <button class="btn c full" id="ge-s-${goal.id}">Сохранить</button>
+        </details>
+        <div style="margin-top:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:6px">Внести пополнение:</div>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="gp-${goal.id}" placeholder="Сумма ₽" style="flex:1">
+            <button class="btn g" id="ga-${goal.id}">+ Добавить</button>
+          </div>
+        </div>`;
+      c.appendChild(gc);
+
+      gc.querySelector(`[data-gid="${goal.id}"]`).onclick=()=>confirmDel(gc.querySelector(`[data-gid="${goal.id}"]`),async()=>{gc.querySelector(`[data-gid="${goal.id}"]`)._ok=true;await this.db.del(S.GOALS,goal.id);this._render();});
+
+      const colsEl=gc.querySelector(`#ge-cols-${goal.id}`);
+      let selColor=goal.color||GOAL_COLORS[0];
+      colsEl.querySelectorAll('.color-dot').forEach(el=>{el.onclick=()=>{colsEl.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selColor=el.dataset.col;};});
+
+      gc.querySelector(`#ge-s-${goal.id}`).onclick=async()=>{
+        const updated={...goal,
+          name:gc.querySelector(`#ge-n-${goal.id}`).value.trim()||goal.name,
+          targetAmount:parseFloat(gc.querySelector(`#ge-t-${goal.id}`).value)||goal.targetAmount,
+          deadline:gc.querySelector(`#ge-d-${goal.id}`).value||goal.deadline,
+          monthlyAllocation:parseFloat(gc.querySelector(`#ge-a-${goal.id}`).value)||0,
+          priority:parseInt(gc.querySelector(`#ge-p-${goal.id}`).value)||1,
+          color:selColor,
+        };
+        await this.db.set(S.GOALS,updated);this._render();
+      };
+
+      gc.querySelector(`#ga-${goal.id}`).onclick=async()=>{
+        const amt=parseFloat(gc.querySelector(`#gp-${goal.id}`).value);
+        if(!amt||amt<=0) return;
+        await this.db.add(S.TX,{amount:amt,type:'expense',category:'Цель',comment:goal.name,date:new Date().toISOString()});
+        const bal=await this.db.cfg('balance');
+        await this.db.setCfg('balance',bal-amt);
+        this._render();
+      };
+    }
+
+    /* New goal */
+    const nc=this._card();
+    nc.innerHTML=`<div class="card-title">Добавить цель</div>
+      <div class="ig"><label class="lbl">Название</label><input id="ng-n" placeholder="Долг, аренда, телефон…"></div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Сумма (₽)</label><input type="number" id="ng-t" placeholder="100000"></div>
+        <div class="ig"><label class="lbl">Дедлайн</label><input type="date" id="ng-d" value="2026-12-31"></div>
+        <div class="ig"><label class="lbl">₽/мес</label><input type="number" id="ng-a" placeholder="5000"></div>
+        <div class="ig"><label class="lbl">Приоритет</label><select id="ng-p"><option value="1">1 — Высокий</option><option value="2" selected>2 — Средний</option><option value="3">3 — Низкий</option></select></div>
+      </div>
+      <div class="ig"><label class="lbl">Цвет</label><div id="ng-cols" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px">${GOAL_COLORS.map((cl,i)=>`<div class="color-dot${i===0?' selected':''}" data-col="${cl}" style="background:${cl}"></div>`).join('')}</div></div>
+      <button class="btn v full" id="ng-add">Создать цель</button>`;
+    c.appendChild(nc);
+    let newColor=GOAL_COLORS[0];
+    nc.querySelector('#ng-cols').querySelectorAll('.color-dot').forEach(el=>{el.onclick=()=>{nc.querySelector('#ng-cols').querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');newColor=el.dataset.col;};});
+    nc.querySelector('#ng-add').onclick=async()=>{
+      const name=nc.querySelector('#ng-n').value.trim();
+      const target=parseFloat(nc.querySelector('#ng-t').value);
+      if(!name||!target){alert('Введи название и сумму');return;}
+      await this.db.add(S.GOALS,{name,targetAmount:target,deadline:nc.querySelector('#ng-d').value,priority:parseInt(nc.querySelector('#ng-p').value)||2,monthlyAllocation:parseFloat(nc.querySelector('#ng-a').value)||0,color:newColor,active:true});
+      this._render();
+    };
+  }
+
+  /* ── GARAGE ── */
+  async _garage(c){
+    const odo=await this.db.cfg('currentOdometer');
+    const hist=await this.db.all(S.ODO);
+    const items=(await this.db.all(S.SVC)).filter(it=>it.enabled).sort((a,b)=>a.id-b.id);
+    const partsNotes=await this.db.cfg('carPartsNotes');
+    let avgDay=20;
+    if(hist.length>=2){
+      const s=[...hist].sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const span=(new Date(s[s.length-1].date)-new Date(s[0].date))/86400000;
+      const delta=s[s.length-1].odometer-s[0].odometer;
+      if(span>0) avgDay=delta/span;
+    }
+
+    /* Odometer */
+    const oc=this._card();
+    oc.innerHTML=`<div class="card-title">Peugeot 206 · 1.1i TU1JP</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="big">${fmtI(odo)} <span style="font-size:18px;color:rgba(0,255,255,.4)">км</span></div>
+        <button class="btn c" id="odo-btn">Обновить пробег</button>
+      </div>
+      <div class="sub">~${Math.round(avgDay*7)} км/нед · ~${Math.round(avgDay)} км/день</div>
+      <div id="odo-ed"></div>`;
+    c.appendChild(oc);
+    oc.querySelector('#odo-btn').onclick=()=>{
+      const ed=oc.querySelector('#odo-ed');
+      if(ed.innerHTML){ed.innerHTML='';return;}
+      ed.innerHTML=`<div class="g2" style="margin-top:12px"><div class="ig"><label class="lbl">Новый пробег (км)</label><input type="number" id="oi" value="${odo}"></div><div class="ig"><label class="lbl">Дата</label><input type="date" id="od" value="${today()}"></div></div><button class="btn c full" id="os">Сохранить</button>`;
+      ed.querySelector('#os').onclick=async()=>{
+        const v=parseFloat(ed.querySelector('#oi').value);
+        const dt=ed.querySelector('#od').value||today();
+        if(isNaN(v)||v<0) return;
+        await this.db.setCfg('currentOdometer',v);
+        await this.db.add(S.ODO,{odometer:v,date:new Date(dt+'T12:00:00').toISOString()});
+        this._render();
+      };
+    };
+
+    /* Wear */
+    const wc=this._card();
+    wc.innerHTML='<div class="card-title">Прогноз обслуживания</div>';
+    items.forEach(it=>{
+      const div=document.createElement('div'); div.className='wear-row';
+      const critClass=it.crit==='critical'?'crit':it.crit==='warning'?'warn':'info';
+      const critLbl={critical:'КРИТ',warning:'ВНМ',info:'ОК'}[it.crit]||'ОК';
+      if(it.condOnly){
+        const cs=it.conditionStatus||'ok';
+        const pctMap={ok:0,watch:35,replace:70,critical:100};
+        div.innerHTML=`<div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span>
+          <select class="cond-sel" style="color:${cCol(cs)}">
+            <option value="ok" ${cs==='ok'?'selected':''}>Норма</option>
+            <option value="watch" ${cs==='watch'?'selected':''}>Наблюдение</option>
+            <option value="replace" ${cs==='replace'?'selected':''}>Заменить</option>
+            <option value="critical" ${cs==='critical'?'selected':''}>Критично!</option>
+          </select></div>
+          <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs]||0}%;background:${cCol(cs)}"></div></div>
+          ${it.notes?`<div class="svc-notes">${it.notes}</div>`:''}`;
+        div.querySelector('.cond-sel').onchange=async e=>{
+          await this.db.set(S.SVC,{...it,conditionStatus:e.target.value});
+          e.target.style.color=cCol(e.target.value);
+        };
+      } else {
+        const done=Math.max(0,odo-it.lastServiceOdo);
+        const pct=Math.min(100,(done/it.km)*100);
+        const rem=Math.max(0,it.km-done);
+        const col=wCol(pct);
+        const eta=avgDay>0&&rem>0?dStr(new Date(Date.now()+(rem/avgDay)*86400000)):'—';
+        div.innerHTML=`<div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span><span style="color:${col};font-weight:700">${pct.toFixed(0)}%</span></div>
+          <div class="wear-bar"><div class="wear-fill" style="width:${pct}%;background:${col}"></div></div>
+          ${it.notes?`<div class="svc-notes">${it.notes}</div>`:''}
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">каждые ${fmtI(it.km)} км · ост. ${fmtI(rem)} км · ~${eta}${it.lastServiceOdo?' · при '+fmtI(it.lastServiceOdo)+' км':''}</div>`;
+      }
+      wc.appendChild(div);
+    });
+    c.appendChild(wc);
+
+    /* Add service */
+    const sc=this._card();
+    const itemOpts=items.map(it=>`<option value="${it.id}">${it.label}</option>`).join('');
+    sc.innerHTML=`<div class="card-title">Записать ТО</div>
+      <div class="ig"><label class="lbl">Работа</label><select id="svc-it">${itemOpts}<option value="other">Другое…</option></select></div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Пробег (км)</label><input type="number" id="svc-o" value="${odo}"></div>
+        <div class="ig"><label class="lbl">Стоимость (₽)</label><input type="number" id="svc-c" placeholder="0"></div>
+      </div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Дата</label><input type="date" id="svc-d" value="${today()}"></div>
+        <div class="ig"><label class="lbl">Комментарий</label><input type="text" id="svc-n" placeholder="Что сделано"></div>
+      </div>
+      <button class="btn c full" id="svc-add">Записать в журнал</button>`;
+    c.appendChild(sc);
+    sc.querySelector('#svc-add').onclick=async()=>{
+      const itemId=parseInt(sc.querySelector('#svc-it').value);
+      const svcOdo=parseFloat(sc.querySelector('#svc-o').value);
+      const cost=parseFloat(sc.querySelector('#svc-c').value)||0;
+      const comment=sc.querySelector('#svc-n').value.trim();
+      const dt=sc.querySelector('#svc-d').value||today();
+      if(isNaN(svcOdo)) return;
+      const selItem=items.find(it=>it.id===itemId);
+      const label=selItem?selItem.label:'Другое';
+      await this.db.add(S.GARAGE,{type:selItem?.key||'other',label,odometer:svcOdo,cost,comment,date:new Date(dt+'T12:00:00').toISOString()});
+      if(selItem) await this.db.set(S.SVC,{...selItem,lastServiceOdo:svcOdo,conditionStatus:'ok'});
+      if(cost>0){
+        const bal=await this.db.cfg('balance');
+        await this.db.setCfg('balance',bal-cost);
+        await this.db.add(S.TX,{amount:cost,type:'expense',category:'Авто',comment:label+(comment?' · '+comment:''),date:new Date(dt+'T12:00:00').toISOString()});
+      }
+      this._render();
+    };
+
+    /* Logs */
+    const logs=(await this.db.all(S.GARAGE)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,15);
+    const jc=this._card();
+    jc.innerHTML='<div class="card-title">Журнал обслуживания</div>';
+    if(!logs.length){jc.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет записей</div>');}
+    else logs.forEach(log=>{
+      const row=document.createElement('div'); row.className='log-row';
+      const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
+      row.innerHTML=`<div style="min-width:0;flex:1"><span class="badge">${log.label}</span><div class="log-meta">${dStr(log.date)} · ${fmtI(log.odometer)} км${log.comment?' · '+log.comment:''}</div></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${log.cost?`<span style="color:var(--orange);font-size:12px;font-weight:700">−${fmt(log.cost)} ₽</span>`:''}</div>`;
+      row.querySelector('div:last-child').appendChild(del);
+      del.onclick=()=>confirmDel(del,async()=>{del._ok=true;await this.db.del(S.GARAGE,log.id);if(log.cost>0){const bal=await this.db.cfg('balance');await this.db.setCfg('balance',bal+log.cost);}this._render();});
+      jc.appendChild(row);
+    });
+    c.appendChild(jc);
+
+    /* Parts notes */
+    const ac=this._card();
+    ac.innerHTML=`<div class="card-title">Артикулы и заметки</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей</div>
+      <textarea id="parts-n" placeholder="Масло: Castrol 5W-30&#10;Фильтр: MANN W712/75&#10;Свечи: NGK BPR5E&#10;...">${partsNotes||''}</textarea>
+      <button class="btn c full" id="parts-s">Сохранить</button>`;
+    c.appendChild(ac);
+    ac.querySelector('#parts-s').onclick=async()=>{
+      await this.db.setCfg('carPartsNotes',ac.querySelector('#parts-n').value);
+      const f=document.createElement('div');f.textContent='✓ Сохранено';f.style.cssText='color:var(--green);font-size:11px;margin-top:6px';
+      ac.appendChild(f);setTimeout(()=>f.remove(),2000);
+    };
+  }
+
+  /* ── 3D PRINT ── */
+  async _print(c){
+    const hr=await this.db.cfg('printHourRate');
+    const sf=await this.db.cfg('printSetupFee');
+    const mp=await this.db.cfg('printMinPrice');
+
+    const paramCard=this._card();
+    paramCard.innerHTML=`<div class="card-title">Параметры расчёта</div>
+      <div class="g3">
+        <div class="ig"><label class="lbl">₽/ч работы</label><input type="number" id="pr-r" value="${hr}"></div>
+        <div class="ig"><label class="lbl">Подготовка (₽)</label><input type="number" id="pr-f" value="${sf}"></div>
+        <div class="ig"><label class="lbl">Минималка (₽)</label><input type="number" id="pr-m" value="${mp}"></div>
+      </div>
+      <button class="btn v full" id="pr-save">Сохранить</button>`;
+    c.appendChild(paramCard);
+    paramCard.querySelector('#pr-save').onclick=async()=>{
+      await this.db.setCfg('printHourRate',parseFloat(paramCard.querySelector('#pr-r').value)||hr);
+      await this.db.setCfg('printSetupFee',parseFloat(paramCard.querySelector('#pr-f').value)||sf);
+      await this.db.setCfg('printMinPrice',parseFloat(paramCard.querySelector('#pr-m').value)||mp);
+      const f=document.createElement('div');f.textContent='✓ Сохранено';f.style.cssText='color:var(--green);font-size:11px;margin-top:6px';paramCard.appendChild(f);
+      setTimeout(()=>f.remove(),700);
+    };
+
+    const cc=this._card();
+    cc.innerHTML=`<div class="card-title">Калькулятор заказа</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.6">≤50г: Вес×коэф | >50г стандарт: (Ч×${hr})+(Вес×5)+${sf} | TPU: +Вес×10 | Композит: +Вес×20</div>
+      <div class="ig"><label class="lbl">Тип материала</label>
+        <select id="c-mat"><option value="standard">PLA / PETG / ABS — Стандарт</option><option value="flex">TPU / Flex — Гибкий</option><option value="composite">Carbon / Glass — Композит</option></select>
+      </div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Вес модели (г)</label><input type="number" id="c-wg" placeholder="150"></div>
+        <div class="ig"><label class="lbl">Время печати (ч)</label><input type="number" id="c-th" placeholder="4.5"></div>
+      </div>
+      <div class="ig"><label class="lbl">Название заказа</label><input type="text" id="c-desc" placeholder="Описание детали"></div>
+      <button class="btn c full" id="c-calc">Рассчитать цену</button>
+      <div id="c-res" style="display:none;margin-top:12px"></div>`;
+    c.appendChild(cc);
+    let lastTotal=0;
+    cc.querySelector('#c-calc').onclick=()=>{
+      const wg=parseFloat(cc.querySelector('#c-wg').value);
+      const th=parseFloat(cc.querySelector('#c-th').value)||0;
+      const mat=cc.querySelector('#c-mat').value;
+      const res=cc.querySelector('#c-res'); res.style.display='block';
+      if(!wg||wg<=0){res.innerHTML='<div style="color:var(--red)">Введи вес модели</div>';return;}
+      if(wg>50&&th<=0){res.innerHTML='<div style="color:var(--orange)">Для >50г укажи время из слайсера</div>';return;}
+      const {price,formula,breakdown}=calc3DPrice(wg,th,mat,hr,sf,mp);
+      lastTotal=price;
+      res.innerHTML=`<div class="calc-result">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${wg}г${th?' · '+th+'ч':''} · формула: ${formula}</div>
+        ${breakdown.map(b=>`<div>${b}</div>`).join('')}
+        <div class="calc-total">Итого: ${fmt(price)} ₽</div>
+      </div>
+      <button class="btn g full" id="c-inc">→ Зачислить как доход</button>`;
+      res.querySelector('#c-inc').onclick=async()=>{
+        if(lastTotal<=0) return;
+        const desc=cc.querySelector('#c-desc').value.trim()||'3D-печать';
+        await this.db.add(S.TX,{amount:lastTotal,type:'income',category:'3D-печать',comment:`${desc} · ${wg}г${th?' · '+th+'ч':''}`,date:new Date().toISOString()});
+        const bal=await this.db.cfg('balance');
+        await this.db.setCfg('balance',bal+lastTotal);
+        res.insertAdjacentHTML('beforeend',`<div style="color:var(--green);font-size:11px;margin-top:8px">✓ ${fmt(lastTotal)} ₽ добавлено в баланс</div>`);
+        res.querySelector('#c-inc').disabled=true; lastTotal=0;
+      };
+    };
+
+    /* History */
+    const pTxs=(await this.db.all(S.TX)).filter(t=>t.category==='3D-печать'&&t.type==='income').sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,12);
+    const hc=this._card();
+    hc.innerHTML='<div class="card-title">История заказов</div>';
+    if(!pTxs.length){hc.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет заказов</div>');}
+    else pTxs.forEach(t=>{
+      const row=document.createElement('div'); row.className='log-row';
+      const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
+      row.innerHTML=`<div style="min-width:0;flex:1"><div style="font-size:11px">${t.comment||'—'}</div><div class="log-meta">${dStr(t.date)}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span class="amt i">+${fmt(t.amount)} ₽</span></div>`;
+      row.querySelector('div:last-child').appendChild(del);
+      del.onclick=()=>confirmDel(del,async()=>{del._ok=true;await this.db.del(S.TX,t.id);const bal=await this.db.cfg('balance');await this.db.setCfg('balance',bal-t.amount);this._render();});
+      hc.appendChild(row);
+    });
+    c.appendChild(hc);
+  }
+
+  /* ── HUB ── */
+  async _hub(c){
+    const txs=await this.db.all(S.TX);
+    const odo=await this.db.cfg('currentOdometer');
+    const items=await this.db.all(S.SVC);
+    const goals=(await this.db.all(S.GOALS)).filter(g=>g.active);
+    const balance=await this.db.cfg('balance');
+    const budgetCap=await this.db.cfg('monthlyBudgetCap');
+    const mandatory=await this.db.cfg('mandatoryPayments');
+    const now=new Date(), todayStr=today();
+    const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+    const isGoal=t=>t.type==='expense'&&(t.category==='Цель'||(t.category==='Цель/Долг'&&goals.some(g=>g.name===t.comment)));
+    const spentMonth=txs.filter(t=>t.type==='expense'&&new Date(t.date)>=mStart&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
+    const todaySpent=txs.filter(t=>t.type==='expense'&&t.date.startsWith(todayStr)&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
+    const payday=calcNextPayday(txs);
+    const budRem=Math.max(0,budgetCap-(spentMonth-todaySpent));
+    const dInM=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const dRem=Math.max(1,dInM-now.getDate()+1);
+    const maxBal=payday.days>0?Math.max(0,(balance-mandatory)/payday.days):0;
+    const dailyBudget=Math.min(budRem/dRem,maxBal);
+    const survRes=dailyBudget*payday.days;
+    const freeCash=Math.max(0,balance-survRes-mandatory-1000);
+    const lastExp=txs.filter(t=>t.type==='expense').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const daysSince=lastExp?Math.floor((now-new Date(lastExp.date))/86400000):999;
+    const overdueItems=items.filter(it=>!it.condOnly&&it.enabled&&(odo-it.lastServiceOdo)>=it.km);
+    const critItems=items.filter(it=>it.condOnly&&it.conditionStatus==='critical');
+
+    /* Reminders */
+    const remCard=this._card();
+    remCard.innerHTML='<div class="card-title">Центр уведомлений</div>';
+    let any=false;
+    if(daysSince>=3){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход: ${lastExp?dStr(lastExp.date):'давно'} (${daysSince} дн. назад). Возможно что-то не записал?</div>`);}
+    if(freeCash>500){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b> — можно на цели!</div>`);}
+    if(overdueItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🚗 Просрочено ТО: ${overdueItems.map(it=>it.label).join(', ')}</div>`);}
+    if(critItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">⚠️ Критичное состояние: ${critItems.map(it=>it.label).join(', ')}</div>`);}
+    goals.forEach(goal=>{
+      const saved=txs.filter(t=>t.type==='expense'&&t.category==='Цель'&&t.comment===goal.name).reduce((s,t)=>s+t.amount,0);
+      const dl=new Date(goal.deadline);
+      const dL=Math.ceil((dl-now)/86400000);
+      if(dL>0&&dL<14&&saved<goal.targetAmount){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🎯 "${goal.name}" — ${dL} дн. до дедлайна! Накоплено ${fmt(saved)} из ${fmt(goal.targetAmount)}</div>`);}
+    });
+    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Всё под контролем, Дима!</div>');
+    c.appendChild(remCard);
+
+    /* Summary */
+    const sc=this._card();
+    sc.innerHTML=`<div class="card-title">Сводка</div>
+      <div class="g3">
+        <div class="stat"><div class="v" style="color:${balance<0?'var(--red)':'var(--cyan)'}">${fmtI(balance)}</div><div class="l">Баланс ₽</div></div>
+        <div class="stat"><div class="v" style="color:var(--violet)">${payday.days}</div><div class="l">Дн. до ${payday.label}</div></div>
+        <div class="stat"><div class="v" style="color:${spentMonth>budgetCap?'var(--red)':'var(--orange)'}">${fmtI(spentMonth)}</div><div class="l">Потрачено ₽</div></div>
+      </div>`;
+    c.appendChild(sc);
+
+    /* Car tips */
+    const autoCard=this._card();
+    autoCard.innerHTML='<div class="card-title">💡 Совет по Peugeot 206</div><div id="auto-tips"></div><button class="btn c full" id="ref-tips">🔄 Другой совет</button>';
+    c.appendChild(autoCard);
+    const showTips=()=>{
+      const seed=Date.now();
+      const tip1=CAR_TIPS[seed%CAR_TIPS.length];
+      const tip2=CAR_TIPS[(seed+7)%CAR_TIPS.length];
+      autoCard.querySelector('#auto-tips').innerHTML=[tip1,tip2].map(t=>`<div class="tip">${t}</div>`).join('');
+    };
+    autoCard.querySelector('#ref-tips').onclick=showTips;
+    showTips();
+
+    /* Print tips */
+    const prCard=this._card();
+    const sb=now.getDate()+now.getMonth()*31;
+    prCard.innerHTML=`<div class="card-title">🖨 Совет по 3D-печати</div>
+      <div class="tip">${PRINT_TIPS[sb%PRINT_TIPS.length]}</div>
+      <div class="tip">${PRINT_TIPS[(sb+5)%PRINT_TIPS.length]}</div>`;
+    c.appendChild(prCard);
+
+    /* Recipes */
+    const recCard=this._card();
+    recCard.innerHTML=`<div class="card-title">🍳 Быстрые рецепты</div>
+      <div class="search-row">
+        <select id="rec-cat"><option value="">Все</option><option value="Завтрак">Завтрак</option><option value="Обед">Обед</option><option value="Ужин">Ужин</option><option value="Перекус">Перекус</option></select>
+        <input type="text" id="rec-q" placeholder="Поиск...">
+      </div>
+      <div id="rec-list"></div>`;
+    c.appendChild(recCard);
+    const renderRec=()=>{
+      const cat=recCard.querySelector('#rec-cat').value;
+      const q=recCard.querySelector('#rec-q').value.toLowerCase();
+      let fil=RECIPES;
+      if(cat) fil=fil.filter(r=>r.cat===cat);
+      if(q) fil=fil.filter(r=>r.name.toLowerCase().includes(q));
+      const list=recCard.querySelector('#rec-list'); list.innerHTML='';
+      if(!fil.length){list.innerHTML='<div style="color:var(--muted);text-align:center;padding:16px">Нет рецептов</div>';return;}
+      fil.forEach((rec,idx)=>{
+        const rd=document.createElement('div'); rd.className='recipe';
+        rd.innerHTML=`<div class="recipe-hd">
+            <div><div class="recipe-name">${rec.name}</div><div class="recipe-meta">⏱ ${rec.time} · 🔥 ${rec.cal} · ${rec.cat}</div></div>
+            <span style="color:var(--violet);font-size:20px;line-height:1">›</span>
+          </div>
+          <div class="recipe-body" id="rb-${idx}">
+            <div class="rsec">Ингредиенты</div>
+            <ul>${rec.ingr.map(i=>`<li>${i}</li>`).join('')}</ul>
+            <div class="rsec">Приготовление</div>
+            <ol>${rec.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+          </div>`;
+        const body=rd.querySelector(`#rb-${idx}`);
+        const arr=rd.querySelector('span:last-child');
+        rd.onclick=()=>{body.classList.toggle('open');arr.textContent=body.classList.contains('open')?'‹':'›';};
+        list.appendChild(rd);
+      });
+    };
+    renderRec();
+    recCard.querySelector('#rec-cat').onchange=renderRec;
+    recCard.querySelector('#rec-q').oninput=renderRec;
+  }
+
+  /* ── STATS ── */
+  async _stats(c){
+    const txs=await this.db.all(S.TX);
+    const now=new Date();
+    if(!this.statsStart){
+      const s=new Date(now);s.setDate(now.getDate()-30);
+      this.statsStart=s.toISOString().split('T')[0];
+      this.statsEnd=now.toISOString().split('T')[0];
+    }
+
+    const pCard=this._card();
+    pCard.innerHTML=`<div class="card-title">Период анализа</div>
+      <div class="g2" style="margin-bottom:10px">
+        <div class="ig"><label class="lbl">От</label><input type="date" id="as" value="${this.statsStart}"></div>
+        <div class="ig"><label class="lbl">До</label><input type="date" id="ae" value="${this.statsEnd}"></div>
+      </div>
+      <button class="btn c" id="ap">Применить</button>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn v" id="qt">Сегодня</button>
+        <button class="btn v" id="qm">Этот месяц</button>
+        <button class="btn v" id="qy">Этот год</button>
+      </div>`;
+    c.appendChild(pCard);
+
+    const upd=(s,e)=>{this.statsStart=s;this.statsEnd=e;this._render();};
+    pCard.querySelector('#ap').onclick=()=>{const s=pCard.querySelector('#as').value,e=pCard.querySelector('#ae').value;if(s&&e&&s<=e)upd(s,e);};
+    pCard.querySelector('#qt').onclick=()=>{const t=now.toISOString().split('T')[0];upd(t,t);};
+    pCard.querySelector('#qm').onclick=()=>upd(new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0],new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0]);
+    pCard.querySelector('#qy').onclick=()=>upd(`${now.getFullYear()}-01-01`,`${now.getFullYear()}-12-31`);
+
+    const s0=new Date(this.statsStart), e0=new Date(this.statsEnd); e0.setHours(23,59,59,999);
+    const pTxs=txs.filter(t=>{const d=new Date(t.date);return d>=s0&&d<=e0;});
+    const totalInc=pTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const totalExp=pTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const saldo=totalInc-totalExp;
+
+    const sumCard=this._card();
+    sumCard.innerHTML=`<div class="card-title">${this.statsStart} — ${this.statsEnd}</div>
+      <div class="g3">
+        <div class="stat"><div class="v" style="color:var(--green)">+${fmtI(totalInc)}</div><div class="l">Доходы ₽</div></div>
+        <div class="stat"><div class="v" style="color:var(--red)">−${fmtI(totalExp)}</div><div class="l">Расходы ₽</div></div>
+        <div class="stat"><div class="v" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${saldo>=0?'+':''}${fmtI(saldo)}</div><div class="l">Сальдо ₽</div></div>
+      </div>`;
+    c.appendChild(sumCard);
+
+    /* Pie */
+    const expByCat={};
+    pTxs.filter(t=>t.type==='expense').forEach(t=>{expByCat[t.category]=(expByCat[t.category]||0)+t.amount;});
+    const cats=Object.keys(expByCat).sort((a,b)=>expByCat[b]-expByCat[a]);
+    const vals=cats.map(k=>expByCat[k]);
+    const totalE=vals.reduce((s,v)=>s+v,0);
+    const COLORS=['#0ff','#9b4dff','#0f8','#ff5555','#ffa040','#38c8f0','#f06dff','#ffeb40','#ff9b4d'];
+
+    const pieCard=this._card();
+    pieCard.innerHTML='<div class="card-title">Расходы по категориям</div>';
+    if(!cats.length){pieCard.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет расходов</div>');}
+    else {
+      const wrap=document.createElement('div'); wrap.className='canvas-wrap';
+      const canvas=document.createElement('canvas'); canvas.width=440; canvas.height=220;
+      wrap.appendChild(canvas); pieCard.appendChild(wrap);
+      const leg=document.createElement('div'); leg.style.cssText='margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 12px';
+      cats.forEach((cat,i)=>{leg.insertAdjacentHTML('beforeend',`<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#a0b0c0"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${COLORS[i%COLORS.length]};flex-shrink:0"></span>${cat}: ${fmt(vals[i])} ₽ (${((vals[i]/totalE)*100).toFixed(1)}%)</span>`);});
+      pieCard.appendChild(leg);
+      requestAnimationFrame(()=>{
+        const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-12;
+        let a=-Math.PI/2; ctx.clearRect(0,0,W,H);
+        vals.forEach((v,i)=>{const sw=(v/totalE)*2*Math.PI;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,a,a+sw);ctx.closePath();ctx.fillStyle=COLORS[i%COLORS.length];ctx.fill();ctx.strokeStyle='rgba(8,8,14,.8)';ctx.lineWidth=2;ctx.stroke();a+=sw;});
+        ctx.beginPath();ctx.arc(cx,cy,R*.48,0,2*Math.PI);ctx.fillStyle='rgba(8,8,14,.94)';ctx.fill();
+        ctx.fillStyle='#0ff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(fmt(totalE)+' ₽',cx,cy-6);
+        ctx.fillStyle='#6a8090';ctx.font='9px Segoe UI';ctx.fillText('расходов',cx,cy+8);
+      });
+    }
+    c.appendChild(pieCard);
+
+    /* Line chart */
+    const sorted=[...pTxs].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const pts=[]; let run=0;
+    sorted.forEach(t=>{run=t.type==='income'?run+t.amount:run-t.amount;pts.push(run);});
+    if(pts.length>=2){
+      const lineCard=this._card();
+      lineCard.innerHTML='<div class="card-title">Динамика баланса за период</div>';
+      const lWrap=document.createElement('div'); lWrap.className='canvas-wrap';
+      const lc=document.createElement('canvas'); lc.width=440; lc.height=130;
+      lWrap.appendChild(lc); lineCard.appendChild(lWrap);
+      c.appendChild(lineCard);
+      requestAnimationFrame(()=>{
+        const ctx=lc.getContext('2d'),W=lc.width,H=lc.height,n=pts.length;
+        const minY=Math.min(...pts),maxY=Math.max(...pts),rng=maxY-minY||1;
+        const px=12,py=12,toX=i=>px+(i/(n-1))*(W-px*2),toY=v=>H-py-((v-minY)/rng)*(H-py*2);
+        ctx.clearRect(0,0,W,H);
+        const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(0,255,255,.15)');gr.addColorStop(1,'rgba(0,255,255,0)');
+        ctx.beginPath();ctx.moveTo(toX(0),toY(pts[0]));pts.forEach((v,i)=>ctx.lineTo(toX(i),toY(v)));
+        ctx.lineTo(toX(n-1),H);ctx.lineTo(toX(0),H);ctx.closePath();ctx.fillStyle=gr;ctx.fill();
+        ctx.beginPath();ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.lineJoin='round';pts.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.stroke();
+        pts.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),2.5,0,2*Math.PI);ctx.fillStyle='#0ff';ctx.fill();});
+        ctx.fillStyle='#6a8090';ctx.font='9px Segoe UI';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(fmt(maxY)+' ₽',px+2,py);ctx.textBaseline='bottom';ctx.fillText(fmt(minY)+' ₽',px+2,H-py);
+      });
+    }
+  }
+
+  /* ── EXPORT / IMPORT ── */
+  async _export(){
+    const data={version:5,exportedAt:new Date().toISOString(),
+      transactions:await this.db.all(S.TX),garage_logs:await this.db.all(S.GARAGE),
+      odo_history:await this.db.all(S.ODO),service_items:await this.db.all(S.SVC),
+      goals:await this.db.all(S.GOALS),settings:await this.db.all(S.CFG)};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`sentinel-backup-${today()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }
+  async _import(file){
+    if(!file) return;
+    const text=await file.text();
+    let data; try{data=JSON.parse(text);}catch{alert('Неверный формат файла');return;}
+    if(!confirm(`Загрузить резервную копию от ${data.exportedAt||'?'}?\nВсе текущие данные будут заменены!`)) return;
+    const map={transactions:S.TX,garage_logs:S.GARAGE,odo_history:S.ODO,service_items:S.SVC,goals:S.GOALS,settings:S.CFG};
+    for(const [key,sn] of Object.entries(map)){
+      if(!data[key]) continue;
+      const ex=await this.db.all(sn);
+      for(const r of ex) await this.db.del(sn,r.id||r.key);
+      for(const r of data[key]) await this.db.set(sn,r);
+    }
+    this._render();
+  }
+}
+
+new App();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script>
+</body>
+</html>
