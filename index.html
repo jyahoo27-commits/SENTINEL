@@ -1385,18 +1385,21 @@ class App {
       <div class="ig"><label class="lbl">Тип материала</label>
         <select id="c-mat"><option value="standard">PLA / PETG / ABS — Стандарт</option><option value="flex">TPU / Flex — Гибкий</option><option value="composite">Carbon / Glass — Композит</option></select>
       </div>
-      <div class="g2">
+            <div class="g3">
         <div class="ig"><label class="lbl">Вес модели (г)</label><input type="number" id="c-wg" placeholder="150"></div>
-        <div class="ig"><label class="lbl">Время печати (ч)</label><input type="number" id="c-th" placeholder="4.5"></div>
+        <div class="ig"><label class="lbl">Часы печати</label><input type="number" id="c-th-h" placeholder="2" step="1" value="0"></div>
+        <div class="ig"><label class="lbl">Минуты печати</label><input type="number" id="c-th-m" placeholder="56" step="1" value="0"></div>
       </div>
       <div class="ig"><label class="lbl">Название заказа</label><input type="text" id="c-desc" placeholder="Описание детали"></div>
       <button class="btn c full" id="c-calc">Рассчитать цену</button>
       <div id="c-res" style="display:none;margin-top:12px"></div>`;
     c.appendChild(cc);
     let lastTotal=0;
-    cc.querySelector('#c-calc').onclick=()=>{
+        cc.querySelector('#c-calc').onclick=()=>{
       const wg=parseFloat(cc.querySelector('#c-wg').value);
-      const th=parseFloat(cc.querySelector('#c-th').value)||0;
+      const hours = parseFloat(cc.querySelector('#c-th-h').value) || 0;
+      const minutes = parseFloat(cc.querySelector('#c-th-m').value) || 0;
+      const th = hours + minutes / 60;
       const mat=cc.querySelector('#c-mat').value;
       const res=cc.querySelector('#c-res'); res.style.display='block';
       if(!wg||wg<=0){res.innerHTML='<div style="color:var(--red)">Введи вес модели</div>';return;}
