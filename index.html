@@ -11,37 +11,46 @@
 <link rel="manifest" href="manifest.json">
 <title>Sentinel OS: Carbon</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 :root{--bg:#08080e;--card:rgba(12,12,22,.9);--border:rgba(0,255,255,.18);--cyan:#0ff;--violet:#9b4dff;--green:#0f8;--red:#ff4d4d;--orange:#ffa040;--text:#d8e0ea;--muted:#6a8090}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
-body{padding-bottom:env(safe-area-inset-bottom)}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;overscroll-behavior-y:none}
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
+
+/* ── LOGO ANIMATION ── */
+@keyframes logo-flow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.logo{font-size:14px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,#0ff,#9b4dff,#5ae6ff,#bf9bff,#0ff);background-size:300%;animation:logo-flow 5s ease infinite;-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
 
 /* ── HEADER ── */
-#app-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(0,255,255,.08),rgba(155,77,255,.06));border-bottom:1px solid var(--border);backdrop-filter:blur(20px);padding:12px 16px 0;padding-top:calc(12px + env(safe-area-inset-top))}
-.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.logo{font-size:14px;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.header-acts{display:flex;gap:8px;align-items:center}
-.hdr-btn{background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.25);border-radius:8px;color:var(--cyan);padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px}
+#app-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(0,255,255,.07),rgba(155,77,255,.05));border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 14px 0;padding-top:calc(10px + env(safe-area-inset-top))}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.header-acts{display:flex;gap:7px}
+.hdr-btn{background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.25);border-radius:8px;color:var(--cyan);padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;line-height:1}
 
 /* ── TABS ── */
-.tabs{display:flex;overflow-x:auto;scrollbar-width:none;gap:0}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:0}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;padding:9px 14px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(160,180,200,.5);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab{flex:0 0 auto;padding:8px 13px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(160,180,200,.5);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s;user-select:none}
 .tab.active{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
 
 /* ── CONTENT ── */
-#app-content{padding:14px 14px 80px}
+#app-content{padding:13px 13px 20px;overflow-x:hidden}
+
+/* ── SWIPE TRANSITION ── */
+.page-slide-left{animation:slideL .22s ease forwards}
+.page-slide-right{animation:slideR .22s ease forwards}
+@keyframes slideL{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
 
 /* ── CARDS ── */
-.card{background:var(--card);border:1px solid rgba(0,255,255,.11);border-radius:18px;padding:16px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid rgba(0,255,255,.11);border-radius:18px;padding:15px;margin-bottom:13px}
 .card.danger{border-color:rgba(255,77,77,.4);box-shadow:0 0 18px rgba(255,77,77,.08)}
-.card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);border-left:3px solid var(--cyan);padding-left:8px;margin-bottom:14px}
+.card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);border-left:3px solid var(--cyan);padding-left:8px;margin-bottom:13px}
 
 /* ── TYPOGRAPHY ── */
 .big{font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:-1px;line-height:1}
-.big.ok{color:var(--green)}.big.warn{color:var(--orange)}.big.bad{color:var(--red)}
+.big.ok{color:var(--green)}.big.warn{color:var(--orange)}.big.bad{color:var(--red);text-shadow:0 0 12px rgba(255,77,77,.35)}
 .sub{font-size:11px;color:var(--muted);margin-top:5px}
-.lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.5px}
+.lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.4px}
 
 /* ── INPUTS ── */
 input,select,textarea{width:100%;padding:10px 13px;background:rgba(0,0,0,.5);border:1px solid rgba(0,255,255,.2);border-radius:12px;color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border-color .2s;-webkit-appearance:none}
@@ -51,7 +60,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .ig{margin-bottom:10px}
 
 /* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;font-size:12px;font-weight:700;border-radius:30px;cursor:pointer;border:1px solid;font-family:inherit;transition:all .2s;white-space:nowrap;letter-spacing:.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;font-size:12px;font-weight:700;border-radius:30px;cursor:pointer;border:1px solid;font-family:inherit;transition:all .2s;white-space:nowrap;letter-spacing:.4px}
 .btn.c{background:rgba(0,255,255,.1);border-color:var(--cyan);color:var(--cyan)}
 .btn.c:active{background:rgba(0,255,255,.25)}
 .btn.v{background:rgba(155,77,255,.12);border-color:var(--violet);color:#bf9bff}
@@ -66,7 +75,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 
-/* ── STAT BOXES ── */
+/* ── STATS ── */
 .stat{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;text-align:center}
 .stat .v{font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:3px}
 .stat .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
@@ -77,13 +86,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .prog-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 
 /* ── TX LOG ── */
-.log-row{padding:10px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.log-row{padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;gap:8px}
 .log-row:last-child{border-bottom:none}
 .log-meta{font-size:10px;color:var(--muted);margin-top:2px}
 .amt{font-size:13px;font-weight:700;white-space:nowrap}
 .amt.i{color:var(--green)}.amt.e{color:var(--red)}
 .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(0,255,255,.1);color:var(--cyan);letter-spacing:.5px}
-.del-btn{background:none;border:1px solid rgba(255,80,80,.25);border-radius:7px;color:rgba(255,80,80,.5);font-size:13px;padding:3px 8px;cursor:pointer;flex-shrink:0;line-height:1;transition:color .2s,border-color .2s}
+.del-btn{background:none;border:1px solid rgba(255,80,80,.2);border-radius:7px;color:rgba(255,80,80,.45);font-size:13px;padding:3px 8px;cursor:pointer;flex-shrink:0;line-height:1;transition:color .2s,border-color .2s}
 .del-btn:active{color:var(--red);border-color:var(--red)}
 
 /* ── WEAR ── */
@@ -95,7 +104,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .svc-notes{font-size:10px;color:#5a7080;font-style:italic;margin-top:3px}
 
 /* ── PILLS ── */
-.pill{display:inline-block;padding:2px 7px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.4px;margin-right:4px}
+.pill{display:inline-block;padding:2px 7px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.4px;margin-right:4px;flex-shrink:0}
 .pill.crit{background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.3)}
 .pill.warn{background:rgba(255,160,64,.12);color:var(--orange);border:1px solid rgba(255,160,64,.25)}
 .pill.info{background:rgba(68,170,255,.1);color:#5af;border:1px solid rgba(68,170,255,.2)}
@@ -105,9 +114,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .b-row:last-child{border-bottom:none}
 .b-key{color:#7a90a0;font-size:11px}
 .b-val{font-weight:700}
-
-/* ── GOAL CARD ── */
-.goal-card{border-left:3px solid var(--gc,var(--cyan))}
 
 /* ── RECIPE ── */
 .recipe{background:rgba(0,0,0,.35);border:1px solid rgba(155,77,255,.15);border-radius:14px;padding:13px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
@@ -119,7 +125,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .recipe-body.open{display:block}
 .recipe-body ol{margin:5px 0 0;padding-left:18px}
 .recipe-body li{margin-bottom:5px}
-.recipe-body .rsec{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:8px 0 4px}
+.rsec{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:8px 0 4px}
 .recipe-body ul{margin:3px 0;padding-left:16px}
 
 /* ── TIPS ── */
@@ -138,21 +144,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .canvas-wrap{border-radius:12px;overflow:hidden;background:rgba(0,0,0,.3);margin-top:8px}
 .canvas-wrap canvas{display:block;width:100%}
 
-/* ── SECTION SEP ── */
-.sep{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5a7090;margin:14px 0 9px;display:flex;align-items:center;gap:8px}
-.sep::after{content:'';flex:1;height:1px;background:rgba(0,255,255,.08)}
-
-/* ── COND SELECT ── */
-.cond-sel{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:var(--text);font-size:10px;padding:3px 7px;cursor:pointer;outline:none;width:auto}
-
-/* ── PAYDAY TAG ── */
-.payday-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(155,77,255,.15);border:1px solid rgba(155,77,255,.3);color:#bf9bff;letter-spacing:.5px}
-
 /* ── DETAILS ── */
-details summary{font-size:11px;color:#5a8090;cursor:pointer;user-select:none;padding:6px 0}
-details summary::-webkit-details-marker{color:var(--violet)}
+details{margin-top:8px}
+details summary{font-size:11px;color:#5a8090;cursor:pointer;user-select:none;padding:6px 0;list-style:none}
+details summary::before{content:'›';margin-right:5px;display:inline-block;transition:transform .2s}
+details[open] summary::before{transform:rotate(90deg)}
 
-/* ── SEARCH ── */
+/* ── SEARCH ROW ── */
 .search-row{display:flex;gap:8px;margin-bottom:12px}
 .search-row input{flex:1}
 .search-row select{flex:0 0 auto;width:auto;min-width:110px}
@@ -161,12 +159,48 @@ details summary::-webkit-details-marker{color:var(--violet)}
 .goal-mini{margin-bottom:12px}
 .goal-mini-title{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;align-items:center}
 
-/* ── SAFE AREA BOTTOM ── */
-.safe-bottom{height:env(safe-area-inset-bottom)}
+/* ── PAYDAY TAG ── */
+.payday-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(155,77,255,.15);border:1px solid rgba(155,77,255,.3);color:#bf9bff;letter-spacing:.5px}
 
-/* ── COLORS ── */
+/* ── COLOR DOTS ── */
 .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
 .color-dot.selected{border-color:white;box-shadow:0 0 8px rgba(255,255,255,.4)}
+
+/* ── CAR SCHEMATIC ── */
+#car-schema{width:100%;max-width:340px;margin:10px auto 0;display:block}
+.schema-dot{cursor:pointer;transition:transform .15s}
+.schema-dot:active{transform:scale(1.25)}
+.schema-label{font-size:9px;fill:#a0b8cc;font-family:'Segoe UI',sans-serif;pointer-events:none}
+.schema-status{font-size:8px;font-weight:700;pointer-events:none}
+
+/* ── BAR CHART ── */
+.bar-chart{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:10px}
+.bar-row .bar-label{width:40px;text-align:right;color:var(--muted);flex-shrink:0;font-size:9px}
+.bar-row .bar-track{flex:1;height:14px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden;position:relative}
+.bar-row .bar-inc{height:100%;border-radius:7px;background:linear-gradient(90deg,rgba(0,255,136,.5),rgba(0,255,136,.8));transition:width .5s}
+.bar-row .bar-exp{height:100%;border-radius:7px;background:linear-gradient(90deg,rgba(255,77,77,.5),rgba(255,77,77,.8));transition:width .5s;margin-top:2px}
+.bar-row .bar-val{width:68px;font-size:9px;flex-shrink:0;color:var(--muted)}
+.bar-legend{display:flex;gap:14px;margin-bottom:8px;font-size:10px}
+.bar-legend span{display:flex;align-items:center;gap:5px}
+.bar-legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ── HIST POPUP ── */
+.hist-list{max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,255,255,.2) transparent}
+.hist-list::-webkit-scrollbar{width:3px}
+.hist-list::-webkit-scrollbar-thumb{background:rgba(0,255,255,.25);border-radius:3px}
+
+/* ── FREE CASH ── */
+.free-cash{margin-top:8px;font-size:11px;color:var(--green);background:rgba(0,255,136,.07);padding:7px 10px;border-radius:8px;border:1px solid rgba(0,255,136,.15)}
+
+/* ── SEP ── */
+.sep{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5a7090;margin:13px 0 8px;display:flex;align-items:center;gap:8px}
+.sep::after{content:'';flex:1;height:1px;background:rgba(0,255,255,.08)}
+
+/* ── LEGEND ── */
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px}
+.chart-legend span{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#a0b0c0}
+.chart-legend .ld{display:inline-block;width:9px;height:9px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -194,11 +228,11 @@ details summary::-webkit-details-marker{color:var(--violet)}
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    ДАННЫЕ
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const DB_NAME = 'SentinelCarbonV3';
-const DB_VER  = 3;
+const DB_VER  = 4; // bump to add any missing stores
 const S = { TX:'transactions', GARAGE:'garage_logs', ODO:'odo_history', CFG:'settings', SVC:'service_items', GOALS:'goals' };
 
 const DEFAULTS = {
@@ -209,98 +243,161 @@ const DEFAULTS = {
 };
 
 const SVC_ITEMS = [
-  {key:'oil',        label:'Масло + масляный фильтр',     km:8000,  crit:'critical',condOnly:false,notes:'5W-30 · 3.2 л · не реже раза в год'},
-  {key:'airfilter',  label:'Воздушный фильтр',            km:15000, crit:'warning', condOnly:false,notes:'Осматривать каждые 8к км'},
-  {key:'cabinfilter',label:'Фильтр салона',               km:15000, crit:'info',    condOnly:false,notes:'Раз в год минимум'},
-  {key:'spark',      label:'Свечи зажигания',             km:30000, crit:'critical',condOnly:false,notes:'NGK BPR5E · зазор 0.8мм · 4 шт.'},
-  {key:'brakefluid', label:'Тормозная жидкость',          km:30000, crit:'critical',condOnly:false,notes:'DOT-4 · каждые 2 года'},
-  {key:'brakef',     label:'Колодки тормозные передние',  km:30000, crit:'critical',condOnly:false,notes:'Остаток <3мм → замена срочно'},
-  {key:'braker',     label:'Колодки тормозные задние',    km:40000, crit:'warning', condOnly:false,notes:'Барабанные тормоза'},
-  {key:'timing',     label:'Ремень ГРМ + ролики + помпа', km:60000, crit:'critical',condOnly:false,notes:'ТОЛЬКО комплектом! Обрыв = капремонт'},
-  {key:'coolant',    label:'Охлаждающая жидкость',        km:60000, crit:'warning', condOnly:false,notes:'G11/G12 · не смешивать цвета! · 5.6 л'},
-  {key:'gearboxoil', label:'Масло в КПП',                 km:60000, crit:'info',    condOnly:false,notes:'75W-80 GL-4 · ~2 л'},
-  {key:'bearingfl',  label:'Подшипник ступицы пер. лев.', km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч, усиливается в поворотах'},
-  {key:'bearingfr',  label:'Подшипник ступицы пер. пр.',  km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч, усиливается в поворотах'},
-  {key:'stablink',   label:'Стойки стабилизатора',        km:0,     crit:'info',    condOnly:true, notes:'Стук на кочках и в поворотах ~500₽/пара'},
-  {key:'cvjoint',    label:'ШРУС наружный',               km:0,     crit:'warning', condOnly:true, notes:'Хруст при повороте в крайнее положение'},
+  {key:'oil',        label:'Масло + масляный фильтр',       km:8000,  crit:'critical',condOnly:false,notes:'5W-30 · 3.2 л · не реже раза в год'},
+  {key:'airfilter',  label:'Воздушный фильтр двигателя',    km:15000, crit:'warning', condOnly:false,notes:'Осматривать каждые 8к км'},
+  {key:'fuelfil',    label:'Топливный фильтр',              km:30000, crit:'warning', condOnly:false,notes:'В баке — менять при замене бензонасоса'},
+  {key:'cabinfilter',label:'Фильтр салона',                 km:15000, crit:'info',    condOnly:false,notes:'Раз в год минимум'},
+  {key:'spark',      label:'Свечи зажигания',               km:30000, crit:'critical',condOnly:false,notes:'NGK BPR5E · зазор 0.8мм · 4 шт.'},
+  {key:'brakefluid', label:'Тормозная жидкость',            km:30000, crit:'critical',condOnly:false,notes:'DOT-4 · каждые 2 года'},
+  {key:'brakef',     label:'Колодки тормозные передние',    km:30000, crit:'critical',condOnly:false,notes:'Остаток <3мм → замена срочно'},
+  {key:'discf',      label:'Диски тормозные передние',      km:60000, crit:'warning', condOnly:false,notes:'Мин. толщина 20мм · трещины и биение'},
+  {key:'brakershoes',label:'Колодки задние (барабанные)',   km:40000, crit:'warning', condOnly:false,notes:'Остаток <2мм → замена'},
+  {key:'timing',     label:'Ремень ГРМ + ролики + помпа',   km:60000, crit:'critical',condOnly:false,notes:'ТОЛЬКО комплектом! Обрыв = капремонт'},
+  {key:'coolant',    label:'Охлаждающая жидкость',          km:60000, crit:'warning', condOnly:false,notes:'G11 (зелёный) · 5.6 л · не смешивать'},
+  {key:'gearboxoil', label:'Масло в КПП',                   km:60000, crit:'info',    condOnly:false,notes:'75W-80 GL-4 · ~2 л'},
+  {key:'bearingfl',  label:'Подшипник ступицы пер. лев.',   km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч в поворотах влево'},
+  {key:'bearingfr',  label:'Подшипник ступицы пер. пр.',    km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч в поворотах вправо'},
+  {key:'bearingrl',  label:'Подшипник ступицы задн. лев.',  km:0,     crit:'info',    condOnly:true, notes:'Гул на скорости, реже чем передние'},
+  {key:'bearingrr',  label:'Подшипник ступицы задн. пр.',   km:0,     crit:'info',    condOnly:true, notes:'Гул на скорости, реже чем передние'},
+  {key:'reardrumfl', label:'Барабан тормозной задн. лев.',  km:0,     crit:'info',    condOnly:true, notes:'Осмотр на биение и выработку'},
+  {key:'reardrumfr', label:'Барабан тормозной задн. пр.',   km:0,     crit:'info',    condOnly:true, notes:'Осмотр на биение и выработку'},
+  {key:'stablink',   label:'Стойки стабилизатора',          km:0,     crit:'info',    condOnly:true, notes:'Стук на кочках/поворотах · ~500₽/пара'},
+  {key:'cvjointl',   label:'ШРУС наружный левый',           km:0,     crit:'warning', condOnly:true, notes:'Хруст при вывернутом руле влево'},
+  {key:'cvjointr',   label:'ШРУС наружный правый',          km:0,     crit:'warning', condOnly:true, notes:'Хруст при вывернутом руле вправо'},
+  {key:'handbrake',  label:'Трос ручного тормоза',          km:0,     crit:'info',    condOnly:true, notes:'Плохо держит на уклоне → регулировка или замена'},
+  {key:'throttle',   label:'Дроссельная заслонка',          km:0,     crit:'info',    condOnly:true, notes:'Плавающие обороты → чистка очистителем карбюратора'},
+  {key:'lambda',     label:'Лямбда-зонд',                   km:0,     crit:'info',    condOnly:true, notes:'Рост расхода + плавающие обороты к 100-120к км'},
+  {key:'battery',    label:'Аккумулятор (АКБ)',              km:0,     crit:'warning', condOnly:true, notes:'Срок 3-5 лет · проверь CCA тестером при ТО'},
+  {key:'exhaust',    label:'Выхлопная система',             km:0,     crit:'info',    condOnly:true, notes:'Коррозия, прогары, посторонний шум'},
 ];
 
-const GOAL_COLORS = ['#ff4d4d','#ffa040','#0f8','#0ff','#9b4dff','#f06dff','#38c8f0','#ffeb40'];
+// Позиции компонентов на схеме машины [x%, y%] (viewBox 220x420)
+const SCHEMA_POS = {
+  oil:       [110, 95,  'Масло'],
+  timing:    [110, 65,  'ГРМ'],
+  airfilter: [80,  75,  'Возд.ф'],
+  cabinfilter:[150, 200,'Сал.ф'],
+  fuelfil:   [145, 360, 'Топл.ф'],
+  spark:     [80,  95,  'Свечи'],
+  coolant:   [145, 80,  'Охл'],
+  gearboxoil:[110, 175, 'КПП'],
+  brakefluid:[155, 155, 'Торм.ж'],
+  brakef:    [110, 130, 'Кол.П'],
+  discf:     [110, 130, null],
+  brakershoes:[110,340, 'Кол.З'],
+  timing:    [80,  65,  'ГРМ'],
+  bearingfl: [45,  125, 'Ступ.ПЛ'],
+  bearingfr: [175, 125, 'Ступ.ПП'],
+  bearingrl: [45,  330, 'Ступ.ЗЛ'],
+  bearingrr: [175, 330, 'Ступ.ЗП'],
+  reardrumfl:[45,  345, 'Бараб.Л'],
+  reardrumfr:[175, 345, 'Бараб.П'],
+  stablink:  [110, 215, 'Стаб'],
+  cvjointl:  [55,  160, 'ШРУС Л'],
+  cvjointr:  [165, 160, 'ШРУС П'],
+  handbrake: [110, 310, 'Ручник'],
+  throttle:  [145, 95,  'Дрос'],
+  lambda:    [155, 275, 'Λ-зонд'],
+  battery:   [75,  75,  'АКБ'],
+  exhaust:   [145, 300, 'Выхл'],
+};
 
+const GOAL_COLORS = ['#ff4d4d','#ffa040','#0f8','#0ff','#9b4dff','#f06dff','#38c8f0','#ffeb40'];
 const CAT_EXP = ['Еда','Авто','Быт','Развлечения','Здоровье','3D-расходники','Другое'];
 const CAT_INC = ['ЗП','Аванс','Премия','3D-печать','Другое'];
 
 const CAR_TIPS = [
-  '🔧 ГРМ TU1JP: если не знаешь когда менялся — меняй сразу. Обрыв ремня при работающем двигателе = капремонт на 30–60к₽.',
-  '🌡️ Перегрев TU1JP — смерть. Стрелка к красному → сразу глуши. Жди полного остывания.',
-  '🔊 Гул на скорости 60+, меняется при смене полосы → передний подшипник умирает. Диагностика срочно.',
-  '🛑 Тормозные колодки: менее 3мм → замена. Иначе диск тоже под замену.',
+  '🔧 ГРМ TU1JP: не знаешь когда менялся — меняй сразу. Обрыв при работающем движке = капремонт 30–60к₽.',
+  '🌡️ Перегрев TU1JP — смерть мотора. Стрелка к красному → сразу глуши, жди полного остывания.',
+  '🔊 Гул 60+ км/ч, меняется при смене полосы → передний подшипник умирает. Диагностика срочно.',
+  '🛑 Колодки: остаток <3мм → замена. Иначе диск тоже пойдёт под замену.',
   '💨 Зимой давление шин падает 0.1 атм на каждые -10°C. Проверяй еженедельно.',
-  '🔩 ШРУС: хруст при вывернутом руле — рваный пыльник. Меняй пыльник сразу.',
-  '🔗 Стойки стаба — расходник ~500₽/пара. Стук на кочках = они.',
-  '⚙️ Масло в КПП часто забывают. Если не менялось после 60к км — пора.',
+  '🔩 ШРУС: хруст при вывернутом руле = рваный пыльник. Меняй пыльник сразу.',
+  '🔗 Стойки стаба — расходник ~500₽/пара. Стук на кочках/поворотах = они.',
+  '⚙️ Масло КПП часто забывают. Если не менялось после 60к км — пора.',
   '🏎️ Диагностика перед зимой и весной — дешевле ремонта на трассе ночью.',
-  '🔋 АКБ служит 3–5 лет. Не помнишь когда меняли — проверь CCA.',
-  '💧 Уровень охлаждайки проверяй на холодном двигателе. Постоянно падает — утечка.',
-  '🛞 Вибрация руля 80–100 км/ч = дисбаланс колёс. Балансировка ~500₽.',
+  '🔋 АКБ служит 3–5 лет. Не помнишь когда меняли — проверь CCA тестером.',
+  '💧 Охлаждайку проверяй на холодном моторе. Постоянно падает — утечка.',
+  '🛞 Вибрация руля 80–100 км/ч = дисбаланс. Балансировка ~500₽.',
   '🧊 Тормозная жидкость гигроскопична — меняй каждые 2 года без исключений.',
-  '🔌 TU1JP: катушка зажигания — частая проблема. Троит на холодную/в дождь = она.',
-  '💨 TU1JP: дроссель любит загрязняться. Плавающие обороты — промой очистителем.',
-  '⛽ TU1JP: только 95-й бензин. 92-й → детонация и прогорание клапанов.',
-  '🌡️ TU1JP: термостат на 89°C. Долго греется / перегрев в пробке — менять.',
-  '💡 Если печка дует холодным на горячем двигателе — проверь кран отопителя (~800₽).',
-  '⚡ Peugeot 206: блокировка дверей живёт своей жизнью. Чаще виноват концевик в двери.',
+  '🔌 Катушка зажигания TU1JP — частая болячка. Троит на холодную/дождь = она.',
+  '💨 Дроссель TU1JP любит загрязняться. Плавающие обороты → промой очистителем.',
+  '⛽ TU1JP: только 95-й бензин. 92-й → детонация и прогар клапанов.',
+  '🌡️ TU1JP: термостат 89°C. Долго греется или перегрев в пробке → менять.',
+  '💡 Печка дует холодным на горячем движке → кран отопителя (~800₽).',
+  '⚡ Peugeot 206: блокировка дверей живёт своей жизнью. Чаще виноват концевик.',
+  '🔧 TU1JP: свечные колодцы заливает маслом из прокладки клапанной крышки.',
+  '🔊 Стук задней подвески на кочках — сайлентблоки задней балки.',
+  '💨 Лямбда-зонд умирает к 100–120к. Расход вырос + плавают обороты — проверь.',
+  '🛞 Развал-схождение 206: задние колёса регулируются эксцентриками. Нет эксцентриков → замена балки.',
   '🔦 Задние фонари: раз в год чисти и смазывай контакты.',
-  '🌡️ TU1JP: датчик температуры часто врёт. Вентилятор включается поздно — замени.',
+  '🌡️ Датчик температуры TU1JP часто врёт. Вентилятор включается поздно → замени.',
 ];
 
 const PRINT_TIPS = [
-  '🧵 PETG — лучший для прочных деталей. Хорошая адгезия, минимальная усадка, до ~70°C.',
+  '🧵 PETG — лучший для прочных деталей. Адгезия, минимальная усадка, до ~70°C.',
   '🔥 ABS без закрытого корпуса — не трать время. Усадка 2–3%, стол 100°C+.',
   '🌿 PLA — самый простой, но не для деталей под нагрузку и жару.',
-  '⚡ PC: самый прочный. Требует 250–280°C сопла и сухого пластика.',
-  '🌊 Влажный пластик: пузыри, нити, плохая слоистость. Хранить в герметике с силикагелем.',
+  '⚡ PC: самый прочный. Требует 250–280°C сопла и строго сухого пластика.',
+  '🌊 Влажный пластик: пузыри, нити. Хранить в герметике с силикагелем.',
   '📏 Первый слой — 90% успеха. Зазор: лист бумаги должен чуть тереться.',
-  '💸 Брак снижает прибыль: 300г PETG = ~450₽. Тест первых 20 мин = правильное решение.',
-  '📦 Carbon/Glass: убивает латунное сопло за 100–200г. Нужно закалённое (hardened) сопло.',
+  '💸 Брак снижает прибыль: 300г PETG = ~450₽. Тест первых 20 мин спасёт принт.',
+  '📦 Carbon/Glass убивает латунное сопло за 100–200г. Нужно hardened сопло.',
+  '🔁 Ретракт PETG: 4–6мм (Bowden) или 1–2мм (директ). Больше ≠ лучше.',
+  '🌡️ TPU: скорость 20–30 мм/с, иначе нити. Директ-экструдер обязателен.',
 ];
 
 const RECIPES = [
   {name:'Гречка с тушёнкой',cat:'Обед',time:'15 мин',cal:'~450 ккал',
-   ingr:['Гречка сухая — 150г','Вода — 300мл','Тушёнка говяжья — 325г (1 банка)','Соль — 0.5 ч.л.'],
-   steps:['Гречку промыть до прозрачной воды','Залить кипятком 1:2, посолить, накрыть крышкой','Минимальный огонь 12–15 мин — не открывать!','Тушёнку разогреть или выложить прямо из банки','Смешать с гречкой, подать с чёрным перцем']},
+   ingr:['Гречка — 150г','Вода — 300мл','Тушёнка говяжья — 325г','Соль — 0.5 ч.л.'],
+   steps:['Промыть гречку до прозрачной воды','Залить кипятком 1:2, посолить','Минимум огня, крышка — 12–15 мин, не открывать!','Тушёнку разогреть или добавить из банки','Смешать, подать с чёрным перцем']},
   {name:'Яичница с колбасой',cat:'Завтрак',time:'7 мин',cal:'~380 ккал',
-   ingr:['Яйца — 3 шт','Колбаса/сосиски — 80–100г','Масло — 1 ст.л.','Соль, перец'],
-   steps:['Сковороду разогреть с маслом','Колбасу нарезать кружками, обжарить 2–3 мин','Разбить яйца, посолить','Накрыть крышкой: 3–4 мин — мягкий желток, 5–6 — твёрдый']},
+   ingr:['Яйца — 3 шт','Колбаса — 80–100г','Масло — 1 ст.л.','Соль, перец'],
+   steps:['Разогреть сковороду с маслом','Нарезать колбасу, обжарить 2–3 мин','Разбить яйца, посолить','Накрыть крышкой 3–4 мин (мягкий желток) или 5–6 мин (твёрдый)']},
   {name:'Паста с маслом и сыром',cat:'Обед',time:'12 мин',cal:'~520 ккал',
-   ingr:['Паста — 120г','Масло сливочное — 20г','Сыр твёрдый — 50г','Соль — 1 ч.л. в воду','Чёрный перец'],
-   steps:['Вскипятить воду, хорошо посолить','Варить пасту по инструкции на упаковке','За 30 сек зачерпнуть 3 ст.л. воды из кастрюли — нужно!','Слить пасту, вернуть в кастрюлю','Добавить масло + сохранённую воду + тёртый сыр','Быстро перемешать — подавать горячей']},
+   ingr:['Паста — 120г','Масло сливочное — 20г','Сыр твёрдый — 50г','Соль в воду','Чёрный перец'],
+   steps:['Кипяток хорошо посолить','Варить пасту по инструкции','За 30 сек зачерпнуть 3 ст.л. воды — нужно!','Слить пасту, вернуть в кастрюлю','Масло + вода + тёртый сыр — быстро перемешать']},
   {name:'Рис жареный с яйцом',cat:'Обед',time:'10 мин',cal:'~420 ккал',
-   ingr:['Варёный рис — 200г (холодный)','Яйца — 2 шт','Соевый соус — 1 ст.л.','Масло — 1 ст.л.'],
-   steps:['Сковороду хорошо раскалить с маслом','Рис выложить, жарить 3–4 мин не трогая','Яйца разбить рядом с рисом, перемешать через 1–2 мин','Смешать всё, влить соевый соус, ещё 1 мин']},
+   ingr:['Варёный рис (холодный) — 200г','Яйца — 2 шт','Соевый соус — 1 ст.л.','Масло — 1 ст.л.'],
+   steps:['Раскалить сковороду с маслом','Рис выложить, жарить 3–4 мин не трогая','Яйца разбить рядом, перемешать через 1–2 мин','Смешать всё, добавить соевый соус — ещё 1 мин']},
   {name:'Омлет классический',cat:'Завтрак',time:'8 мин',cal:'~360 ккал',
-   ingr:['Яйца — 3 шт','Молоко — 3 ст.л.','Масло сливочное — 15г','Соль — 2 щепотки'],
-   steps:['Взбить яйца с молоком вилкой 30 сек, посолить','Разогреть сковороду, растопить масло (не жарить)','Вылить смесь, ждать 20 сек — края схватятся','Убавить огонь до минимума, накрыть крышкой','4–5 мин — готово. Сложить пополам, подавать сразу']},
+   ingr:['Яйца — 3 шт','Молоко — 3 ст.л.','Масло сливочное — 15г','Соль'],
+   steps:['Взбить яйца с молоком вилкой 30 сек, посолить','Разогреть сковороду, растопить масло','Вылить смесь, 20 сек — края схватятся','Минимум огня, крышка, 4–5 мин — готово']},
   {name:'Картошка в мундире',cat:'Ужин',time:'25 мин',cal:'~280 ккал',
-   ingr:['Картофель — 4–5 шт','Соль — 1 ч.л. в воду','Сметана/масло/укроп'],
-   steps:['Картошку хорошо вымыть щёткой','Залить холодной водой, посолить','Варить 20–25 мин на среднем огне','Проверить зубочисткой: входит легко = готова','Подать со сметаной и укропом']},
-  {name:'Паста Карбонара (быстрая)',cat:'Ужин',time:'15 мин',cal:'~600 ккал',
-   ingr:['Спагетти — 200г','Ветчина/бекон — 100г','Яйца — 2 шт','Сыр твёрдый — 2 ст.л.','Перец'],
-   steps:['Варить спагетти в подсоленной воде строго по инструкции','Пока варятся: обжарить бекон до золотистого, выключить огонь','Взбить 2 яйца + тёртый сыр + перец','Слить пасту, оставить 3 ст.л. воды','Добавить пасту к бекону, вылить яичную смесь','Быстро мешать 1–2 мин добавляя воду — яйца не должны свернуться!']},
-  {name:'Куриный суп с лапшой',cat:'Обед',time:'25 мин',cal:'~280 ккал',
-   ingr:['Куриное филе — 200г','Вода — 1 л','Морковь — 1 шт','Картофель — 1 шт','Вермишель — 50г','Соль, зелень'],
-   steps:['Куриное филе варить в воде 15 мин, вынуть и нарезать','Добавить нарезанные морковь и картофель, варить 10 мин','Засыпать вермишель, 3–4 мин','Вернуть курицу, посолить, добавить зелень']},
+   ingr:['Картофель — 4–5 шт','Соль — 1 ч.л.','Сметана/масло/укроп'],
+   steps:['Вымыть щёткой, залить холодной водой, посолить','Варить 20–25 мин на среднем огне','Проверить зубочисткой: входит легко = готова','Подать со сметаной и укропом']},
+  {name:'Паста Карбонара',cat:'Ужин',time:'15 мин',cal:'~600 ккал',
+   ingr:['Спагетти — 200г','Бекон/ветчина — 100г','Яйца — 2 шт','Сыр твёрдый — 2 ст.л.','Перец'],
+   steps:['Варить спагетти строго по инструкции в солёной воде','Обжарить бекон до золотистого, выключить огонь','Взбить яйца + тёртый сыр + перец','Слить пасту, оставить 3 ст.л. воды','Добавить пасту к бекону, вылить яичную смесь','Быстро мешать 1–2 мин — яйца не должны свернуться!']},
   {name:'Пицца на сковородке',cat:'Ужин',time:'15 мин',cal:'~520 ккал',
-   ingr:['Мука — 4 ст.л.','Молоко — 4 ст.л.','Яйца — 2 шт','Томатная паста — 2 ст.л.','Колбаса — 70г','Сыр — 60г','Соль'],
-   steps:['Смешать муку + молоко + яйца + соль вилкой до однородности','Разогреть сковороду с маслом, вылить тесто','Накрыть крышкой, 5–7 мин на среднем огне','Намазать томатной пастой, выложить колбасу и сыр','Накрыть крышкой ещё 3–4 мин до расплавления сыра']},
+   ingr:['Мука — 4 ст.л.','Молоко — 4 ст.л.','Яйца — 2 шт','Томат. паста, колбаса, сыр'],
+   steps:['Смешать муку + молоко + яйца + соль вилкой','Разогреть сковороду с маслом, вылить тесто','Крышка, 5–7 мин на среднем огне','Намазать пастой, выложить колбасу и сыр','Крышка ещё 3–4 мин до расплавления сыра']},
+  {name:'Куриный суп с лапшой',cat:'Обед',time:'25 мин',cal:'~280 ккал',
+   ingr:['Куриное филе — 200г','Вода — 1 л','Морковь, картофель','Вермишель — 50г','Соль, зелень'],
+   steps:['Варить филе 15 мин, вынуть и нарезать','Добавить овощи, варить 10 мин','Засыпать вермишель, 3–4 мин','Вернуть курицу, посолить, зелень']},
+  {name:'Овсянка с бананом',cat:'Завтрак',time:'7 мин',cal:'~380 ккал',
+   ingr:['Хлопья — 40г','Молоко/вода — 200мл','Банан — 1 шт','Мёд — 1 ч.л.','Соль — щепотка'],
+   steps:['Вскипятить молоко с солью','Засыпать хлопья, варить 3–5 мин помешивая','Добавить нарезанный банан','Снять с огня, добавить мёд, накрыть на 1 мин']},
   {name:'Сырники из творога',cat:'Завтрак',time:'15 мин',cal:'~410 ккал',
-   ingr:['Творог — 200г','Яйцо — 1 шт','Мука — 2 ст.л. + немного для обвалки','Сахар — 1 ст.л.','Соль — щепотка'],
-   steps:['Разомнуть творог вилкой, добавить яйцо, муку, сахар, соль','Перемешать до однородности','Сформировать лепёшки, обвалять в муке','Жарить на масле 2–3 мин с каждой стороны до корочки','Подать со сметаной или вареньем']},
+   ingr:['Творог — 200г','Яйцо — 1 шт','Мука — 2 ст.л.','Сахар — 1 ст.л.','Соль'],
+   seps:['Разомнуть творог, добавить яйцо, муку, сахар, соль','Сформировать лепёшки, обвалять в муке','Жарить на масле 2–3 мин с каждой стороны','Подать со сметаной или вареньем']},
+  {name:'Яичница "Шакшука"',cat:'Завтрак',time:'12 мин',cal:'~360 ккал',
+   ingr:['Яйца — 3 шт','Томаты — 400г (банка)','Лук, чеснок','Паприка, куркума','Масло, хлеб'],
+   steps:['Обжарить лук 3 мин, добавить чеснок + паприку 30 сек','Добавить томаты, тушить 5 мин','Сделать 3 углубления, разбить яйца','Крышка 4–5 мин — белок схватится, желток мягкий']},
+  {name:'Гречка "Купеческая"',cat:'Обед',time:'20 мин',cal:'~520 ккал',
+   ingr:['Куриное бедро/свинина — 150г','Гречка — 150г','Лук, морковь','Вода — 300мл','Лавровый лист'],
+   steps:['Обжарить мясо кубиком 3 мин на сильном огне','Добавить лук и тёртую морковь, жарить 5 мин','Засыпать гречку, мешать 1 мин — поджарится','Кипяток + соль + лавровый лист, крышка','Минимум огня, 15 мин. Не открывать!']},
+  {name:'Курица в соевом соусе',cat:'Ужин',time:'20 мин',cal:'~480 ккал',
+   ingr:['Куриное филе — 300г','Соевый соус — 3 ст.л.','Мёд — 1 ст.л.','Чеснок, имбирь','Масло'],
+   steps:['Нарезать филе 2×2 см, посолить, поперчить','Раскалить сковороду, кинуть курицу — не трогать 2–3 мин','Перевернуть, жарить 2 мин','Вылить соус+мёд+чеснок, тушить 5–7 мин до загустения']},
+  {name:'Картошка по-деревенски',cat:'Ужин',time:'25 мин',cal:'~350 ккал',
+   ingr:['Картофель — 4–5 шт','Масло — 2 ст.л.','Паприка, чеснок, соль'],
+   steps:['Нарезать дольками, замочить 5 мин, хорошо обсушить','Смешать с маслом, паприкой, чесноком, солью','Духовка 200°C или аэрогриль 190°C','Один слой на противень, 20–25 мин, перевернуть раз']},
 ];
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    INDEXEDDB
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 class DB {
   constructor(){ this.ready = this._open(); }
   _open(){
@@ -329,8 +426,18 @@ class DB {
     for(const [k,v] of Object.entries(DEFAULTS)){
       if(await this.get(S.CFG,k)===null) await this.set(S.CFG,{key:k,value:v});
     }
-    if(!(await this.all(S.SVC)).length){
+    // Sync service items — add any new keys not yet in DB
+    const existing = await this.all(S.SVC);
+    const existKeys = new Set(existing.map(it=>it.key));
+    if(!existing.length){
       for(const it of SVC_ITEMS) await this.add(S.SVC,{...it,lastServiceOdo:0,conditionStatus:'ok',enabled:true});
+    } else {
+      // Add new items that don't exist yet
+      for(const it of SVC_ITEMS){
+        if(!existKeys.has(it.key)){
+          await this.add(S.SVC,{...it,lastServiceOdo:0,conditionStatus:'ok',enabled:true});
+        }
+      }
     }
     if(!(await this.all(S.GOALS)).length){
       await this.add(S.GOALS,{name:'Долг Сабине',targetAmount:100000,deadline:'2026-06-15',priority:1,monthlyAllocation:15000,color:GOAL_COLORS[0],active:true});
@@ -346,19 +453,20 @@ class DB {
   async setCfg(k,v){await this.set(S.CFG,{key:k,value:v});}
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    УТИЛИТЫ
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const fmt   = n => Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtI  = n => Number(n||0).toLocaleString('ru-RU');
 const dStr  = d => new Date(d).toLocaleDateString('ru-RU');
 const today = () => new Date().toISOString().split('T')[0];
 const wCol  = p => p<60?'#0ff':p<85?'#ffa040':'#ff4d4d';
 const cCol  = c => ({ok:'#0f8',watch:'#ffa040',replace:'#ff8040',critical:'#ff4d4d'}[c]||'#0f8');
+// Handle both condOnly and conditionOnly for backwards compatibility
+const isCondOnly = it => !!(it.condOnly || it.conditionOnly);
 
 function adjustedDate(y,m,d){
-  const dt=new Date(y,m,d);
-  const dow=dt.getDay();
+  const dt=new Date(y,m,d); const dow=dt.getDay();
   if(dow===0) dt.setDate(dt.getDate()-2);
   if(dow===6) dt.setDate(dt.getDate()-1);
   return dt;
@@ -369,8 +477,8 @@ function calcNextPayday(txs){
   const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-50);
   const recent=(txs||[]).filter(t=>t.type==='income'&&['ЗП','Аванс','Премия'].includes(t.category)&&new Date(t.date)>=cutoff);
   const mStart=new Date(y,m,1);
-  const thisZP   =recent.some(t=>t.category==='ЗП'   &&new Date(t.date)>=mStart);
-  const thisAvans=recent.some(t=>t.category==='Аванс' &&new Date(t.date)>=mStart);
+  const thisZP    = recent.some(t=>t.category==='ЗП'    &&new Date(t.date)>=mStart);
+  const thisAvans = recent.some(t=>t.category==='Аванс' &&new Date(t.date)>=mStart);
   if(thisZP&&!thisAvans){
     const av=new Date(y,m,20);
     if(av>now) return{date:av,days:Math.max(1,Math.ceil((av-now)/86400000)),label:'Аванс'};
@@ -385,19 +493,16 @@ function calcNextPayday(txs){
     const pr=new Date(y,m+1,22);
     return{date:pr,days:Math.max(1,Math.ceil((pr-now)/86400000)),label:'Премия 🎉'};
   }
-  const d=now.getDate();
   const zp5=adjustedDate(y,m,5), av20=new Date(y,m,20), zpN=adjustedDate(y,m+1,5);
   if(now<zp5) return{date:zp5, days:Math.max(1,Math.ceil((zp5-now)/86400000)), label:'ЗП'};
   if(now<av20) return{date:av20,days:Math.max(1,Math.ceil((av20-now)/86400000)),label:'Аванс'};
   return          {date:zpN,  days:Math.max(1,Math.ceil((zpN-now)/86400000)),  label:'ЗП'};
 }
 
-function confirmDel(btn, cb){
+function confirmDel(btn,cb){
   if(btn._c){cb();return;}
-  btn._c=true;
-  const orig=btn.textContent;
-  btn.textContent='✓?';
-  btn.style.cssText+=';color:#ff4d4d;border-color:#ff4d4d';
+  btn._c=true; const orig=btn.textContent;
+  btn.textContent='✓?'; btn.style.cssText+=';color:#ff4d4d;border-color:#ff4d4d';
   btn.onclick=()=>{btn._ok=true;cb();};
   setTimeout(()=>{if(!btn._ok){btn._c=false;btn.textContent=orig;btn.style.color='';btn.style.borderColor='';btn.onclick=()=>confirmDel(btn,cb);}},3000);
 }
@@ -410,55 +515,101 @@ function calc3DPrice(wg,th,mat,hr,sf,mp){
     const r=mat==='composite'?25:15;
     price=wg*r; formula=`Вес × ${r} (мелкий ≤50г)`;
     breakdown=[`${wg}г × ${r} ₽/г = ${fmt(price)} ₽`];
+  } else if(mat==='flex'){
+    const l=th*hr,mc=wg*10; price=l+mc;
+    formula=`(Ч × ${hr}) + (Вес × 10)`;
+    breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(l)} ₽`,`TPU/Flex: ${wg}г × 10 = ${fmt(mc)} ₽`];
+  } else if(mat==='composite'){
+    const l=th*hr,mc=wg*20; price=l+mc;
+    formula=`(Ч × ${hr}) + (Вес × 20)`;
+    breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(l)} ₽`,`Carbon/Glass: ${wg}г × 20 = ${fmt(mc)} ₽`,`⚠ Закалённое сопло (учтено)`];
   } else {
-    if(mat==='flex'){
-      const labor=th*hr,mat_c=wg*10;
-      price=labor+mat_c; formula=`(Ч × ${hr}) + (Вес × 10)`;
-      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`TPU/Flex: ${wg}г × 10 = ${fmt(mat_c)} ₽`];
-    } else if(mat==='composite'){
-      const labor=th*hr,mat_c=wg*20;
-      price=labor+mat_c; formula=`(Ч × ${hr}) + (Вес × 20)`;
-      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`Carbon/Glass: ${wg}г × 20 = ${fmt(mat_c)} ₽`,`⚠ Закалённое сопло (учтено)`];
-    } else {
-      const labor=th*hr,mat_c=wg*5;
-      price=labor+mat_c+sf; formula=`(Ч × ${hr}) + (Вес × 5) + ${sf}`;
-      breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(labor)} ₽`,`Пластик+брак: ${wg}г × 5 = ${fmt(mat_c)} ₽`,`Подготовка: ${fmt(sf)} ₽`];
-    }
+    const l=th*hr,mc=wg*5; price=l+mc+sf;
+    formula=`(Ч × ${hr}) + (Вес × 5) + ${sf}`;
+    breakdown=[`Работа: ${th}ч × ${hr} = ${fmt(l)} ₽`,`Пластик+брак: ${wg}г × 5 = ${fmt(mc)} ₽`,`Подготовка: ${fmt(sf)} ₽`];
   }
   if(price<mp){breakdown.push(`Применена минималка: ${fmtI(mp)} ₽`);price=mp;}
   return{price,formula,breakdown};
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════
    APP
-═══════════════════════════════════════════ */
+═══════════════════════════════════════ */
+const TABS = ['finance','goals','garage','print','hub','stats'];
+
 class App {
   constructor(){
     this.db=new DB();
     this.tab='finance';
     this.statsStart=null; this.statsEnd=null;
-    this.db.ready.then(()=>this._init()).catch(e=>console.error(e));
+    this._swipeDir=null;
+    this.db.ready.then(()=>this._init()).catch(e=>console.error('[Sentinel]',e));
   }
+
   _init(){
     document.getElementById('tabs').addEventListener('click', e=>{
-      const t=e.target.dataset.tab; if(!t) return;
+      const t=e.target.dataset.tab; if(!t||t===this.tab) return;
+      const oldIdx=TABS.indexOf(this.tab), newIdx=TABS.indexOf(t);
+      this._swipeDir = newIdx>oldIdx ? 'left' : 'right';
       this.tab=t;
       document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));
+      this._scrollTabIntoView(t);
       this._render();
     });
     document.getElementById('exp-btn').onclick=()=>this._export();
     document.getElementById('imp-file').onchange=e=>this._import(e.target.files[0]);
+    this._initSwipe();
     this._render();
   }
+
+  _scrollTabIntoView(tab){
+    const el=document.querySelector(`.tab[data-tab="${tab}"]`);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
+
+  _initSwipe(){
+    const el=document.getElementById('app-content');
+    let sx=0,sy=0,moved=false;
+    el.addEventListener('touchstart',e=>{
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY; moved=false;
+    },{passive:true});
+    el.addEventListener('touchmove',e=>{
+      const dx=Math.abs(e.touches[0].clientX-sx),dy=Math.abs(e.touches[0].clientY-sy);
+      if(dx>dy&&dx>10) moved=true;
+    },{passive:true});
+    el.addEventListener('touchend',e=>{
+      if(!moved) return;
+      const dx=e.changedTouches[0].clientX-sx;
+      const dy=e.changedTouches[0].clientY-sy;
+      if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4) return;
+      const cur=TABS.indexOf(this.tab);
+      let next=-1;
+      if(dx<0&&cur<TABS.length-1) next=cur+1;
+      if(dx>0&&cur>0) next=cur-1;
+      if(next<0) return;
+      this._swipeDir=dx<0?'left':'right';
+      this.tab=TABS[next];
+      document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===this.tab));
+      this._scrollTabIntoView(this.tab);
+      this._render();
+    },{passive:true});
+  }
+
   _render(){
     const c=document.getElementById('app-content');
     c.innerHTML='';
-    const map={finance:()=>this._finance(c),goals:()=>this._goals(c),garage:()=>this._garage(c),print:()=>this._print(c),hub:()=>this._hub(c),stats:()=>this._stats(c)};
+    const wrap=document.createElement('div');
+    if(this._swipeDir==='left') wrap.className='page-slide-left';
+    else if(this._swipeDir==='right') wrap.className='page-slide-right';
+    this._swipeDir=null;
+    c.appendChild(wrap);
+    const map={finance:()=>this._finance(wrap),goals:()=>this._goals(wrap),garage:()=>this._garage(wrap),print:()=>this._print(wrap),hub:()=>this._hub(wrap),stats:()=>this._stats(wrap)};
     (map[this.tab]||map.finance)();
   }
+
   _card(extra=''){const el=document.createElement('div');el.className='card'+extra;return el;}
 
-  /* ── FINANCE ── */
+  /* ═══════ FINANCE ═══════ */
   async _finance(c){
     const balance=await this.db.cfg('balance');
     const budgetCap=await this.db.cfg('monthlyBudgetCap');
@@ -482,7 +633,7 @@ class App {
     const survRes=dailyBudget*payday.days;
     const freeCash=Math.max(0,balance-survRes-mandatory-1000);
 
-    /* Balance card */
+    // Balance
     const balCard=this._card(exceeded?' danger':'');
     const bCol=balance<=0?'bad':balance<survRes?'warn':'ok';
     balCard.innerHTML=`<div class="card-title">Текущий баланс</div>
@@ -491,7 +642,7 @@ class App {
         <button class="btn c" id="set-bal">Изменить</button>
       </div>
       ${exceeded?`<div class="reminder red" style="margin-top:10px">⚠ Лимит превышен на ${fmt(Math.abs(remainToday))} ₽</div>`:''}
-      ${freeCash>500?`<div class="reminder green" style="margin-top:10px">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b></div>`:''}
+      ${freeCash>500?`<div class="free-cash">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b> — можно на цели</div>`:''}
       <div id="bal-ed"></div>`;
     c.appendChild(balCard);
     balCard.querySelector('#set-bal').onclick=()=>{
@@ -501,14 +652,14 @@ class App {
       ed.querySelector('#bs').onclick=async()=>{const v=parseFloat(ed.querySelector('#bi').value);if(!isNaN(v)){await this.db.setCfg('balance',v);this._render();}};
     };
 
-    /* Budget card */
+    // Budget
     const dayCol=remainToday<0?'#ff4d4d':remainToday<200?'#ffa040':'#0f8';
     const budCard=this._card();
     budCard.innerHTML=`<div class="card-title">Бюджет и выплаты</div>
-      <div class="b-row"><div class="b-key">Следующая выплата</div><div class="b-val"><span class="payday-tag">${payday.label} · ${dStr(payday.date)}</span> <span style="color:var(--violet);margin-left:4px"><b>${payday.days}</b> дн.</span></div></div>
+      <div class="b-row"><div class="b-key">Следующая выплата</div><div class="b-val"><span class="payday-tag">${payday.label} · ${dStr(payday.date)}</span> <span style="color:var(--violet);margin-left:5px"><b>${payday.days}</b> дн.</span></div></div>
       <div class="b-row"><div class="b-key">Остаток на сегодня</div><div class="b-val" style="color:${dayCol}">${fmt(remainToday)} ₽ <span style="opacity:.5;font-size:10px">/ ${fmt(dailyBudget)}</span></div></div>
       <div class="b-row"><div class="b-key">Потрачено сегодня</div><div class="b-val">${fmt(todaySpent)} ₽</div></div>
-      <div class="b-row"><div class="b-key">За этот месяц</div><div class="b-val" style="color:${spentMonth>budgetCap?'#ff4d4d':'#ffa040'}">${fmt(spentMonth)} / ${fmtI(budgetCap)} ₽</div></div>
+      <div class="b-row"><div class="b-key">За этот месяц</div><div class="b-val" style="color:${spentMonth>budgetCap?'var(--red)':'var(--orange)'}">${fmt(spentMonth)} / ${fmtI(budgetCap)} ₽</div></div>
       <details><summary>⚙ Настройки бюджета</summary>
         <div class="g2" style="margin-top:8px">
           <div class="ig"><label class="lbl">Бюджет/месяц (₽)</label><input type="number" id="budcap" value="${budgetCap}"></div>
@@ -523,7 +674,7 @@ class App {
       if(cap>0){await this.db.setCfg('monthlyBudgetCap',cap);await this.db.setCfg('mandatoryPayments',m);this._render();}
     };
 
-    /* Goals mini */
+    // Goals mini
     if(goals.length){
       const gCard=this._card();
       gCard.innerHTML='<div class="card-title">Цели</div>';
@@ -541,7 +692,7 @@ class App {
       c.appendChild(gCard);
     }
 
-    /* Add tx */
+    // Add tx
     const txCard=this._card();
     const allGoals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     txCard.innerHTML=`<div class="card-title">Новая транзакция</div>
@@ -569,23 +720,21 @@ class App {
     txCard.querySelector('#tx-add').onclick=async()=>{
       const amt=parseFloat(txCard.querySelector('#tx-amt').value);
       if(!amt||amt<=0) return;
-      const type=typeEl.value;
-      let cat=catEl.value, comment=txCard.querySelector('#tx-comment').value.trim();
+      const type=typeEl.value; let cat=catEl.value, comment=txCard.querySelector('#tx-comment').value.trim();
       const dt=txCard.querySelector('#tx-date').value||todayStr;
       if(cat.startsWith('ЦЕЛЬ:')){comment=cat.substring(5);cat='Цель';}
       await this.db.add(S.TX,{amount:amt,type,category:cat,comment,date:new Date(dt+'T12:00:00').toISOString()});
       let bal=await this.db.cfg('balance');
       await this.db.setCfg('balance',type==='income'?bal+amt:bal-amt);
-      txCard.querySelector('#tx-amt').value='';
-      txCard.querySelector('#tx-comment').value='';
+      txCard.querySelector('#tx-amt').value=''; txCard.querySelector('#tx-comment').value='';
       this._render();
     };
 
-    /* History */
+    // History
     const sorted=[...txs].sort((a,b)=>new Date(b.date)-new Date(a.date));
     const histCard=this._card();
     histCard.innerHTML=`<div class="card-title">Операции</div>
-      <div class="search-row"><input type="text" id="tx-q" placeholder="Поиск..."><select id="tx-fc"><option value="">Все</option>${[...new Set([...CAT_EXP,...CAT_INC])].map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
+      <div class="search-row"><input type="text" id="tx-q" placeholder="🔍 Поиск..."><select id="tx-fc"><option value="">Все</option>${[...new Set([...CAT_EXP,...CAT_INC,'Цель'])].map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
       <div id="tx-list"></div>`;
     c.appendChild(histCard);
     const renderList=(q='',fc='')=>{
@@ -604,18 +753,19 @@ class App {
       });
     };
     renderList();
-    histCard.querySelector('#tx-q').oninput=e=>renderList(e.target.value.toLowerCase(),histCard.querySelector('#tx-fc').value);
+    let st; histCard.querySelector('#tx-q').oninput=e=>{clearTimeout(st);st=setTimeout(()=>renderList(e.target.value.toLowerCase(),histCard.querySelector('#tx-fc').value),200);};
     histCard.querySelector('#tx-fc').onchange=e=>renderList(histCard.querySelector('#tx-q').value.toLowerCase(),e.target.value);
   }
 
-  /* ── GOALS ── */
+  /* ═══════ GOALS ═══════ */
   async _goals(c){
     const txs=await this.db.all(S.TX);
     const goals=await this.db.all(S.GOALS);
     const now=new Date();
 
     for(const goal of goals){
-      const saved=txs.filter(t=>t.type==='expense'&&((t.category==='Цель'&&t.comment===goal.name)||(t.category==='Цель/Долг'&&t.comment===goal.name))).reduce((s,t)=>s+t.amount,0);
+      const goalTxs=txs.filter(t=>t.type==='expense'&&((t.category==='Цель'&&t.comment===goal.name)||(t.category==='Цель/Долг'&&t.comment===goal.name)));
+      const saved=goalTxs.reduce((s,t)=>s+t.amount,0);
       const left=Math.max(0,goal.targetAmount-saved);
       const pct=Math.min(100,(saved/goal.targetAmount)*100);
       const dl=new Date(goal.deadline);
@@ -623,6 +773,8 @@ class App {
       const mLeft=Math.max(0.5,dLeft/30);
       const needPM=left/mLeft;
       const col=goal.color||'#0ff';
+      const monthsToClose=goal.monthlyAllocation>0?left/goal.monthlyAllocation:999;
+      const eta=goal.monthlyAllocation>0&&monthsToClose<999?new Date(now.getFullYear(),now.getMonth()+Math.ceil(monthsToClose),now.getDate()):null;
 
       const gc=this._card();
       gc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
@@ -638,8 +790,27 @@ class App {
         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.8">
           Нужно/мес: <b style="color:var(--orange)">${fmt(needPM)} ₽</b>
           · Откладываю: <b style="color:${col}">${fmtI(goal.monthlyAllocation||0)} ₽/мес</b>
+          ${eta?` · закроешь ~${dStr(eta)}`:''}
         </div>
-        <details style="margin-top:10px"><summary>✏ Редактировать</summary>
+
+        <!-- ИСТОРИЯ ПОПОЛНЕНИЙ -->
+        <details style="margin-top:10px">
+          <summary>📜 История пополнений (${goalTxs.length})</summary>
+          <div class="hist-list" style="margin-top:8px">
+            ${goalTxs.length===0?'<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">Нет пополнений</div>':
+              [...goalTxs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(tx=>`
+                <div class="log-row">
+                  <div style="min-width:0;flex:1">
+                    <div style="font-size:11px;color:#a0b8c0">${dStr(tx.date)}</div>
+                  </div>
+                  <div class="amt e">−${fmt(tx.amount)} ₽</div>
+                </div>`).join('')}
+          </div>
+        </details>
+
+        <!-- РЕДАКТИРОВАТЬ -->
+        <details style="margin-top:8px">
+          <summary>✏ Редактировать цель</summary>
           <div style="margin-top:10px" class="g2">
             <div class="ig"><label class="lbl">Название</label><input id="ge-n-${goal.id}" value="${goal.name}"></div>
             <div class="ig"><label class="lbl">Сумма цели (₽)</label><input type="number" id="ge-t-${goal.id}" value="${goal.targetAmount}"></div>
@@ -650,13 +821,16 @@ class App {
               <option value="2" ${goal.priority===2?'selected':''}>2 — Средний</option>
               <option value="3" ${goal.priority===3?'selected':''}>3 — Низкий</option>
             </select></div>
-            <div class="ig"><label class="lbl">Цвет</label><div id="ge-cols-${goal.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+            <div class="ig"><label class="lbl">Цвет</label><div id="ge-cols-${goal.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
               ${GOAL_COLORS.map(cl=>`<div class="color-dot${goal.color===cl?' selected':''}" data-col="${cl}" style="background:${cl}"></div>`).join('')}
             </div></div>
           </div>
           <button class="btn c full" id="ge-s-${goal.id}">Сохранить</button>
         </details>
-        <div style="margin-top:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:6px">Внести пополнение:</div>
+
+        <!-- ПОПОЛНЕНИЕ -->
+        <div style="margin-top:12px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Внести пополнение:</div>
           <div style="display:flex;gap:8px">
             <input type="number" id="gp-${goal.id}" placeholder="Сумма ₽" style="flex:1">
             <button class="btn g" id="ga-${goal.id}">+ Добавить</button>
@@ -666,9 +840,8 @@ class App {
 
       gc.querySelector(`[data-gid="${goal.id}"]`).onclick=()=>confirmDel(gc.querySelector(`[data-gid="${goal.id}"]`),async()=>{gc.querySelector(`[data-gid="${goal.id}"]`)._ok=true;await this.db.del(S.GOALS,goal.id);this._render();});
 
-      const colsEl=gc.querySelector(`#ge-cols-${goal.id}`);
       let selColor=goal.color||GOAL_COLORS[0];
-      colsEl.querySelectorAll('.color-dot').forEach(el=>{el.onclick=()=>{colsEl.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selColor=el.dataset.col;};});
+      gc.querySelectorAll(`#ge-cols-${goal.id} .color-dot`).forEach(el=>{el.onclick=()=>{gc.querySelectorAll(`#ge-cols-${goal.id} .color-dot`).forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selColor=el.dataset.col;};});
 
       gc.querySelector(`#ge-s-${goal.id}`).onclick=async()=>{
         const updated={...goal,
@@ -679,7 +852,7 @@ class App {
           priority:parseInt(gc.querySelector(`#ge-p-${goal.id}`).value)||1,
           color:selColor,
         };
-        await this.db.set(S.GOALS,updated);this._render();
+        await this.db.set(S.GOALS,updated); this._render();
       };
 
       gc.querySelector(`#ga-${goal.id}`).onclick=async()=>{
@@ -692,8 +865,9 @@ class App {
       };
     }
 
-    /* New goal */
+    // New goal
     const nc=this._card();
+    let newColor=GOAL_COLORS[0];
     nc.innerHTML=`<div class="card-title">Добавить цель</div>
       <div class="ig"><label class="lbl">Название</label><input id="ng-n" placeholder="Долг, аренда, телефон…"></div>
       <div class="g2">
@@ -702,11 +876,10 @@ class App {
         <div class="ig"><label class="lbl">₽/мес</label><input type="number" id="ng-a" placeholder="5000"></div>
         <div class="ig"><label class="lbl">Приоритет</label><select id="ng-p"><option value="1">1 — Высокий</option><option value="2" selected>2 — Средний</option><option value="3">3 — Низкий</option></select></div>
       </div>
-      <div class="ig"><label class="lbl">Цвет</label><div id="ng-cols" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px">${GOAL_COLORS.map((cl,i)=>`<div class="color-dot${i===0?' selected':''}" data-col="${cl}" style="background:${cl}"></div>`).join('')}</div></div>
+      <div class="ig"><label class="lbl">Цвет</label><div id="ng-cols" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px">${GOAL_COLORS.map((cl,i)=>`<div class="color-dot${i===0?' selected':''}" data-col="${cl}" style="background:${cl}"></div>`).join('')}</div></div>
       <button class="btn v full" id="ng-add">Создать цель</button>`;
     c.appendChild(nc);
-    let newColor=GOAL_COLORS[0];
-    nc.querySelector('#ng-cols').querySelectorAll('.color-dot').forEach(el=>{el.onclick=()=>{nc.querySelector('#ng-cols').querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');newColor=el.dataset.col;};});
+    nc.querySelectorAll('#ng-cols .color-dot').forEach(el=>{el.onclick=()=>{nc.querySelectorAll('#ng-cols .color-dot').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');newColor=el.dataset.col;};});
     nc.querySelector('#ng-add').onclick=async()=>{
       const name=nc.querySelector('#ng-n').value.trim();
       const target=parseFloat(nc.querySelector('#ng-t').value);
@@ -714,27 +887,36 @@ class App {
       await this.db.add(S.GOALS,{name,targetAmount:target,deadline:nc.querySelector('#ng-d').value,priority:parseInt(nc.querySelector('#ng-p').value)||2,monthlyAllocation:parseFloat(nc.querySelector('#ng-a').value)||0,color:newColor,active:true});
       this._render();
     };
+
+    // Backup
+    const bc=this._card();
+    bc.innerHTML=`<div class="card-title">Резервная копия</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Данные в IndexedDB — при очистке кэша удалятся. Делай бэкап!</div>
+      <label class="btn c" style="cursor:pointer">📂 Загрузить JSON<input type="file" accept=".json" id="imp2" style="display:none"></label>`;
+    c.appendChild(bc);
+    bc.querySelector('#imp2').onchange=e=>this._import(e.target.files[0]);
   }
 
-  /* ── GARAGE ── */
+  /* ═══════ GARAGE ═══════ */
   async _garage(c){
     const odo=await this.db.cfg('currentOdometer');
     const hist=await this.db.all(S.ODO);
-    const items=(await this.db.all(S.SVC)).filter(it=>it.enabled).sort((a,b)=>a.id-b.id);
+    const items=(await this.db.all(S.SVC)).filter(it=>it.enabled!==false).sort((a,b)=>a.id-b.id);
     const partsNotes=await this.db.cfg('carPartsNotes');
+
     let avgDay=20;
     if(hist.length>=2){
       const s=[...hist].sort((a,b)=>new Date(a.date)-new Date(b.date));
       const span=(new Date(s[s.length-1].date)-new Date(s[0].date))/86400000;
       const delta=s[s.length-1].odometer-s[0].odometer;
-      if(span>0) avgDay=delta/span;
+      if(span>0&&delta>0) avgDay=delta/span;
     }
 
-    /* Odometer */
+    // Odometer card
     const oc=this._card();
     oc.innerHTML=`<div class="card-title">Peugeot 206 · 1.1i TU1JP</div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div class="big">${fmtI(odo)} <span style="font-size:18px;color:rgba(0,255,255,.4)">км</span></div>
+        <div class="big">${fmtI(odo)} <span style="font-size:16px;color:rgba(0,255,255,.4)">км</span></div>
         <button class="btn c" id="odo-btn">Обновить пробег</button>
       </div>
       <div class="sub">~${Math.round(avgDay*7)} км/нед · ~${Math.round(avgDay)} км/день</div>
@@ -754,18 +936,463 @@ class App {
       };
     };
 
-    /* Wear */
+    // ═══════════════════════════════════════════════════════════════════
+    // CAR SCHEMATIC — Peugeot 206 1.1i TU1JP 2000 · 5-door · VF32AHFZE
+    // Три вида: СВЕРХУ / КАПОТ / СНИЗУ — переключаются кнопками
+    // ═══════════════════════════════════════════════════════════════════
+    const schCard = this._card();
+    schCard.innerHTML = '<div class="card-title">🚗 Peugeot 206 · Интерактивная схема</div>';
+
+    // ── Инжектируем доп. стили для схемы (один раз) ──
+    if (!document.getElementById('schema-styles')) {
+      const sts = document.createElement('style'); sts.id='schema-styles';
+      sts.textContent = `
+        .sv-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+        .sv-tab{padding:6px 14px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;cursor:pointer;border:1px solid rgba(0,255,255,.25);color:rgba(0,255,255,.5);background:transparent;transition:all .2s;font-family:inherit}
+        .sv-tab.on{background:rgba(0,255,255,.12);border-color:#0ff;color:#0ff;text-shadow:0 0 8px #0ff}
+        .sv-wrap{position:relative;width:100%;border-radius:16px;overflow:hidden;background:rgba(0,0,4,.6);border:1px solid rgba(0,255,255,.08)}
+        .sv-wrap svg{display:block;width:100%}
+        .sv-hs{cursor:pointer;transition:transform .15s}
+        .sv-hs:active{transform:scale(1.2)}
+        .sv-hs:hover circle.outer{r:13}
+        .sv-tooltip{position:absolute;background:rgba(6,6,18,.97);border:1px solid rgba(0,255,255,.3);border-radius:12px;padding:10px 13px;font-size:11px;color:#d8e0ea;pointer-events:none;z-index:50;min-width:175px;max-width:230px;box-shadow:0 6px 30px rgba(0,0,0,.6);line-height:1.65;display:none}
+        .sv-tooltip.show{display:block}
+        .sv-tt-name{font-size:12px;font-weight:700;margin-bottom:5px}
+        .sv-tt-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#7a9aaa}
+        .sv-tt-row b{color:#c0d8e0}
+        .sv-legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 2px;font-size:10px}
+        .sv-legend span{display:flex;align-items:center;gap:5px}
+        .sv-legend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+      `;
+      document.head.appendChild(sts);
+    }
+
+    // ── Справочник хотспотов по каждому виду ──
+    // [key, cx, cy, label, view]  view: 'top'|'hood'|'bottom'
+    const HOTSPOTS = [
+      // ─ ВИД СВЕРХУ (top) ──────────────────────────────────────────
+      // Передняя часть / под капотом
+      ['oil',        110, 88,  'Масло',    'top'],
+      ['timing',     78,  70,  'ГРМ',      'top'],
+      ['airfilter',  68,  85,  'Воздух',   'top'],
+      ['coolant',    148, 78,  'Охл.ж.',   'top'],
+      ['battery',    152, 92,  'АКБ',      'top'],
+      ['spark',      88,  95,  'Свечи',    'top'],
+      ['gearboxoil', 102,115,  'КПП',      'top'],
+      ['fuelfil',    118, 68,  'Топл.ф',   'top'],
+      // Салон
+      ['cabinfilter',110,180,  'Сал.ф',    'top'],
+      ['throttle',   148,105,  'Дроссель', 'top'],
+      // Передняя подвеска
+      ['bearingfl',  36, 115,  'Ступ.ПЛ', 'top'],
+      ['bearingfr',  184,115,  'Ступ.ПП', 'top'],
+      ['cvjointl',   52, 128,  'ШРУС Л',  'top'],
+      ['cvjointr',   168,128,  'ШРУС П',  'top'],
+      ['brakef',     36, 130,  'Кол.ПЛ',  'top'],   // визуально совмещены с колесом
+      // Задняя часть
+      ['bearingrl',  36, 325,  'Ступ.ЗЛ', 'top'],
+      ['bearingrr',  184,325,  'Ступ.ЗП', 'top'],
+      ['brakershoes',110,340,  'Кол.Зд',  'top'],
+      ['reardrumfl', 36, 340,  'Бар.ЗЛ',  'top'],
+      ['reardrumfr', 184,340,  'Бар.ЗП',  'top'],
+      ['handbrake',  110,300,  'Ручник',  'top'],
+      // Топливный бак
+      ['fuelfil',    110,355,  'Топл.ф',  'top'],
+      // Стаб/выхлоп
+      ['stablink',   110,215,  'Стаб.',   'top'],
+      ['exhaust',    138,260,  'Выхлоп',  'top'],
+      ['lambda',     138,230,  'Λ-зонд',  'top'],
+      ['brakefluid', 148,150,  'Торм.ж',  'top'],
+
+      // ─ ВИД КАПОТА (hood) ────────────────────────────────────────
+      // Визуальная раскладка подкапотного пространства TU1JP
+      ['oil',         90, 180, 'Масло+ф.',  'hood'],
+      ['timing',      62, 120, 'ГРМ',       'hood'],
+      ['airfilter',   52,  70, 'Возд.ф.',   'hood'],
+      ['fuelfil',    165, 165, 'Топл.ф.',   'hood'],
+      ['coolant',    165,  80, 'Охл.жидк.', 'hood'],
+      ['battery',    168, 45,  'АКБ',       'hood'],
+      ['spark',      108, 135, 'Свечи (4)', 'hood'],
+      ['gearboxoil', 78,  205, 'Масло КПП', 'hood'],
+      ['brakefluid', 168, 125, 'Торм.жидк.','hood'],
+      ['throttle',   135, 100, 'Дроссель',  'hood'],
+      ['lambda',     130, 220, 'Λ-зонд',    'hood'],
+      ['battery',    168,  45, 'АКБ',       'hood'],
+      ['exhaust',    100, 235, 'Выхлоп',    'hood'],
+
+      // ─ ВИД СНИЗУ (bottom) ──────────────────────────────────────
+      ['timing',      78,  78, 'ГРМ',       'bottom'],
+      ['oil',        110,  95, 'Масло',     'bottom'],
+      ['gearboxoil', 102, 115, 'КПП',       'bottom'],
+      ['bearingfl',   38, 120, 'Ступ.ПЛ',  'bottom'],
+      ['bearingfr',  182, 120, 'Ступ.ПП',  'bottom'],
+      ['cvjointl',    55, 145, 'ШРУС Л',   'bottom'],
+      ['cvjointr',   165, 145, 'ШРУС П',   'bottom'],
+      ['brakef',      38, 135, 'Диск ПЛ',  'bottom'],
+      ['discf',      182, 135, 'Диск ПП',  'bottom'],
+      ['stablink',   110, 190, 'Стаб.',    'bottom'],
+      ['exhaust',    118, 255, 'Выхлоп',   'bottom'],
+      ['lambda',     118, 230, 'Λ-зонд',   'bottom'],
+      ['fuelfil',    110, 330, 'Бак/ф.',   'bottom'],
+      ['bearingrl',   38, 320, 'Ступ.ЗЛ',  'bottom'],
+      ['bearingrr',  182, 320, 'Ступ.ЗП',  'bottom'],
+      ['brakershoes', 38, 338, 'Кол.ЗЛ',  'bottom'],
+      ['reardrumfl', 182, 338, 'Кол.ЗП',  'bottom'],
+      ['handbrake',  110, 305, 'Трос рч.',  'bottom'],
+    ];
+
+    // Удаляем дубли по key+view (берём первый)
+    const hsSeen = new Set();
+    const HS = HOTSPOTS.filter(([key,,,,view])=>{
+      const k=key+view; if(hsSeen.has(k)) return false; hsSeen.add(k); return true;
+    });
+
+    // Собираем statusMap из items
+    const statusMap2 = {};
+    items.forEach(it => {
+      const condOnly = isCondOnly(it);
+      if (condOnly) {
+        const cs = it.conditionStatus||'ok';
+        statusMap2[it.key] = {
+          color: cCol(cs), pct: {ok:0,watch:35,replace:70,critical:100}[cs]||0,
+          statusText: {ok:'Норма',watch:'Наблюдение',replace:'Заменить',critical:'КРИТИЧНО'}[cs]||'Норма',
+          notes: it.notes||'', label: it.label||it.key,
+          lastKm: it.lastServiceOdo||0, km: 0, condOnly: true,
+        };
+      } else {
+        const done = Math.max(0, odo - (it.lastServiceOdo||0));
+        const pct  = it.km>0 ? Math.min(100,(done/it.km)*100) : 0;
+        const rem  = Math.max(0, (it.km||0)-done);
+        statusMap2[it.key] = {
+          color: wCol(pct), pct,
+          statusText: pct<60?'Норма':pct<85?'Внимание':'ПРОСРОЧЕНО',
+          notes: it.notes||'', label: it.label||it.key,
+          lastKm: it.lastServiceOdo||0, km: it.km||0, rem, condOnly: false,
+        };
+      }
+    });
+
+    // ── Рендер SVG для каждого вида ──
+    function buildSVG(view) {
+      const W = 220, H = view==='hood'?280:420;
+
+      // ─ Кузов: вид сверху ─────────────────────────────────────
+      let body = '';
+      if (view === 'top') {
+        body = `
+          <defs>
+            <linearGradient id="hood-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1a2840" stop-opacity=".9"/>
+              <stop offset="100%" stop-color="#0d1520" stop-opacity=".8"/>
+            </linearGradient>
+            <linearGradient id="cabin-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0e1825" stop-opacity=".9"/>
+              <stop offset="100%" stop-color="#0a1018" stop-opacity=".9"/>
+            </linearGradient>
+            <filter id="glow-r"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-y"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- Фронтальный бампер -->
+          <path d="M72 20 Q110 15 148 20 L152 32 Q110 27 68 32 Z" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.4)" stroke-width="1.2"/>
+          <!-- Передние фары -->
+          <ellipse cx="74" cy="28" rx="11" ry="5" fill="rgba(220,240,255,.25)" stroke="rgba(180,220,255,.5)" stroke-width="1"/>
+          <ellipse cx="146" cy="28" rx="11" ry="5" fill="rgba(220,240,255,.25)" stroke="rgba(180,220,255,.5)" stroke-width="1"/>
+          <!-- Капот (моторный отсек) -->
+          <path d="M62 32 Q55 38 52 58 L50 72 L170 72 L168 58 Q165 38 158 32 Z" fill="url(#hood-grad)" stroke="rgba(0,255,255,.35)" stroke-width="1.5"/>
+          <!-- Линия разъёма капота -->
+          <line x1="52" y1="72" x2="168" y2="72" stroke="rgba(0,255,255,.2)" stroke-width=".8" stroke-dasharray="4,3"/>
+          <!-- Центральная линия капота -->
+          <line x1="110" y1="35" x2="110" y2="71" stroke="rgba(0,255,255,.1)" stroke-width=".8" stroke-dasharray="3,4"/>
+          <!-- Лобовое стекло -->
+          <path d="M56 74 L164 74 L162 108 L58 108 Z" fill="rgba(100,200,255,.09)" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
+          <!-- Основная крыша (салон) -->
+          <path d="M54 108 L166 108 L167 250 L53 250 Z" fill="url(#cabin-grad)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
+          <!-- Центральная стойка (В) -->
+          <rect x="53" y="153" width="5" height="30" rx="2" fill="rgba(0,255,255,.18)"/>
+          <rect x="162" y="153" width="5" height="30" rx="2" fill="rgba(0,255,255,.18)"/>
+          <!-- Заднее стекло -->
+          <path d="M56 252 L164 252 L162 280 L58 280 Z" fill="rgba(100,200,255,.07)" stroke="rgba(0,255,255,.18)" stroke-width="1"/>
+          <!-- Задняя дверь (хэтч) + багажник -->
+          <path d="M56 280 L164 280 L166 355 L54 355 Z" fill="rgba(0,255,255,.03)" stroke="rgba(0,255,255,.16)" stroke-width="1.2"/>
+          <!-- Задние фонари -->
+          <rect x="52" y="348" width="22" height="10" rx="3" fill="rgba(255,80,80,.35)" stroke="rgba(255,80,80,.5)" stroke-width="1"/>
+          <rect x="146" y="348" width="22" height="10" rx="3" fill="rgba(255,80,80,.35)" stroke="rgba(255,80,80,.5)" stroke-width="1"/>
+          <!-- Задний бампер -->
+          <path d="M68 357 Q110 363 152 357 L148 370 Q110 375 72 370 Z" fill="rgba(0,255,255,.09)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <!-- Колесо ПЛ -->
+          <rect x="22" y="90" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.6)" stroke-width="1.8"/>
+          <rect x="25" y="94" width="20" height="44" rx="6" fill="rgba(0,255,255,.07)"/>
+          <circle cx="35" cy="116" r="7" fill="none" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <!-- Колесо ПП -->
+          <rect x="172" y="90" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.6)" stroke-width="1.8"/>
+          <rect x="175" y="94" width="20" height="44" rx="6" fill="rgba(0,255,255,.07)"/>
+          <circle cx="185" cy="116" r="7" fill="none" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <!-- Колесо ЗЛ -->
+          <rect x="22" y="300" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.45)" stroke-width="1.5"/>
+          <rect x="25" y="304" width="20" height="44" rx="6" fill="rgba(0,255,255,.06)"/>
+          <circle cx="35" cy="326" r="7" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
+          <!-- Колесо ЗП -->
+          <rect x="172" y="300" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.45)" stroke-width="1.5"/>
+          <rect x="175" y="304" width="20" height="44" rx="6" fill="rgba(0,255,255,.06)"/>
+          <circle cx="185" cy="326" r="7" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
+          <!-- Полуоси/приводы передние -->
+          <line x1="48" y1="128" x2="85" y2="128" stroke="rgba(0,255,255,.25)" stroke-width="2" stroke-dasharray="4,2"/>
+          <line x1="135" y1="128" x2="172" y2="128" stroke="rgba(0,255,255,.25)" stroke-width="2" stroke-dasharray="4,2"/>
+          <!-- Стабилизатор передний -->
+          <path d="M38 160 Q110 150 182 160" fill="none" stroke="rgba(0,255,255,.18)" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <!-- Выхлопная труба -->
+          <path d="M118 155 L128 300 L132 355" fill="none" stroke="rgba(255,160,40,.35)" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <!-- Подписи -->
+          <text x="110" y="10" text-anchor="middle" fill="rgba(0,255,255,.5)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ПЕРЕД</text>
+          <text x="110" y="418" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ЗАД</text>
+          <text x="8" y="116" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif" transform="rotate(-90,8,116)" text-anchor="middle">ЛЕВО</text>
+          <text x="213" y="116" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif" transform="rotate(90,213,116)" text-anchor="middle">ПРАВО</text>
+        `;
+
+      // ─ Вид КАПОТ ─────────────────────────────────────────────
+      } else if (view === 'hood') {
+        body = `
+          <defs>
+            <linearGradient id="eng-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1a2030" stop-opacity=".9"/>
+              <stop offset="100%" stop-color="#0c1020" stop-opacity=".95"/>
+            </linearGradient>
+          </defs>
+          <!-- Периметр моторного отсека -->
+          <rect x="10" y="10" width="200" height="${H-20}" rx="12" fill="url(#eng-grad)" stroke="rgba(0,255,255,.3)" stroke-width="1.5"/>
+          <!-- Стрелка перед/зад -->
+          <text x="110" y="24" text-anchor="middle" fill="rgba(0,255,255,.4)" font-size="8" font-family="Segoe UI,sans-serif" font-weight="700">↑ ПЕРЕД (бампер)</text>
+          <text x="110" y="${H-12}" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="8" font-family="Segoe UI,sans-serif">↓ СТЕНА САЛОНА</text>
+          <!-- Блок двигателя TU1JP — слегка левее центра (в поперечном расположении) -->
+          <rect x="40" y="95" width="110" height="100" rx="8" fill="rgba(20,40,70,.7)" stroke="rgba(0,255,255,.25)" stroke-width="1.2"/>
+          <text x="95" y="150" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="9" font-family="Segoe UI,sans-serif" font-weight="700">TU1JP · 1.1L</text>
+          <text x="95" y="163" text-anchor="middle" fill="rgba(0,255,255,.2)" font-size="7.5" font-family="Segoe UI,sans-serif">4цил. · поперечно</text>
+          <!-- Головка блока / свечи -->
+          <rect x="43" y="98" width="104" height="22" rx="4" fill="rgba(0,255,255,.06)" stroke="rgba(0,255,255,.15)" stroke-width="1"/>
+          <text x="95" y="113" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ГБЦ</text>
+          <!-- 4 свечных колодца -->
+          <circle cx="58"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <circle cx="78"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <circle cx="98"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <circle cx="118" cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
+          <!-- КПП — справа от двигателя -->
+          <rect x="150" y="120" width="44" height="55" rx="6" fill="rgba(20,35,55,.7)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+          <text x="172" y="152" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="8" font-family="Segoe UI,sans-serif">КПП</text>
+          <!-- Ремень ГРМ — слева от двигателя -->
+          <rect x="16" y="85" width="30" height="60" rx="6" fill="rgba(20,35,55,.6)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+          <text x="31" y="117" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="7.5" font-family="Segoe UI,sans-serif">ГРМ</text>
+          <!-- Кожух ремня (штриховой) -->
+          <rect x="17" y="87" width="28" height="56" rx="5" fill="none" stroke="rgba(0,255,255,.12)" stroke-width="1" stroke-dasharray="3,2"/>
+          <!-- Расширительный бачок охлаждайки — правый угол спереди -->
+          <rect x="155" y="30" width="38" height="36" rx="6" fill="rgba(0,60,80,.5)" stroke="rgba(0,200,255,.35)" stroke-width="1.2"/>
+          <text x="174" y="50" text-anchor="middle" fill="rgba(0,200,255,.5)" font-size="7.5" font-family="Segoe UI,sans-serif">ОХЛАЖДЕНИЕ</text>
+          <!-- АКБ — правый угол -->
+          <rect x="155" y="30" width="38" height="36" rx="6" fill="none"/><!-- фейк для отступа -->
+          <!-- Воздушный фильтр — левый угол спереди (гофрированный патрубок к дросселю) -->
+          <rect x="18" y="28" width="44" height="40" rx="7" fill="rgba(30,50,30,.5)" stroke="rgba(80,200,80,.3)" stroke-width="1.2"/>
+          <text x="40" y="50" text-anchor="middle" fill="rgba(80,200,80,.5)" font-size="7.5" font-family="Segoe UI,sans-serif">ВОЗДУХ.Ф.</text>
+          <!-- Патрубок от воздушного фильтра к дросселю -->
+          <path d="M62 48 Q85 48 88 105" fill="none" stroke="rgba(80,200,80,.2)" stroke-width="3" stroke-dasharray="5,3"/>
+          <!-- Дроссельный узел -->
+          <circle cx="88" cy="105" r="10" fill="rgba(30,50,50,.5)" stroke="rgba(0,200,150,.3)" stroke-width="1.2"/>
+          <!-- Топливный фильтр — вдоль правой стенки -->
+          <rect x="155" y="155" width="40" height="28" rx="6" fill="rgba(50,40,20,.6)" stroke="rgba(200,160,40,.3)" stroke-width="1.2"/>
+          <text x="175" y="172" text-anchor="middle" fill="rgba(200,160,40,.4)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОПЛ.Ф.</text>
+          <!-- Главный тормозной цилиндр / бачок -->
+          <rect x="155" y="190" width="40" height="30" rx="6" fill="rgba(50,20,20,.5)" stroke="rgba(200,60,60,.3)" stroke-width="1.2"/>
+          <text x="175" y="207" text-anchor="middle" fill="rgba(200,60,60,.5)" font-size="7" font-family="Segoe UI,sans-serif">ТОРМ.Ж.</text>
+          <!-- Выпускной коллектор снизу ДВС -->
+          <path d="M55 195 Q95 202 105 215 Q115 225 120 240" fill="none" stroke="rgba(255,130,30,.4)" stroke-width="2.5"/>
+          <text x="90" y="255" text-anchor="middle" fill="rgba(255,130,30,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">→ Выхлоп</text>
+          <!-- Лямбда-зонд -->
+          <circle cx="113" cy="228" r="6" fill="rgba(255,160,30,.15)" stroke="rgba(255,160,30,.4)" stroke-width="1"/>
+          <!-- АКБ реальная позиция — левее КПП спереди -->
+        `;
+
+      // ─ Вид СНИЗУ ─────────────────────────────────────────────
+      } else {
+        body = `
+          <defs>
+            <linearGradient id="floor-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0e1825" stop-opacity=".95"/>
+              <stop offset="100%" stop-color="#080e18" stop-opacity=".9"/>
+            </linearGradient>
+          </defs>
+          <!-- Подкузовное пространство -->
+          <path d="M50 22 Q38 28 34 55 L32 95 L32 340 Q33 368 50 378 L170 378 Q187 368 188 340 L188 95 L186 55 Q182 28 170 22 Z" fill="url(#floor-grad)" stroke="rgba(0,255,255,.2)" stroke-width="1.5"/>
+          <!-- Передний подрамник (MacPherson стойки) -->
+          <rect x="45" y="55" width="130" height="30" rx="6" fill="rgba(30,50,80,.5)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+          <text x="110" y="74" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ПЕРЕДНИЙ ПОДРАМНИК</text>
+          <!-- Стойки MacPherson (линии от кузова к ступице) -->
+          <line x1="50" y1="60" x2="38" y2="120" stroke="rgba(0,255,255,.25)" stroke-width="2"/>
+          <line x1="170" y1="60" x2="182" y2="120" stroke="rgba(0,255,255,.25)" stroke-width="2"/>
+          <!-- Поперечные рычаги передней подвески -->
+          <line x1="38" y1="130" x2="58" y2="125" stroke="rgba(0,255,255,.22)" stroke-width="1.8"/>
+          <line x1="182" y1="130" x2="162" y2="125" stroke="rgba(0,255,255,.22)" stroke-width="1.8"/>
+          <!-- Полуоси передние -->
+          <line x1="45" y1="140" x2="100" y2="125" stroke="rgba(100,180,255,.3)" stroke-width="2.2"/>
+          <line x1="175" y1="140" x2="120" y2="125" stroke="rgba(100,180,255,.3)" stroke-width="2.2"/>
+          <!-- КПП / двигатель (вид снизу) -->
+          <rect x="60" y="82" width="100" height="65" rx="8" fill="rgba(20,40,65,.7)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
+          <text x="110" y="108" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ДВИГАТЕЛЬ (снизу)</text>
+          <text x="110" y="120" text-anchor="middle" fill="rgba(0,255,255,.2)" font-size="7" font-family="Segoe UI,sans-serif">Поддон · картер</text>
+          <!-- Маслосливная пробка -->
+          <circle cx="102" cy="138" r="6" fill="rgba(200,140,0,.2)" stroke="rgba(200,140,0,.4)" stroke-width="1"/>
+          <text x="102" y="152" text-anchor="middle" fill="rgba(200,140,0,.35)" font-size="6.5" font-family="Segoe UI,sans-serif">слив</text>
+          <!-- Стабилизатор поперечной устойчивости -->
+          <path d="M38 165 Q75 155 110 158 Q145 155 182 165" fill="none" stroke="rgba(100,180,255,.35)" stroke-width="2.5"/>
+          <text x="110" y="153" text-anchor="middle" fill="rgba(100,180,255,.3)" font-size="7" font-family="Segoe UI,sans-serif">стабилизатор</text>
+          <!-- Задняя балка (торсионная — характерно для 206) -->
+          <path d="M38 300 Q55 310 110 308 Q165 310 182 300" fill="none" stroke="rgba(0,200,200,.3)" stroke-width="3"/>
+          <text x="110" y="322" text-anchor="middle" fill="rgba(0,200,200,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОРСИОННАЯ БАЛКА</text>
+          <!-- Задние колёса (ось) -->
+          <line x1="36" y1="325" x2="184" y2="325" stroke="rgba(0,255,255,.12)" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <!-- Выхлопная система -->
+          <path d="M105 148 L110 200 L115 265 Q116 285 122 310 L124 360" fill="none" stroke="rgba(255,140,30,.5)" stroke-width="2.5"/>
+          <!-- Глушитель -->
+          <ellipse cx="124" cy="350" rx="16" ry="10" fill="rgba(50,50,50,.8)" stroke="rgba(255,140,30,.45)" stroke-width="1.2"/>
+          <text x="124" y="370" text-anchor="middle" fill="rgba(255,140,30,.4)" font-size="7" font-family="Segoe UI,sans-serif">глушитель</text>
+          <!-- Топливный бак — сзади между осью и задним бампером -->
+          <rect x="68" y="300" width="84" height="38" rx="8" fill="rgba(50,40,15,.6)" stroke="rgba(200,180,30,.3)" stroke-width="1.2"/>
+          <text x="110" y="323" text-anchor="middle" fill="rgba(200,180,30,.35)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОПЛИВНЫЙ БАК</text>
+          <!-- Тросы ручного тормоза -->
+          <line x1="38" y1="325" x2="108" y2="295" stroke="rgba(160,160,160,.25)" stroke-width="1.2" stroke-dasharray="3,3"/>
+          <line x1="182" y1="325" x2="112" y2="295" stroke="rgba(160,160,160,.25)" stroke-width="1.2" stroke-dasharray="3,3"/>
+          <!-- Подписи колёс -->
+          <text x="22" y="140" fill="rgba(0,255,255,.3)" font-size="7" font-family="Segoe UI,sans-serif" transform="rotate(-90,22,140)" text-anchor="middle">ЛЕВО</text>
+          <text x="198" y="140" fill="rgba(0,255,255,.3)" font-size="7" font-family="Segoe UI,sans-serif" transform="rotate(90,198,140)" text-anchor="middle">ПРАВО</text>
+          <text x="110" y="18" text-anchor="middle" fill="rgba(0,255,255,.5)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ПЕРЕД</text>
+          <text x="110" y="408" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ЗАД</text>
+          <!-- Передние колёса (вид снизу) -->
+          <ellipse cx="35" cy="120" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.5)" stroke-width="1.5"/>
+          <ellipse cx="35" cy="120" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
+          <ellipse cx="185" cy="120" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.5)" stroke-width="1.5"/>
+          <ellipse cx="185" cy="120" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
+          <!-- Задние колёса -->
+          <ellipse cx="35" cy="325" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.4)" stroke-width="1.5"/>
+          <ellipse cx="35" cy="325" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+          <ellipse cx="185" cy="325" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.4)" stroke-width="1.5"/>
+          <ellipse cx="185" cy="325" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+        `;
+      }
+
+      // ── Хотспоты текущего вида ──
+      let dots = '';
+      HS.filter(h=>h[4]===view).forEach(([key,cx,cy,lbl]) => {
+        const st = statusMap2[key];
+        if (!st) return;
+        const col = st.color;
+        const isRed = col==='#ff4d4d';
+        const isOra = col==='#ffa040';
+        const glowId = isRed ? 'glow-r' : isOra ? 'glow-y' : '';
+        const pulse = isRed ? `<animate attributeName="r" values="9;11;9" dur="1.4s" repeatCount="indefinite"/>` : '';
+        dots += `<g class="sv-hs" data-key="${key}" data-lbl="${lbl}" data-view="${view}" ${glowId?`filter="url(#${glowId})"`:''}">
+          <circle class="outer" cx="${cx}" cy="${cy}" r="11" fill="${col}" fill-opacity=".18" stroke="none"/>
+          <circle cx="${cx}" cy="${cy}" r="8" fill="${col}" fill-opacity=".8" stroke="${col}" stroke-width="1.5">${pulse}</circle>
+          <circle cx="${cx}" cy="${cy}" r="4" fill="rgba(255,255,255,.6)"/>
+          <text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="7.5" font-family="Segoe UI,sans-serif" fill="rgba(200,220,235,.75)" pointer-events="none">${lbl}</text>
+        </g>`;
+      });
+
+      return `<svg viewBox="0 0 220 ${H}" xmlns="http://www.w3.org/2000/svg" style="max-height:460px">${body}${dots}</svg>`;
+    }
+
+    // ── Сборка карточки ──
+    const viewLabels = { top:'🔭 Сверху', hood:'🔧 Капот', bottom:'⬇ Снизу' };
+    let activeView = 'top';
+
+    const tabBar = document.createElement('div'); tabBar.className='sv-tabs';
+    const svgWrap = document.createElement('div'); svgWrap.className='sv-wrap';
+    const tooltip = document.createElement('div'); tooltip.className='sv-tooltip'; tooltip.id='sv-tt';
+    svgWrap.appendChild(tooltip);
+    const legend = document.createElement('div'); legend.className='sv-legend';
+    legend.innerHTML=`
+      <span><i style="background:#0ff"></i>Норма</span>
+      <span><i style="background:#ffa040"></i>Внимание</span>
+      <span><i style="background:#ff4d4d"></i>Критично</span>
+      <span style="font-size:9px;color:rgba(0,255,255,.35);margin-left:4px">Нажми на точку для деталей</span>
+    `;
+
+    ['top','hood','bottom'].forEach(v=>{
+      const btn=document.createElement('button');
+      btn.className='sv-tab'+(v==='top'?' on':'');
+      btn.textContent=viewLabels[v];
+      btn.onclick=()=>{
+        activeView=v;
+        tabBar.querySelectorAll('.sv-tab').forEach(b=>b.classList.toggle('on',b===btn));
+        svgWrap.querySelector('svg').outerHTML; // placeholder
+        const existing=svgWrap.querySelector('svg');
+        if(existing) existing.remove();
+        const dummy=document.createElement('div');
+        dummy.innerHTML=buildSVG(v);
+        svgWrap.insertBefore(dummy.firstChild, tooltip);
+        bindHotspots();
+        tooltip.classList.remove('show');
+      };
+      tabBar.appendChild(btn);
+    });
+
+    // Первый рендер
+    const initDiv=document.createElement('div');
+    initDiv.innerHTML=buildSVG('top');
+    svgWrap.insertBefore(initDiv.firstChild, tooltip);
+
+    schCard.appendChild(tabBar);
+    schCard.appendChild(svgWrap);
+    schCard.appendChild(legend);
+    c.appendChild(schCard);
+
+    // ── Обработка тапов/кликов на хотспоты ──
+    function bindHotspots(){
+      svgWrap.querySelectorAll('.sv-hs').forEach(g=>{
+        g.onclick=(e)=>{
+          const key=g.dataset.key;
+          const st=statusMap2[key];
+          if(!st){ tooltip.classList.remove('show'); return; }
+          const r=svgWrap.getBoundingClientRect();
+          const gBox=g.getBoundingClientRect();
+          let tx=gBox.left-r.left+20, ty=gBox.top-r.top-10;
+          if(tx+240>r.width) tx=r.width-240;
+          if(ty<0) ty=0;
+
+          const pctLine = st.condOnly
+            ? `<div class="sv-tt-row"><span>Статус</span><b style="color:${st.color}">${st.statusText}</b></div>`
+            : `<div class="sv-tt-row"><span>Износ</span><b style="color:${st.color}">${st.pct.toFixed(0)}%</b></div>
+               <div class="sv-tt-row"><span>Осталось</span><b>${st.rem>0?fmtI(st.rem)+' км':'⚠ Просрочено'}</b></div>
+               <div class="sv-tt-row"><span>Каждые</span><b>${fmtI(st.km)} км</b></div>`;
+          const lastLine = st.lastKm>0
+            ? `<div class="sv-tt-row"><span>Последнее</span><b>${fmtI(st.lastKm)} км</b></div>` : '';
+
+          tooltip.innerHTML=`
+            <div class="sv-tt-name" style="color:${st.color}">${st.label}</div>
+            ${pctLine}${lastLine}
+            ${st.notes?`<div style="margin-top:6px;font-size:10px;color:#7a9aaa;border-top:1px solid rgba(255,255,255,.07);padding-top:5px">${st.notes}</div>`:''}
+          `;
+          tooltip.style.left=tx+'px';
+          tooltip.style.top=ty+'px';
+          tooltip.classList.add('show');
+          e.stopPropagation();
+        };
+      });
+    }
+    bindHotspots();
+
+    // Закрыть тултип при тапе мимо
+    svgWrap.addEventListener('click', e=>{ if(!e.target.closest('.sv-hs')) tooltip.classList.remove('show'); });
+
+    // Wear intervals card
     const wc=this._card();
     wc.innerHTML='<div class="card-title">Прогноз обслуживания</div>';
     items.forEach(it=>{
       const div=document.createElement('div'); div.className='wear-row';
-      const critClass=it.crit==='critical'?'crit':it.crit==='warning'?'warn':'info';
-      const critLbl={critical:'КРИТ',warning:'ВНМ',info:'ОК'}[it.crit]||'ОК';
-      if(it.condOnly){
+      const critClass=(it.crit||it.criticality)==='critical'?'crit':(it.crit||it.criticality)==='warning'?'warn':'info';
+      const critLbl={critical:'КРИТ',warning:'ВНМ',info:'ОК'}[it.crit||it.criticality]||'ОК';
+      const condOnly=isCondOnly(it);
+      if(condOnly){
         const cs=it.conditionStatus||'ok';
         const pctMap={ok:0,watch:35,replace:70,critical:100};
         div.innerHTML=`<div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span>
-          <select class="cond-sel" style="color:${cCol(cs)}">
+          <select class="cond-sel" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:${cCol(cs)};font-size:10px;padding:3px 7px;cursor:pointer;outline:none;width:auto">
             <option value="ok" ${cs==='ok'?'selected':''}>Норма</option>
             <option value="watch" ${cs==='watch'?'selected':''}>Наблюдение</option>
             <option value="replace" ${cs==='replace'?'selected':''}>Заменить</option>
@@ -774,12 +1401,12 @@ class App {
           <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs]||0}%;background:${cCol(cs)}"></div></div>
           ${it.notes?`<div class="svc-notes">${it.notes}</div>`:''}`;
         div.querySelector('.cond-sel').onchange=async e=>{
-          await this.db.set(S.SVC,{...it,conditionStatus:e.target.value});
+          await this.db.set(S.SVC,{...it,conditionStatus:e.target.value,condOnly:true,conditionOnly:true});
           e.target.style.color=cCol(e.target.value);
         };
       } else {
         const done=Math.max(0,odo-it.lastServiceOdo);
-        const pct=Math.min(100,(done/it.km)*100);
+        const pct=it.km>0?Math.min(100,(done/it.km)*100):0;
         const rem=Math.max(0,it.km-done);
         const col=wCol(pct);
         const eta=avgDay>0&&rem>0?dStr(new Date(Date.now()+(rem/avgDay)*86400000)):'—';
@@ -792,10 +1419,10 @@ class App {
     });
     c.appendChild(wc);
 
-    /* Add service */
+    // Add service record
     const sc=this._card();
-    const itemOpts=items.map(it=>`<option value="${it.id}">${it.label}</option>`).join('');
-    sc.innerHTML=`<div class="card-title">Записать ТО</div>
+    const itemOpts=items.filter(it=>!isCondOnly(it)).map(it=>`<option value="${it.id}">${it.label}</option>`).join('');
+    sc.innerHTML=`<div class="card-title">Записать ТО / работу</div>
       <div class="ig"><label class="lbl">Работа</label><select id="svc-it">${itemOpts}<option value="other">Другое…</option></select></div>
       <div class="g2">
         <div class="ig"><label class="lbl">Пробег (км)</label><input type="number" id="svc-o" value="${odo}"></div>
@@ -826,7 +1453,7 @@ class App {
       this._render();
     };
 
-    /* Logs */
+    // Logs
     const logs=(await this.db.all(S.GARAGE)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,15);
     const jc=this._card();
     jc.innerHTML='<div class="card-title">Журнал обслуживания</div>';
@@ -842,10 +1469,10 @@ class App {
     });
     c.appendChild(jc);
 
-    /* Parts notes */
+    // Parts notes
     const ac=this._card();
     ac.innerHTML=`<div class="card-title">Артикулы и заметки</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей — чтобы не гуглить перед ТО</div>
       <textarea id="parts-n" placeholder="Масло: Castrol 5W-30&#10;Фильтр: MANN W712/75&#10;Свечи: NGK BPR5E&#10;...">${partsNotes||''}</textarea>
       <button class="btn c full" id="parts-s">Сохранить</button>`;
     c.appendChild(ac);
@@ -856,7 +1483,7 @@ class App {
     };
   }
 
-  /* ── 3D PRINT ── */
+  /* ═══════ 3D PRINT ═══════ */
   async _print(c){
     const hr=await this.db.cfg('printHourRate');
     const sf=await this.db.cfg('printSetupFee');
@@ -920,7 +1547,6 @@ class App {
       };
     };
 
-    /* History */
     const pTxs=(await this.db.all(S.TX)).filter(t=>t.category==='3D-печать'&&t.type==='income').sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,12);
     const hc=this._card();
     hc.innerHTML='<div class="card-title">История заказов</div>';
@@ -936,7 +1562,7 @@ class App {
     c.appendChild(hc);
   }
 
-  /* ── HUB ── */
+  /* ═══════ HUB ═══════ */
   async _hub(c){
     const txs=await this.db.all(S.TX);
     const odo=await this.db.cfg('currentOdometer');
@@ -960,14 +1586,14 @@ class App {
     const freeCash=Math.max(0,balance-survRes-mandatory-1000);
     const lastExp=txs.filter(t=>t.type==='expense').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
     const daysSince=lastExp?Math.floor((now-new Date(lastExp.date))/86400000):999;
-    const overdueItems=items.filter(it=>!it.condOnly&&it.enabled&&(odo-it.lastServiceOdo)>=it.km);
-    const critItems=items.filter(it=>it.condOnly&&it.conditionStatus==='critical');
+    const overdueItems=items.filter(it=>!isCondOnly(it)&&it.enabled!==false&&it.km>0&&(odo-it.lastServiceOdo)>=it.km);
+    const critItems=items.filter(it=>isCondOnly(it)&&it.conditionStatus==='critical');
 
-    /* Reminders */
+    // Reminders
     const remCard=this._card();
     remCard.innerHTML='<div class="card-title">Центр уведомлений</div>';
     let any=false;
-    if(daysSince>=3){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход: ${lastExp?dStr(lastExp.date):'давно'} (${daysSince} дн. назад). Возможно что-то не записал?</div>`);}
+    if(daysSince>=3){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход: ${lastExp?dStr(lastExp.date):'давно'} (${daysSince} дн. назад). Что-то не записал?</div>`);}
     if(freeCash>500){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b> — можно на цели!</div>`);}
     if(overdueItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🚗 Просрочено ТО: ${overdueItems.map(it=>it.label).join(', ')}</div>`);}
     if(critItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">⚠️ Критичное состояние: ${critItems.map(it=>it.label).join(', ')}</div>`);}
@@ -977,10 +1603,10 @@ class App {
       const dL=Math.ceil((dl-now)/86400000);
       if(dL>0&&dL<14&&saved<goal.targetAmount){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🎯 "${goal.name}" — ${dL} дн. до дедлайна! Накоплено ${fmt(saved)} из ${fmt(goal.targetAmount)}</div>`);}
     });
-    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Всё под контролем, Дима!</div>');
+    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Всё под контролем, Дима! Хорошая работа.</div>');
     c.appendChild(remCard);
 
-    /* Summary */
+    // Summary
     const sc=this._card();
     sc.innerHTML=`<div class="card-title">Сводка</div>
       <div class="g3">
@@ -990,20 +1616,18 @@ class App {
       </div>`;
     c.appendChild(sc);
 
-    /* Car tips */
+    // Car tips
     const autoCard=this._card();
     autoCard.innerHTML='<div class="card-title">💡 Совет по Peugeot 206</div><div id="auto-tips"></div><button class="btn c full" id="ref-tips">🔄 Другой совет</button>';
     c.appendChild(autoCard);
     const showTips=()=>{
       const seed=Date.now();
-      const tip1=CAR_TIPS[seed%CAR_TIPS.length];
-      const tip2=CAR_TIPS[(seed+7)%CAR_TIPS.length];
-      autoCard.querySelector('#auto-tips').innerHTML=[tip1,tip2].map(t=>`<div class="tip">${t}</div>`).join('');
+      const t1=CAR_TIPS[seed%CAR_TIPS.length], t2=CAR_TIPS[(seed+7)%CAR_TIPS.length];
+      autoCard.querySelector('#auto-tips').innerHTML=[t1,t2].map(t=>`<div class="tip">${t}</div>`).join('');
     };
-    autoCard.querySelector('#ref-tips').onclick=showTips;
-    showTips();
+    autoCard.querySelector('#ref-tips').onclick=showTips; showTips();
 
-    /* Print tips */
+    // Print tips
     const prCard=this._card();
     const sb=now.getDate()+now.getMonth()*31;
     prCard.innerHTML=`<div class="card-title">🖨 Совет по 3D-печати</div>
@@ -1011,7 +1635,7 @@ class App {
       <div class="tip">${PRINT_TIPS[(sb+5)%PRINT_TIPS.length]}</div>`;
     c.appendChild(prCard);
 
-    /* Recipes */
+    // Recipes
     const recCard=this._card();
     recCard.innerHTML=`<div class="card-title">🍳 Быстрые рецепты</div>
       <div class="search-row">
@@ -1031,17 +1655,15 @@ class App {
       fil.forEach((rec,idx)=>{
         const rd=document.createElement('div'); rd.className='recipe';
         rd.innerHTML=`<div class="recipe-hd">
-            <div><div class="recipe-name">${rec.name}</div><div class="recipe-meta">⏱ ${rec.time} · 🔥 ${rec.cal} · ${rec.cat}</div></div>
+            <div><div class="recipe-name">${rec.name} <span style="font-size:9px;background:rgba(0,255,255,.1);color:var(--cyan);padding:1px 6px;border-radius:6px;margin-left:4px">${rec.cat}</span></div><div class="recipe-meta">⏱ ${rec.time} · 🔥 ${rec.cal}</div></div>
             <span style="color:var(--violet);font-size:20px;line-height:1">›</span>
           </div>
           <div class="recipe-body" id="rb-${idx}">
-            <div class="rsec">Ингредиенты</div>
-            <ul>${rec.ingr.map(i=>`<li>${i}</li>`).join('')}</ul>
+            ${rec.ingr?`<div class="rsec">Ингредиенты</div><ul>${rec.ingr.map(i=>`<li>${i}</li>`).join('')}</ul>`:''}
             <div class="rsec">Приготовление</div>
-            <ol>${rec.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+            <ol>${(rec.steps||rec.seps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
           </div>`;
-        const body=rd.querySelector(`#rb-${idx}`);
-        const arr=rd.querySelector('span:last-child');
+        const body=rd.querySelector(`#rb-${idx}`); const arr=rd.querySelector('span:last-child');
         rd.onclick=()=>{body.classList.toggle('open');arr.textContent=body.classList.contains('open')?'‹':'›';};
         list.appendChild(rd);
       });
@@ -1051,7 +1673,7 @@ class App {
     recCard.querySelector('#rec-q').oninput=renderRec;
   }
 
-  /* ── STATS ── */
+  /* ═══════ STATS ═══════ */
   async _stats(c){
     const txs=await this.db.all(S.TX);
     const now=new Date();
@@ -1061,6 +1683,7 @@ class App {
       this.statsEnd=now.toISOString().split('T')[0];
     }
 
+    // Period selector
     const pCard=this._card();
     pCard.innerHTML=`<div class="card-title">Период анализа</div>
       <div class="g2" style="margin-bottom:10px">
@@ -1070,16 +1693,21 @@ class App {
       <button class="btn c" id="ap">Применить</button>
       <div class="btn-row" style="margin-top:8px">
         <button class="btn v" id="qt">Сегодня</button>
-        <button class="btn v" id="qm">Этот месяц</button>
-        <button class="btn v" id="qy">Этот год</button>
+        <button class="btn v" id="qm">Месяц</button>
+        <button class="btn v" id="qy">Год</button>
+        <button class="btn v" id="qa">Всё время</button>
       </div>`;
     c.appendChild(pCard);
-
     const upd=(s,e)=>{this.statsStart=s;this.statsEnd=e;this._render();};
     pCard.querySelector('#ap').onclick=()=>{const s=pCard.querySelector('#as').value,e=pCard.querySelector('#ae').value;if(s&&e&&s<=e)upd(s,e);};
-    pCard.querySelector('#qt').onclick=()=>{const t=now.toISOString().split('T')[0];upd(t,t);};
+    pCard.querySelector('#qt').onclick=()=>{const t=today();upd(t,t);};
     pCard.querySelector('#qm').onclick=()=>upd(new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0],new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0]);
     pCard.querySelector('#qy').onclick=()=>upd(`${now.getFullYear()}-01-01`,`${now.getFullYear()}-12-31`);
+    pCard.querySelector('#qa').onclick=()=>{
+      if(!txs.length){upd(today(),today());return;}
+      const sorted=[...txs].sort((a,b)=>new Date(a.date)-new Date(b.date));
+      upd(sorted[0].date.split('T')[0], today());
+    };
 
     const s0=new Date(this.statsStart), e0=new Date(this.statsEnd); e0.setHours(23,59,59,999);
     const pTxs=txs.filter(t=>{const d=new Date(t.date);return d>=s0&&d<=e0;});
@@ -1087,6 +1715,7 @@ class App {
     const totalExp=pTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
     const saldo=totalInc-totalExp;
 
+    // Summary
     const sumCard=this._card();
     sumCard.innerHTML=`<div class="card-title">${this.statsStart} — ${this.statsEnd}</div>
       <div class="g3">
@@ -1096,62 +1725,161 @@ class App {
       </div>`;
     c.appendChild(sumCard);
 
-    /* Pie */
+    // Monthly bar chart
+    const monthlyData={};
+    txs.forEach(t=>{
+      const d=new Date(t.date);
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if(!monthlyData[key]) monthlyData[key]={inc:0,exp:0};
+      if(t.type==='income') monthlyData[key].inc+=t.amount;
+      else monthlyData[key].exp+=t.amount;
+    });
+    const months=Object.keys(monthlyData).sort().slice(-9);
+    if(months.length>0){
+      const barCard=this._card();
+      barCard.innerHTML='<div class="card-title">Доходы vs Расходы по месяцам</div>';
+      const maxVal=Math.max(...months.map(m=>Math.max(monthlyData[m].inc,monthlyData[m].exp)),1);
+      const barLeg=`<div class="bar-legend"><span><div class="dot" style="background:rgba(0,255,136,.7)"></div>Доходы</span><span><div class="dot" style="background:rgba(255,77,77,.7)"></div>Расходы</span></div>`;
+      let barsHtml='<div class="bar-chart">';
+      months.forEach(m=>{
+        const d=monthlyData[m];
+        const iw=Math.round((d.inc/maxVal)*100);
+        const ew=Math.round((d.exp/maxVal)*100);
+        const lbl=m.substring(5)+'/'+m.substring(2,4);
+        barsHtml+=`<div class="bar-row">
+          <div class="bar-label">${lbl}</div>
+          <div style="flex:1">
+            <div class="bar-track"><div class="bar-inc" style="width:${iw}%"></div></div>
+            <div class="bar-track" style="margin-top:2px"><div class="bar-exp" style="width:${ew}%"></div></div>
+          </div>
+          <div class="bar-val" style="text-align:right">
+            <div style="color:rgba(0,255,136,.8);font-size:9px">+${fmtI(Math.round(d.inc))}</div>
+            <div style="color:rgba(255,77,77,.8);font-size:9px">−${fmtI(Math.round(d.exp))}</div>
+          </div>
+        </div>`;
+      });
+      barsHtml+='</div>';
+      barCard.insertAdjacentHTML('beforeend',barLeg+barsHtml);
+      c.appendChild(barCard);
+    }
+
+    // Expense pie chart
     const expByCat={};
     pTxs.filter(t=>t.type==='expense').forEach(t=>{expByCat[t.category]=(expByCat[t.category]||0)+t.amount;});
     const cats=Object.keys(expByCat).sort((a,b)=>expByCat[b]-expByCat[a]);
     const vals=cats.map(k=>expByCat[k]);
-    const totalE=vals.reduce((s,v)=>s+v,0);
+    const totalE=vals.reduce((s,v)=>s+v,0)||1;
     const COLORS=['#0ff','#9b4dff','#0f8','#ff5555','#ffa040','#38c8f0','#f06dff','#ffeb40','#ff9b4d'];
 
     const pieCard=this._card();
     pieCard.innerHTML='<div class="card-title">Расходы по категориям</div>';
-    if(!cats.length){pieCard.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет расходов</div>');}
-    else {
+    if(!cats.length){
+      pieCard.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет расходов за период</div>');
+    } else {
       const wrap=document.createElement('div'); wrap.className='canvas-wrap';
-      const canvas=document.createElement('canvas'); canvas.width=440; canvas.height=220;
+      const canvas=document.createElement('canvas'); canvas.width=420; canvas.height=220;
       wrap.appendChild(canvas); pieCard.appendChild(wrap);
-      const leg=document.createElement('div'); leg.style.cssText='margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 12px';
-      cats.forEach((cat,i)=>{leg.insertAdjacentHTML('beforeend',`<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#a0b0c0"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${COLORS[i%COLORS.length]};flex-shrink:0"></span>${cat}: ${fmt(vals[i])} ₽ (${((vals[i]/totalE)*100).toFixed(1)}%)</span>`);});
+      // Legend (ALL labels here, none on chart)
+      const leg=document.createElement('div'); leg.className='chart-legend';
+      cats.forEach((cat,i)=>{
+        leg.insertAdjacentHTML('beforeend',`<span><span class="ld" style="background:${COLORS[i%COLORS.length]}"></span>${cat}: ${fmt(vals[i])} ₽ (${((vals[i]/totalE)*100).toFixed(1)}%)</span>`);
+      });
       pieCard.appendChild(leg);
       requestAnimationFrame(()=>{
-        const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-12;
+        const ctx=canvas.getContext('2d');
+        const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
+        const R=Math.min(cx,cy)-8;
         let a=-Math.PI/2; ctx.clearRect(0,0,W,H);
-        vals.forEach((v,i)=>{const sw=(v/totalE)*2*Math.PI;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,a,a+sw);ctx.closePath();ctx.fillStyle=COLORS[i%COLORS.length];ctx.fill();ctx.strokeStyle='rgba(8,8,14,.8)';ctx.lineWidth=2;ctx.stroke();a+=sw;});
-        ctx.beginPath();ctx.arc(cx,cy,R*.48,0,2*Math.PI);ctx.fillStyle='rgba(8,8,14,.94)';ctx.fill();
-        ctx.fillStyle='#0ff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(fmt(totalE)+' ₽',cx,cy-6);
-        ctx.fillStyle='#6a8090';ctx.font='9px Segoe UI';ctx.fillText('расходов',cx,cy+8);
+        vals.forEach((v,i)=>{
+          const sw=(v/totalE)*2*Math.PI;
+          ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,a,a+sw);ctx.closePath();
+          ctx.fillStyle=COLORS[i%COLORS.length];ctx.fill();
+          ctx.strokeStyle='rgba(8,8,14,.7)';ctx.lineWidth=2;ctx.stroke();
+          a+=sw;
+        });
+        // Donut hole
+        ctx.beginPath();ctx.arc(cx,cy,R*.46,0,2*Math.PI);
+        ctx.fillStyle='rgba(8,8,14,.95)';ctx.fill();
+        // Center text — larger font, clear position
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle='#0ff';ctx.font=`bold 13px Segoe UI,sans-serif`;
+        ctx.fillText(fmtI(Math.round(totalE))+' ₽',cx,cy-8);
+        ctx.fillStyle='rgba(160,180,200,.6)';ctx.font=`11px Segoe UI,sans-serif`;
+        ctx.fillText('расходы',cx,cy+10);
       });
     }
     c.appendChild(pieCard);
 
-    /* Line chart */
+    // Income pie
+    const incByCat={};
+    pTxs.filter(t=>t.type==='income').forEach(t=>{incByCat[t.category]=(incByCat[t.category]||0)+t.amount;});
+    const incCats=Object.keys(incByCat).sort((a,b)=>incByCat[b]-incByCat[a]);
+    if(incCats.length){
+      const incCard=this._card();
+      incCard.innerHTML='<div class="card-title">Доходы по источникам</div>';
+      const wrap2=document.createElement('div'); wrap2.className='canvas-wrap';
+      const cv2=document.createElement('canvas'); cv2.width=420; cv2.height=200;
+      wrap2.appendChild(cv2); incCard.appendChild(wrap2);
+      const leg2=document.createElement('div'); leg2.className='chart-legend';
+      const totalI=incCats.reduce((s,k)=>s+incByCat[k],0)||1;
+      const ICOLORS=['#0f8','#22d4a4','#38f8b0','#0ea5e9','#34d399','#6ee7b7','#10b981','#059669'];
+      incCats.forEach((cat,i)=>{leg2.insertAdjacentHTML('beforeend',`<span><span class="ld" style="background:${ICOLORS[i%ICOLORS.length]}"></span>${cat}: ${fmt(incByCat[cat])} ₽ (${((incByCat[cat]/totalI)*100).toFixed(1)}%)</span>`);});
+      incCard.appendChild(leg2);
+      requestAnimationFrame(()=>{
+        const ctx=cv2.getContext('2d');
+        const W=cv2.width,H=cv2.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-8;
+        let a=-Math.PI/2; ctx.clearRect(0,0,W,H);
+        incCats.forEach((cat,i)=>{
+          const sw=(incByCat[cat]/totalI)*2*Math.PI;
+          ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,a,a+sw);ctx.closePath();
+          ctx.fillStyle=ICOLORS[i%ICOLORS.length];ctx.fill();
+          ctx.strokeStyle='rgba(8,8,14,.7)';ctx.lineWidth=2;ctx.stroke();
+          a+=sw;
+        });
+        ctx.beginPath();ctx.arc(cx,cy,R*.46,0,2*Math.PI);ctx.fillStyle='rgba(8,8,14,.95)';ctx.fill();
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle='#0f8';ctx.font='bold 13px Segoe UI,sans-serif';
+        ctx.fillText(fmtI(Math.round(totalI))+' ₽',cx,cy-8);
+        ctx.fillStyle='rgba(160,180,200,.6)';ctx.font='11px Segoe UI,sans-serif';
+        ctx.fillText('доходы',cx,cy+10);
+      });
+      c.appendChild(incCard);
+    }
+
+    // Balance line chart
     const sorted=[...pTxs].sort((a,b)=>new Date(a.date)-new Date(b.date));
     const pts=[]; let run=0;
     sorted.forEach(t=>{run=t.type==='income'?run+t.amount:run-t.amount;pts.push(run);});
     if(pts.length>=2){
       const lineCard=this._card();
       lineCard.innerHTML='<div class="card-title">Динамика баланса за период</div>';
-      const lWrap=document.createElement('div'); lWrap.className='canvas-wrap';
-      const lc=document.createElement('canvas'); lc.width=440; lc.height=130;
-      lWrap.appendChild(lc); lineCard.appendChild(lWrap);
+      const lw=document.createElement('div'); lw.className='canvas-wrap';
+      const lc=document.createElement('canvas'); lc.width=420; lc.height=130;
+      lw.appendChild(lc); lineCard.appendChild(lw);
       c.appendChild(lineCard);
       requestAnimationFrame(()=>{
         const ctx=lc.getContext('2d'),W=lc.width,H=lc.height,n=pts.length;
         const minY=Math.min(...pts),maxY=Math.max(...pts),rng=maxY-minY||1;
-        const px=12,py=12,toX=i=>px+(i/(n-1))*(W-px*2),toY=v=>H-py-((v-minY)/rng)*(H-py*2);
+        const px=14,py=16;
+        const toX=i=>px+(i/(n-1))*(W-px*2);
+        const toY=v=>H-py-((v-minY)/rng)*(H-py*2);
         ctx.clearRect(0,0,W,H);
         const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(0,255,255,.15)');gr.addColorStop(1,'rgba(0,255,255,0)');
         ctx.beginPath();ctx.moveTo(toX(0),toY(pts[0]));pts.forEach((v,i)=>ctx.lineTo(toX(i),toY(v)));
         ctx.lineTo(toX(n-1),H);ctx.lineTo(toX(0),H);ctx.closePath();ctx.fillStyle=gr;ctx.fill();
-        ctx.beginPath();ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.lineJoin='round';pts.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.stroke();
+        ctx.beginPath();ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.lineJoin='round';
+        pts.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.stroke();
         pts.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),2.5,0,2*Math.PI);ctx.fillStyle='#0ff';ctx.fill();});
-        ctx.fillStyle='#6a8090';ctx.font='9px Segoe UI';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(fmt(maxY)+' ₽',px+2,py);ctx.textBaseline='bottom';ctx.fillText(fmt(minY)+' ₽',px+2,H-py);
+        // Labels: top-left and bottom-left to avoid overlap with the line
+        ctx.fillStyle='rgba(160,180,200,.7)';ctx.font='10px Segoe UI,sans-serif';
+        ctx.textAlign='left';
+        ctx.textBaseline='top'; ctx.fillText('↑ '+fmt(maxY)+' ₽', 4, 2);
+        ctx.textBaseline='bottom'; ctx.fillText('↓ '+fmt(minY)+' ₽', 4, H-2);
       });
     }
   }
 
-  /* ── EXPORT / IMPORT ── */
+  /* ═══════ EXPORT / IMPORT ═══════ */
   async _export(){
     const data={version:5,exportedAt:new Date().toISOString(),
       transactions:await this.db.all(S.TX),garage_logs:await this.db.all(S.GARAGE),
@@ -1159,7 +1887,8 @@ class App {
       goals:await this.db.all(S.GOALS),settings:await this.db.all(S.CFG)};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=`sentinel-backup-${today()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    const a=document.createElement('a');a.href=url;a.download=`sentinel-backup-${today()}.json`;
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   }
   async _import(file){
     if(!file) return;
@@ -1178,7 +1907,7 @@ class App {
 }
 
 new App();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script>
 </body>
 </html>
