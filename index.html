@@ -464,6 +464,13 @@ const wCol  = p => p<60?'#0ff':p<85?'#ffa040':'#ff4d4d';
 const cCol  = c => ({ok:'#0f8',watch:'#ffa040',replace:'#ff8040',critical:'#ff4d4d'}[c]||'#0f8');
 // Handle both condOnly and conditionOnly for backwards compatibility
 const isCondOnly = it => !!(it.condOnly || it.conditionOnly);
+                  
+function parseMoney(value) {
+  if (value === undefined || value === null) return 0;
+  const str = String(value).replace(',', '.').trim();
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+}
 
 function adjustedDate(y,m,d){
   const dt=new Date(y,m,d); const dow=dt.getDay();
@@ -649,7 +656,7 @@ class App {
       const ed=balCard.querySelector('#bal-ed');
       if(ed.innerHTML){ed.innerHTML='';return;}
       ed.innerHTML=`<div style="display:flex;gap:8px;margin-top:12px"><input type="number" id="bi" step="0.01" value="${balance}" style="flex:1"><button class="btn c" id="bs">OK</button></div>`;
-      ed.querySelector('#bs').onclick=async()=>{const v=parseFloat(ed.querySelector('#bi').value);if(!isNaN(v)){await this.db.setCfg('balance',v);this._render();}};
+      ed.querySelector('#bs').onclick=async()=>{const v=parseMoney(ed.querySelector('#bi').value);if(!isNaN(v)){await this.db.setCfg('balance',v);this._render();}};
     };
 
     // Budget
@@ -669,8 +676,8 @@ class App {
       </details>`;
     c.appendChild(budCard);
     budCard.querySelector('#bud-save').onclick=async()=>{
-      const cap=parseFloat(budCard.querySelector('#budcap').value);
-      const m=parseFloat(budCard.querySelector('#mand').value)||0;
+  const cap=parseMoney(budCard.querySelector('#budcap').value);
+  const m=parseMoney(budCard.querySelector('#mand').value);
       if(cap>0){await this.db.setCfg('monthlyBudgetCap',cap);await this.db.setCfg('mandatoryPayments',m);this._render();}
     };
 
@@ -718,8 +725,8 @@ class App {
     };
     fillCats(); typeEl.onchange=fillCats;
     txCard.querySelector('#tx-add').onclick=async()=>{
-      const amt=parseFloat(txCard.querySelector('#tx-amt').value);
-      if(!amt||amt<=0) return;
+  const amt=parseMoney(txCard.querySelector('#tx-amt').value);
+  if(!amt||amt<=0) return;
       const type=typeEl.value; let cat=catEl.value, comment=txCard.querySelector('#tx-comment').value.trim();
       const dt=txCard.querySelector('#tx-date').value||todayStr;
       if(cat.startsWith('ЦЕЛЬ:')){comment=cat.substring(5);cat='Цель';}
@@ -846,8 +853,8 @@ class App {
       gc.querySelector(`#ge-s-${goal.id}`).onclick=async()=>{
         const updated={...goal,
           name:gc.querySelector(`#ge-n-${goal.id}`).value.trim()||goal.name,
-          targetAmount:parseFloat(gc.querySelector(`#ge-t-${goal.id}`).value)||goal.targetAmount,
-          deadline:gc.querySelector(`#ge-d-${goal.id}`).value||goal.deadline,
+          targetAmount:parseMoney(gc.querySelector(`#ge-t-${goal.id}`).value)||goal.targetAmount,
+monthlyAllocation:parseMoney(gc.querySelector(`#ge-a-${goal.id}`).value)||0,
           monthlyAllocation:parseFloat(gc.querySelector(`#ge-a-${goal.id}`).value)||0,
           priority:parseInt(gc.querySelector(`#ge-p-${goal.id}`).value)||1,
           color:selColor,
@@ -856,8 +863,8 @@ class App {
       };
 
       gc.querySelector(`#ga-${goal.id}`).onclick=async()=>{
-        const amt=parseFloat(gc.querySelector(`#gp-${goal.id}`).value);
-        if(!amt||amt<=0) return;
+  const amt=parseMoney(gc.querySelector(`#gp-${goal.id}`).value);
+  if(!amt||amt<=0) return;
         await this.db.add(S.TX,{amount:amt,type:'expense',category:'Цель',comment:goal.name,date:new Date().toISOString()});
         const bal=await this.db.cfg('balance');
         await this.db.setCfg('balance',bal-amt);
@@ -1295,7 +1302,7 @@ class App {
     sc.querySelector('#svc-add').onclick = async () => {
       const itemId = parseInt(sc.querySelector('#svc-it').value);
       const svcOdo = parseFloat(sc.querySelector('#svc-o').value);
-      const cost = parseFloat(sc.querySelector('#svc-c').value) || 0;
+      const cost = parseMoney(sc.querySelector('#svc-c').value);
       const comment = sc.querySelector('#svc-n').value.trim();
       const dt = sc.querySelector('#svc-d').value || today();
       if (isNaN(svcOdo)) return;
@@ -1372,9 +1379,9 @@ class App {
       <button class="btn v full" id="pr-save">Сохранить</button>`;
     c.appendChild(paramCard);
     paramCard.querySelector('#pr-save').onclick=async()=>{
-      await this.db.setCfg('printHourRate',parseFloat(paramCard.querySelector('#pr-r').value)||hr);
-      await this.db.setCfg('printSetupFee',parseFloat(paramCard.querySelector('#pr-f').value)||sf);
-      await this.db.setCfg('printMinPrice',parseFloat(paramCard.querySelector('#pr-m').value)||mp);
+      await this.db.setCfg('printHourRate',parseMoney(paramCard.querySelector('#pr-r').value)||hr);
+await this.db.setCfg('printSetupFee',parseMoney(paramCard.querySelector('#pr-f').value)||sf);
+await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m').value)||mp);
       const f=document.createElement('div');f.textContent='✓ Сохранено';f.style.cssText='color:var(--green);font-size:11px;margin-top:6px';paramCard.appendChild(f);
       setTimeout(()=>f.remove(),700);
     };
