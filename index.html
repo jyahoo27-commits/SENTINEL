@@ -13,7 +13,7 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 :root{--bg:#08080e;--card:rgba(12,12,22,.9);--border:rgba(0,255,255,.18);--cyan:#0ff;--violet:#9b4dff;--green:#0f8;--red:#ff4d4d;--orange:#ffa040;--text:#d8e0ea;--muted:#6a8090}
-html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;overscroll-behavior-y:none}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;height:100%;overflow-x:hidden}
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
 
 /* ── LOGO ANIMATION ── */
@@ -33,7 +33,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
 .tab.active{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
 
 /* ── CONTENT ── */
-#app-content{padding:13px 13px 20px;overflow-x:hidden}
+#app-content{padding:13px 13px 20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;height:100%}
 
 /* ── SWIPE TRANSITION ── */
 .page-slide-left{animation:slideL .22s ease forwards}
@@ -898,7 +898,7 @@ class App {
   }
 
   /* ═══════ GARAGE ═══════ */
-  async _garage(c){
+    async _garage(c){
     const odo=await this.db.cfg('currentOdometer');
     const hist=await this.db.all(S.ODO);
     const items=(await this.db.all(S.SVC)).filter(it=>it.enabled!==false).sort((a,b)=>a.id-b.id);
@@ -936,118 +936,7 @@ class App {
       };
     };
 
-    // ═══════════════════════════════════════════════════════════════════
-    // CAR SCHEMATIC — Peugeot 206 1.1i TU1JP 2000 · 5-door · VF32AHFZE
-    // Три вида: СВЕРХУ / КАПОТ / СНИЗУ — переключаются кнопками
-    // ═══════════════════════════════════════════════════════════════════
-    const schCard = this._card();
-    schCard.innerHTML = '<div class="card-title">🚗 Peugeot 206 · Интерактивная схема</div>';
-
-    // ── Инжектируем доп. стили для схемы (один раз) ──
-    if (!document.getElementById('schema-styles')) {
-      const sts = document.createElement('style'); sts.id='schema-styles';
-      sts.textContent = `
-        .sv-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-        .sv-tab{padding:6px 14px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;cursor:pointer;border:1px solid rgba(0,255,255,.25);color:rgba(0,255,255,.5);background:transparent;transition:all .2s;font-family:inherit}
-        .sv-tab.on{background:rgba(0,255,255,.12);border-color:#0ff;color:#0ff;text-shadow:0 0 8px #0ff}
-        .sv-wrap{position:relative;width:100%;border-radius:16px;overflow:hidden;background:rgba(0,0,4,.6);border:1px solid rgba(0,255,255,.08)}
-        .sv-wrap svg{display:block;width:100%}
-        .sv-hs{cursor:pointer;transition:transform .15s}
-        .sv-hs:active{transform:scale(1.2)}
-        .sv-hs:hover circle.outer{r:13}
-        .sv-tooltip{position:absolute;background:rgba(6,6,18,.97);border:1px solid rgba(0,255,255,.3);border-radius:12px;padding:10px 13px;font-size:11px;color:#d8e0ea;pointer-events:none;z-index:50;min-width:175px;max-width:230px;box-shadow:0 6px 30px rgba(0,0,0,.6);line-height:1.65;display:none}
-        .sv-tooltip.show{display:block}
-        .sv-tt-name{font-size:12px;font-weight:700;margin-bottom:5px}
-        .sv-tt-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#7a9aaa}
-        .sv-tt-row b{color:#c0d8e0}
-        .sv-legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 2px;font-size:10px}
-        .sv-legend span{display:flex;align-items:center;gap:5px}
-        .sv-legend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
-      `;
-      document.head.appendChild(sts);
-    }
-
-    // ── Справочник хотспотов по каждому виду ──
-    // [key, cx, cy, label, view]  view: 'top'|'hood'|'bottom'
-    const HOTSPOTS = [
-      // ─ ВИД СВЕРХУ (top) ──────────────────────────────────────────
-      // Передняя часть / под капотом
-      ['oil',        110, 88,  'Масло',    'top'],
-      ['timing',     78,  70,  'ГРМ',      'top'],
-      ['airfilter',  68,  85,  'Воздух',   'top'],
-      ['coolant',    148, 78,  'Охл.ж.',   'top'],
-      ['battery',    152, 92,  'АКБ',      'top'],
-      ['spark',      88,  95,  'Свечи',    'top'],
-      ['gearboxoil', 102,115,  'КПП',      'top'],
-      ['fuelfil',    118, 68,  'Топл.ф',   'top'],
-      // Салон
-      ['cabinfilter',110,180,  'Сал.ф',    'top'],
-      ['throttle',   148,105,  'Дроссель', 'top'],
-      // Передняя подвеска
-      ['bearingfl',  36, 115,  'Ступ.ПЛ', 'top'],
-      ['bearingfr',  184,115,  'Ступ.ПП', 'top'],
-      ['cvjointl',   52, 128,  'ШРУС Л',  'top'],
-      ['cvjointr',   168,128,  'ШРУС П',  'top'],
-      ['brakef',     36, 130,  'Кол.ПЛ',  'top'],   // визуально совмещены с колесом
-      // Задняя часть
-      ['bearingrl',  36, 325,  'Ступ.ЗЛ', 'top'],
-      ['bearingrr',  184,325,  'Ступ.ЗП', 'top'],
-      ['brakershoes',110,340,  'Кол.Зд',  'top'],
-      ['reardrumfl', 36, 340,  'Бар.ЗЛ',  'top'],
-      ['reardrumfr', 184,340,  'Бар.ЗП',  'top'],
-      ['handbrake',  110,300,  'Ручник',  'top'],
-      // Топливный бак
-      ['fuelfil',    110,355,  'Топл.ф',  'top'],
-      // Стаб/выхлоп
-      ['stablink',   110,215,  'Стаб.',   'top'],
-      ['exhaust',    138,260,  'Выхлоп',  'top'],
-      ['lambda',     138,230,  'Λ-зонд',  'top'],
-      ['brakefluid', 148,150,  'Торм.ж',  'top'],
-
-      // ─ ВИД КАПОТА (hood) ────────────────────────────────────────
-      // Визуальная раскладка подкапотного пространства TU1JP
-      ['oil',         90, 180, 'Масло+ф.',  'hood'],
-      ['timing',      62, 120, 'ГРМ',       'hood'],
-      ['airfilter',   52,  70, 'Возд.ф.',   'hood'],
-      ['fuelfil',    165, 165, 'Топл.ф.',   'hood'],
-      ['coolant',    165,  80, 'Охл.жидк.', 'hood'],
-      ['battery',    168, 45,  'АКБ',       'hood'],
-      ['spark',      108, 135, 'Свечи (4)', 'hood'],
-      ['gearboxoil', 78,  205, 'Масло КПП', 'hood'],
-      ['brakefluid', 168, 125, 'Торм.жидк.','hood'],
-      ['throttle',   135, 100, 'Дроссель',  'hood'],
-      ['lambda',     130, 220, 'Λ-зонд',    'hood'],
-      ['battery',    168,  45, 'АКБ',       'hood'],
-      ['exhaust',    100, 235, 'Выхлоп',    'hood'],
-
-      // ─ ВИД СНИЗУ (bottom) ──────────────────────────────────────
-      ['timing',      78,  78, 'ГРМ',       'bottom'],
-      ['oil',        110,  95, 'Масло',     'bottom'],
-      ['gearboxoil', 102, 115, 'КПП',       'bottom'],
-      ['bearingfl',   38, 120, 'Ступ.ПЛ',  'bottom'],
-      ['bearingfr',  182, 120, 'Ступ.ПП',  'bottom'],
-      ['cvjointl',    55, 145, 'ШРУС Л',   'bottom'],
-      ['cvjointr',   165, 145, 'ШРУС П',   'bottom'],
-      ['brakef',      38, 135, 'Диск ПЛ',  'bottom'],
-      ['discf',      182, 135, 'Диск ПП',  'bottom'],
-      ['stablink',   110, 190, 'Стаб.',    'bottom'],
-      ['exhaust',    118, 255, 'Выхлоп',   'bottom'],
-      ['lambda',     118, 230, 'Λ-зонд',   'bottom'],
-      ['fuelfil',    110, 330, 'Бак/ф.',   'bottom'],
-      ['bearingrl',   38, 320, 'Ступ.ЗЛ',  'bottom'],
-      ['bearingrr',  182, 320, 'Ступ.ЗП',  'bottom'],
-      ['brakershoes', 38, 338, 'Кол.ЗЛ',  'bottom'],
-      ['reardrumfl', 182, 338, 'Кол.ЗП',  'bottom'],
-      ['handbrake',  110, 305, 'Трос рч.',  'bottom'],
-    ];
-
-    // Удаляем дубли по key+view (берём первый)
-    const hsSeen = new Set();
-    const HS = HOTSPOTS.filter(([key,,,,view])=>{
-      const k=key+view; if(hsSeen.has(k)) return false; hsSeen.add(k); return true;
-    });
-
-    // Собираем statusMap из items
+    // ── Построение statusMap2 для всех деталей (нужно для схемы и прогноза) ──
     const statusMap2 = {};
     items.forEach(it => {
       const condOnly = isCondOnly(it);
@@ -1072,357 +961,325 @@ class App {
       }
     });
 
-    // ── Рендер SVG для каждого вида ──
-    function buildSVG(view) {
-      const W = 220, H = view==='hood'?280:420;
+    // ═══════════════════════════════════════════════════════════════════
+    // НОВАЯ ИНТЕРАКТИВНАЯ СХЕМА (Blueprint с Pan & Zoom)
+    // ═══════════════════════════════════════════════════════════════════
+    const schCard = this._card();
+    schCard.style.padding = '0';
+    schCard.style.overflow = 'hidden';
+    schCard.style.position = 'relative';
 
-      // ─ Кузов: вид сверху ─────────────────────────────────────
-      let body = '';
-      if (view === 'top') {
-        body = `
-          <defs>
-            <linearGradient id="hood-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#1a2840" stop-opacity=".9"/>
-              <stop offset="100%" stop-color="#0d1520" stop-opacity=".8"/>
-            </linearGradient>
-            <linearGradient id="cabin-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#0e1825" stop-opacity=".9"/>
-              <stop offset="100%" stop-color="#0a1018" stop-opacity=".9"/>
-            </linearGradient>
-            <filter id="glow-r"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            <filter id="glow-y"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <!-- Фронтальный бампер -->
-          <path d="M72 20 Q110 15 148 20 L152 32 Q110 27 68 32 Z" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.4)" stroke-width="1.2"/>
-          <!-- Передние фары -->
-          <ellipse cx="74" cy="28" rx="11" ry="5" fill="rgba(220,240,255,.25)" stroke="rgba(180,220,255,.5)" stroke-width="1"/>
-          <ellipse cx="146" cy="28" rx="11" ry="5" fill="rgba(220,240,255,.25)" stroke="rgba(180,220,255,.5)" stroke-width="1"/>
-          <!-- Капот (моторный отсек) -->
-          <path d="M62 32 Q55 38 52 58 L50 72 L170 72 L168 58 Q165 38 158 32 Z" fill="url(#hood-grad)" stroke="rgba(0,255,255,.35)" stroke-width="1.5"/>
-          <!-- Линия разъёма капота -->
-          <line x1="52" y1="72" x2="168" y2="72" stroke="rgba(0,255,255,.2)" stroke-width=".8" stroke-dasharray="4,3"/>
-          <!-- Центральная линия капота -->
-          <line x1="110" y1="35" x2="110" y2="71" stroke="rgba(0,255,255,.1)" stroke-width=".8" stroke-dasharray="3,4"/>
-          <!-- Лобовое стекло -->
-          <path d="M56 74 L164 74 L162 108 L58 108 Z" fill="rgba(100,200,255,.09)" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
-          <!-- Основная крыша (салон) -->
-          <path d="M54 108 L166 108 L167 250 L53 250 Z" fill="url(#cabin-grad)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
-          <!-- Центральная стойка (В) -->
-          <rect x="53" y="153" width="5" height="30" rx="2" fill="rgba(0,255,255,.18)"/>
-          <rect x="162" y="153" width="5" height="30" rx="2" fill="rgba(0,255,255,.18)"/>
-          <!-- Заднее стекло -->
-          <path d="M56 252 L164 252 L162 280 L58 280 Z" fill="rgba(100,200,255,.07)" stroke="rgba(0,255,255,.18)" stroke-width="1"/>
-          <!-- Задняя дверь (хэтч) + багажник -->
-          <path d="M56 280 L164 280 L166 355 L54 355 Z" fill="rgba(0,255,255,.03)" stroke="rgba(0,255,255,.16)" stroke-width="1.2"/>
-          <!-- Задние фонари -->
-          <rect x="52" y="348" width="22" height="10" rx="3" fill="rgba(255,80,80,.35)" stroke="rgba(255,80,80,.5)" stroke-width="1"/>
-          <rect x="146" y="348" width="22" height="10" rx="3" fill="rgba(255,80,80,.35)" stroke="rgba(255,80,80,.5)" stroke-width="1"/>
-          <!-- Задний бампер -->
-          <path d="M68 357 Q110 363 152 357 L148 370 Q110 375 72 370 Z" fill="rgba(0,255,255,.09)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <!-- Колесо ПЛ -->
-          <rect x="22" y="90" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.6)" stroke-width="1.8"/>
-          <rect x="25" y="94" width="20" height="44" rx="6" fill="rgba(0,255,255,.07)"/>
-          <circle cx="35" cy="116" r="7" fill="none" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <!-- Колесо ПП -->
-          <rect x="172" y="90" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.6)" stroke-width="1.8"/>
-          <rect x="175" y="94" width="20" height="44" rx="6" fill="rgba(0,255,255,.07)"/>
-          <circle cx="185" cy="116" r="7" fill="none" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <!-- Колесо ЗЛ -->
-          <rect x="22" y="300" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.45)" stroke-width="1.5"/>
-          <rect x="25" y="304" width="20" height="44" rx="6" fill="rgba(0,255,255,.06)"/>
-          <circle cx="35" cy="326" r="7" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
-          <!-- Колесо ЗП -->
-          <rect x="172" y="300" width="26" height="52" rx="8" fill="rgba(30,40,60,.95)" stroke="rgba(0,255,255,.45)" stroke-width="1.5"/>
-          <rect x="175" y="304" width="20" height="44" rx="6" fill="rgba(0,255,255,.06)"/>
-          <circle cx="185" cy="326" r="7" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
-          <!-- Полуоси/приводы передние -->
-          <line x1="48" y1="128" x2="85" y2="128" stroke="rgba(0,255,255,.25)" stroke-width="2" stroke-dasharray="4,2"/>
-          <line x1="135" y1="128" x2="172" y2="128" stroke="rgba(0,255,255,.25)" stroke-width="2" stroke-dasharray="4,2"/>
-          <!-- Стабилизатор передний -->
-          <path d="M38 160 Q110 150 182 160" fill="none" stroke="rgba(0,255,255,.18)" stroke-width="1.5" stroke-dasharray="5,3"/>
-          <!-- Выхлопная труба -->
-          <path d="M118 155 L128 300 L132 355" fill="none" stroke="rgba(255,160,40,.35)" stroke-width="1.5" stroke-dasharray="5,3"/>
-          <!-- Подписи -->
-          <text x="110" y="10" text-anchor="middle" fill="rgba(0,255,255,.5)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ПЕРЕД</text>
-          <text x="110" y="418" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ЗАД</text>
-          <text x="8" y="116" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif" transform="rotate(-90,8,116)" text-anchor="middle">ЛЕВО</text>
-          <text x="213" y="116" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif" transform="rotate(90,213,116)" text-anchor="middle">ПРАВО</text>
+    if (!document.getElementById('blueprint-styles')) {
+      const sts = document.createElement('style'); sts.id='blueprint-styles';
+      sts.textContent = `
+        .bp-header { padding: 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .bp-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cyan); border-left: 3px solid var(--cyan); padding-left: 8px; }
+        .bp-tabs { display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; border: 1px solid rgba(0,255,255,0.15); }
+        .bp-tab { padding: 6px 14px; border-radius: 8px; font-size: 10px; font-weight: 700; letter-spacing: .5px; cursor: pointer; color: #5a7080; transition: all 0.2s; user-select: none; }
+        .bp-tab.on { background: rgba(0,255,255,0.15); color: var(--cyan); text-shadow: 0 0 8px rgba(0,255,255,0.5); }
+        .bp-viewport { width: 100%; height: 380px; position: relative; background: #04060a; overflow: hidden; cursor: grab; touch-action: none; }
+        .bp-viewport:active { cursor: grabbing; }
+        .bp-canvas { width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; }
+        .bp-canvas svg { display: block; width: 100%; height: 100%; overflow: visible; }
+        .bp-hs { cursor: pointer; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .bp-hs:active { transform: scale(0.85); }
+        .bp-hs-ring { transform-origin: center; animation: ring-pulse 2s infinite; }
+        @keyframes ring-pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+        .bp-controls { position: absolute; bottom: 15px; right: 15px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+        .bp-ctrl-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(6,12,20,0.8); border: 1px solid rgba(0,255,255,0.2); color: var(--cyan); font-size: 18px; font-weight: 300; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px); transition: background 0.2s; }
+        .bp-ctrl-btn:active { background: rgba(0,255,255,0.2); }
+        .bp-legend { position: absolute; bottom: 15px; left: 15px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 10; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(4px); }
+        .bp-legend span { display: flex; align-items: center; gap: 6px; font-size: 9px; color: #8a9baa; }
+        .bp-legend i { width: 8px; height: 8px; border-radius: 50%; }
+        .bp-sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .bp-sheet-overlay.show { opacity: 1; pointer-events: auto; }
+        .bp-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: #0c0c16; border-top: 1px solid var(--cyan); border-radius: 24px 24px 0 0; z-index: 1000; padding: 20px; transition: bottom 0.35s cubic-bezier(0.1, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+        .bp-sheet.show { bottom: 0; }
+        .bp-sheet-drag { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 15px; }
+        .bp-sheet-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .bp-sheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .bp-sheet-stat { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; }
+        .bp-sheet-stat .lbl { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bp-sheet-stat .val { font-size: 14px; font-weight: 700; }
+        .bp-sheet-notes { background: rgba(0,255,255,0.05); border-left: 3px solid rgba(0,255,255,0.4); padding: 12px; font-size: 11px; color: #a0b8cc; line-height: 1.6; border-radius: 0 8px 8px 0; }
+        .bp-sheet-close { width: 100%; padding: 14px; margin-top: 15px; background: rgba(255,255,255,0.05); border: none; border-radius: 12px; color: white; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+        .bp-sheet-close:active { background: rgba(255,255,255,0.1); }
+      `;
+      document.head.appendChild(sts);
+    }
+
+    // Координаты хотспотов (вид капота и снизу)
+    const HOTSPOTS = [
+      // Капот
+      ['oil',         150, 200, 'Масло+ф.',  'hood'],
+      ['timing',      90,  180, 'ГРМ',       'hood'],
+      ['airfilter',   80,  110, 'Возд.ф.',   'hood'],
+      ['fuelfil',     240, 290, 'Топл.ф.',   'hood'],
+      ['coolant',     240, 140, 'Охл.жидк.', 'hood'],
+      ['battery',     230, 80,  'АКБ',       'hood'],
+      ['spark',       150, 160, 'Свечи (4)', 'hood'],
+      ['gearboxoil',  100, 260, 'Масло КПП', 'hood'],
+      ['brakefluid',  240, 210, 'Торм.жидк.','hood'],
+      ['throttle',    190, 140, 'Дроссель',  'hood'],
+      ['lambda',      180, 270, 'Λ-зонд',    'hood'],
+      ['exhaust',     150, 310, 'Выхлоп',    'hood'],
+      // Снизу
+      ['timing',      110, 100, 'ГРМ',       'bottom'],
+      ['oil',         150, 120, 'Масло',     'bottom'],
+      ['gearboxoil',  120, 150, 'КПП',       'bottom'],
+      ['bearingfl',   60,  130, 'Ступ.ПЛ',   'bottom'],
+      ['bearingfr',   240, 130, 'Ступ.ПП',   'bottom'],
+      ['cvjointl',    90,  160, 'ШРУС Л',    'bottom'],
+      ['cvjointr',    210, 160, 'ШРУС П',    'bottom'],
+      ['brakef',      50,  145, 'Диск ПЛ',   'bottom'],
+      ['discf',       250, 145, 'Диск ПП',   'bottom'],
+      ['stablink',    150, 210, 'Стаб.',     'bottom'],
+      ['exhaust',     160, 280, 'Выхлоп',    'bottom'],
+      ['lambda',      160, 250, 'Λ-зонд',    'bottom'],
+      ['fuelfil',     150, 360, 'Бак/ф.',    'bottom'],
+      ['bearingrl',   60,  350, 'Ступ.ЗЛ',   'bottom'],
+      ['bearingrr',   240, 350, 'Ступ.ЗП',   'bottom'],
+      ['brakershoes', 50,  365, 'Кол.ЗЛ',    'bottom'],
+      ['reardrumfl',  250, 365, 'Кол.ЗП',    'bottom'],
+      ['handbrake',   150, 330, 'Трос рч.',   'bottom'],
+    ];
+
+    const HS = HOTSPOTS.filter(([key,,,,view], idx, self) => {
+      const k = key+view; return self.findIndex(x => x[0]+x[4] === k) === idx;
+    });
+
+    function buildBlueprintSVG(view) {
+      const W = 300, H = view === 'hood' ? 400 : 450;
+      const defs = `<defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,255,255,0.05)" stroke-width="0.5"/>
+        </pattern>
+        <filter id="neon-b"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="neon-r"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="neon-y"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>`;
+      let body = `<rect width="100%" height="100%" fill="url(#grid)" />`;
+      if (view === 'hood') {
+        body += `
+          <path d="M 20 40 Q 150 20 280 40 L 290 380 Q 150 390 10 380 Z" fill="none" stroke="rgba(0,180,255,0.2)" stroke-width="2" stroke-dasharray="10 5"/>
+          <text x="150" y="30" fill="rgba(0,255,255,0.3)" font-size="10" text-anchor="middle" letter-spacing="4">FRONT BUMPER</text>
+          <rect x="70" y="130" width="160" height="110" rx="12" fill="rgba(0,40,60,0.5)" stroke="rgba(0,255,255,0.5)" stroke-width="2" filter="url(#neon-b)"/>
+          <path d="M 70 160 L 230 160 M 70 190 L 230 190 M 70 220 L 230 220" stroke="rgba(0,255,255,0.15)" stroke-width="1"/>
+          <text x="150" y="150" fill="rgba(0,255,255,0.8)" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="2">TU1JP 1.1i</text>
+          <rect x="60" y="140" width="30" height="90" rx="6" fill="rgba(20,20,30,0.8)" stroke="#5a8090" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <circle cx="75" cy="155" r="8" fill="none" stroke="#5a8090"/>
+          <circle cx="75" cy="215" r="10" fill="none" stroke="#5a8090"/>
+          <path d="M 70 240 L 130 240 L 140 290 L 60 280 Z" fill="rgba(20,30,50,0.6)" stroke="rgba(100,150,255,0.4)" stroke-width="1.5"/>
+          <rect x="200" y="60" width="60" height="40" rx="4" fill="rgba(255,0,0,0.1)" stroke="rgba(255,80,80,0.5)" stroke-width="1.5"/>
+          <text x="230" y="84" fill="rgba(255,80,80,0.6)" font-size="10" text-anchor="middle" font-weight="bold">12V BAT</text>
+          <rect x="40" y="80" width="80" height="50" rx="8" fill="rgba(0,255,100,0.05)" stroke="rgba(0,255,100,0.4)" stroke-width="1.5"/>
+          <path d="M 120 105 Q 160 105 190 140" fill="none" stroke="rgba(0,255,100,0.3)" stroke-width="8" stroke-dasharray="2 4"/>
+          <circle cx="240" cy="140" r="18" fill="rgba(0,200,255,0.1)" stroke="rgba(0,200,255,0.6)" stroke-width="1.5"/>
+          <circle cx="240" cy="210" r="14" fill="rgba(255,160,0,0.1)" stroke="rgba(255,160,0,0.6)" stroke-width="1.5"/>
+          <path d="M 100 240 Q 150 260 150 350" fill="none" stroke="rgba(255,100,0,0.4)" stroke-width="4"/>
+          <path d="M 120 240 Q 150 260 150 350" fill="none" stroke="rgba(255,100,0,0.4)" stroke-width="4"/>
         `;
-
-      // ─ Вид КАПОТ ─────────────────────────────────────────────
-      } else if (view === 'hood') {
-        body = `
-          <defs>
-            <linearGradient id="eng-grad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#1a2030" stop-opacity=".9"/>
-              <stop offset="100%" stop-color="#0c1020" stop-opacity=".95"/>
-            </linearGradient>
-          </defs>
-          <!-- Периметр моторного отсека -->
-          <rect x="10" y="10" width="200" height="${H-20}" rx="12" fill="url(#eng-grad)" stroke="rgba(0,255,255,.3)" stroke-width="1.5"/>
-          <!-- Стрелка перед/зад -->
-          <text x="110" y="24" text-anchor="middle" fill="rgba(0,255,255,.4)" font-size="8" font-family="Segoe UI,sans-serif" font-weight="700">↑ ПЕРЕД (бампер)</text>
-          <text x="110" y="${H-12}" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="8" font-family="Segoe UI,sans-serif">↓ СТЕНА САЛОНА</text>
-          <!-- Блок двигателя TU1JP — слегка левее центра (в поперечном расположении) -->
-          <rect x="40" y="95" width="110" height="100" rx="8" fill="rgba(20,40,70,.7)" stroke="rgba(0,255,255,.25)" stroke-width="1.2"/>
-          <text x="95" y="150" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="9" font-family="Segoe UI,sans-serif" font-weight="700">TU1JP · 1.1L</text>
-          <text x="95" y="163" text-anchor="middle" fill="rgba(0,255,255,.2)" font-size="7.5" font-family="Segoe UI,sans-serif">4цил. · поперечно</text>
-          <!-- Головка блока / свечи -->
-          <rect x="43" y="98" width="104" height="22" rx="4" fill="rgba(0,255,255,.06)" stroke="rgba(0,255,255,.15)" stroke-width="1"/>
-          <text x="95" y="113" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ГБЦ</text>
-          <!-- 4 свечных колодца -->
-          <circle cx="58"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <circle cx="78"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <circle cx="98"  cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <circle cx="118" cy="109" r="5" fill="rgba(0,255,255,.12)" stroke="rgba(0,255,255,.3)" stroke-width="1"/>
-          <!-- КПП — справа от двигателя -->
-          <rect x="150" y="120" width="44" height="55" rx="6" fill="rgba(20,35,55,.7)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
-          <text x="172" y="152" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="8" font-family="Segoe UI,sans-serif">КПП</text>
-          <!-- Ремень ГРМ — слева от двигателя -->
-          <rect x="16" y="85" width="30" height="60" rx="6" fill="rgba(20,35,55,.6)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
-          <text x="31" y="117" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="7.5" font-family="Segoe UI,sans-serif">ГРМ</text>
-          <!-- Кожух ремня (штриховой) -->
-          <rect x="17" y="87" width="28" height="56" rx="5" fill="none" stroke="rgba(0,255,255,.12)" stroke-width="1" stroke-dasharray="3,2"/>
-          <!-- Расширительный бачок охлаждайки — правый угол спереди -->
-          <rect x="155" y="30" width="38" height="36" rx="6" fill="rgba(0,60,80,.5)" stroke="rgba(0,200,255,.35)" stroke-width="1.2"/>
-          <text x="174" y="50" text-anchor="middle" fill="rgba(0,200,255,.5)" font-size="7.5" font-family="Segoe UI,sans-serif">ОХЛАЖДЕНИЕ</text>
-          <!-- АКБ — правый угол -->
-          <rect x="155" y="30" width="38" height="36" rx="6" fill="none"/><!-- фейк для отступа -->
-          <!-- Воздушный фильтр — левый угол спереди (гофрированный патрубок к дросселю) -->
-          <rect x="18" y="28" width="44" height="40" rx="7" fill="rgba(30,50,30,.5)" stroke="rgba(80,200,80,.3)" stroke-width="1.2"/>
-          <text x="40" y="50" text-anchor="middle" fill="rgba(80,200,80,.5)" font-size="7.5" font-family="Segoe UI,sans-serif">ВОЗДУХ.Ф.</text>
-          <!-- Патрубок от воздушного фильтра к дросселю -->
-          <path d="M62 48 Q85 48 88 105" fill="none" stroke="rgba(80,200,80,.2)" stroke-width="3" stroke-dasharray="5,3"/>
-          <!-- Дроссельный узел -->
-          <circle cx="88" cy="105" r="10" fill="rgba(30,50,50,.5)" stroke="rgba(0,200,150,.3)" stroke-width="1.2"/>
-          <!-- Топливный фильтр — вдоль правой стенки -->
-          <rect x="155" y="155" width="40" height="28" rx="6" fill="rgba(50,40,20,.6)" stroke="rgba(200,160,40,.3)" stroke-width="1.2"/>
-          <text x="175" y="172" text-anchor="middle" fill="rgba(200,160,40,.4)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОПЛ.Ф.</text>
-          <!-- Главный тормозной цилиндр / бачок -->
-          <rect x="155" y="190" width="40" height="30" rx="6" fill="rgba(50,20,20,.5)" stroke="rgba(200,60,60,.3)" stroke-width="1.2"/>
-          <text x="175" y="207" text-anchor="middle" fill="rgba(200,60,60,.5)" font-size="7" font-family="Segoe UI,sans-serif">ТОРМ.Ж.</text>
-          <!-- Выпускной коллектор снизу ДВС -->
-          <path d="M55 195 Q95 202 105 215 Q115 225 120 240" fill="none" stroke="rgba(255,130,30,.4)" stroke-width="2.5"/>
-          <text x="90" y="255" text-anchor="middle" fill="rgba(255,130,30,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">→ Выхлоп</text>
-          <!-- Лямбда-зонд -->
-          <circle cx="113" cy="228" r="6" fill="rgba(255,160,30,.15)" stroke="rgba(255,160,30,.4)" stroke-width="1"/>
-          <!-- АКБ реальная позиция — левее КПП спереди -->
-        `;
-
-      // ─ Вид СНИЗУ ─────────────────────────────────────────────
       } else {
-        body = `
-          <defs>
-            <linearGradient id="floor-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#0e1825" stop-opacity=".95"/>
-              <stop offset="100%" stop-color="#080e18" stop-opacity=".9"/>
-            </linearGradient>
-          </defs>
-          <!-- Подкузовное пространство -->
-          <path d="M50 22 Q38 28 34 55 L32 95 L32 340 Q33 368 50 378 L170 378 Q187 368 188 340 L188 95 L186 55 Q182 28 170 22 Z" fill="url(#floor-grad)" stroke="rgba(0,255,255,.2)" stroke-width="1.5"/>
-          <!-- Передний подрамник (MacPherson стойки) -->
-          <rect x="45" y="55" width="130" height="30" rx="6" fill="rgba(30,50,80,.5)" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
-          <text x="110" y="74" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ПЕРЕДНИЙ ПОДРАМНИК</text>
-          <!-- Стойки MacPherson (линии от кузова к ступице) -->
-          <line x1="50" y1="60" x2="38" y2="120" stroke="rgba(0,255,255,.25)" stroke-width="2"/>
-          <line x1="170" y1="60" x2="182" y2="120" stroke="rgba(0,255,255,.25)" stroke-width="2"/>
-          <!-- Поперечные рычаги передней подвески -->
-          <line x1="38" y1="130" x2="58" y2="125" stroke="rgba(0,255,255,.22)" stroke-width="1.8"/>
-          <line x1="182" y1="130" x2="162" y2="125" stroke="rgba(0,255,255,.22)" stroke-width="1.8"/>
-          <!-- Полуоси передние -->
-          <line x1="45" y1="140" x2="100" y2="125" stroke="rgba(100,180,255,.3)" stroke-width="2.2"/>
-          <line x1="175" y1="140" x2="120" y2="125" stroke="rgba(100,180,255,.3)" stroke-width="2.2"/>
-          <!-- КПП / двигатель (вид снизу) -->
-          <rect x="60" y="82" width="100" height="65" rx="8" fill="rgba(20,40,65,.7)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
-          <text x="110" y="108" text-anchor="middle" fill="rgba(0,255,255,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ДВИГАТЕЛЬ (снизу)</text>
-          <text x="110" y="120" text-anchor="middle" fill="rgba(0,255,255,.2)" font-size="7" font-family="Segoe UI,sans-serif">Поддон · картер</text>
-          <!-- Маслосливная пробка -->
-          <circle cx="102" cy="138" r="6" fill="rgba(200,140,0,.2)" stroke="rgba(200,140,0,.4)" stroke-width="1"/>
-          <text x="102" y="152" text-anchor="middle" fill="rgba(200,140,0,.35)" font-size="6.5" font-family="Segoe UI,sans-serif">слив</text>
-          <!-- Стабилизатор поперечной устойчивости -->
-          <path d="M38 165 Q75 155 110 158 Q145 155 182 165" fill="none" stroke="rgba(100,180,255,.35)" stroke-width="2.5"/>
-          <text x="110" y="153" text-anchor="middle" fill="rgba(100,180,255,.3)" font-size="7" font-family="Segoe UI,sans-serif">стабилизатор</text>
-          <!-- Задняя балка (торсионная — характерно для 206) -->
-          <path d="M38 300 Q55 310 110 308 Q165 310 182 300" fill="none" stroke="rgba(0,200,200,.3)" stroke-width="3"/>
-          <text x="110" y="322" text-anchor="middle" fill="rgba(0,200,200,.3)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОРСИОННАЯ БАЛКА</text>
-          <!-- Задние колёса (ось) -->
-          <line x1="36" y1="325" x2="184" y2="325" stroke="rgba(0,255,255,.12)" stroke-width="1.5" stroke-dasharray="4,3"/>
-          <!-- Выхлопная система -->
-          <path d="M105 148 L110 200 L115 265 Q116 285 122 310 L124 360" fill="none" stroke="rgba(255,140,30,.5)" stroke-width="2.5"/>
-          <!-- Глушитель -->
-          <ellipse cx="124" cy="350" rx="16" ry="10" fill="rgba(50,50,50,.8)" stroke="rgba(255,140,30,.45)" stroke-width="1.2"/>
-          <text x="124" y="370" text-anchor="middle" fill="rgba(255,140,30,.4)" font-size="7" font-family="Segoe UI,sans-serif">глушитель</text>
-          <!-- Топливный бак — сзади между осью и задним бампером -->
-          <rect x="68" y="300" width="84" height="38" rx="8" fill="rgba(50,40,15,.6)" stroke="rgba(200,180,30,.3)" stroke-width="1.2"/>
-          <text x="110" y="323" text-anchor="middle" fill="rgba(200,180,30,.35)" font-size="7.5" font-family="Segoe UI,sans-serif">ТОПЛИВНЫЙ БАК</text>
-          <!-- Тросы ручного тормоза -->
-          <line x1="38" y1="325" x2="108" y2="295" stroke="rgba(160,160,160,.25)" stroke-width="1.2" stroke-dasharray="3,3"/>
-          <line x1="182" y1="325" x2="112" y2="295" stroke="rgba(160,160,160,.25)" stroke-width="1.2" stroke-dasharray="3,3"/>
-          <!-- Подписи колёс -->
-          <text x="22" y="140" fill="rgba(0,255,255,.3)" font-size="7" font-family="Segoe UI,sans-serif" transform="rotate(-90,22,140)" text-anchor="middle">ЛЕВО</text>
-          <text x="198" y="140" fill="rgba(0,255,255,.3)" font-size="7" font-family="Segoe UI,sans-serif" transform="rotate(90,198,140)" text-anchor="middle">ПРАВО</text>
-          <text x="110" y="18" text-anchor="middle" fill="rgba(0,255,255,.5)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ПЕРЕД</text>
-          <text x="110" y="408" text-anchor="middle" fill="rgba(0,255,255,.35)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ЗАД</text>
-          <!-- Передние колёса (вид снизу) -->
-          <ellipse cx="35" cy="120" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.5)" stroke-width="1.5"/>
-          <ellipse cx="35" cy="120" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
-          <ellipse cx="185" cy="120" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.5)" stroke-width="1.5"/>
-          <ellipse cx="185" cy="120" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.25)" stroke-width="1"/>
-          <!-- Задние колёса -->
-          <ellipse cx="35" cy="325" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.4)" stroke-width="1.5"/>
-          <ellipse cx="35" cy="325" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
-          <ellipse cx="185" cy="325" rx="13" ry="25" fill="rgba(30,40,55,.9)" stroke="rgba(0,255,255,.4)" stroke-width="1.5"/>
-          <ellipse cx="185" cy="325" rx="7" ry="15" fill="none" stroke="rgba(0,255,255,.2)" stroke-width="1"/>
+        body += `
+          <path d="M 30 20 Q 150 0 270 20 L 280 430 Q 150 450 20 430 Z" fill="rgba(4,6,12,0.8)" stroke="rgba(0,255,255,0.1)" stroke-width="1"/>
+          <line x1="60" y1="130" x2="240" y2="130" stroke="rgba(0,150,255,0.3)" stroke-width="8"/>
+          <path d="M 60 130 L 100 180 L 200 180 L 240 130" fill="none" stroke="rgba(0,255,255,0.4)" stroke-width="2"/>
+          <rect x="35" y="100" width="25" height="60" rx="4" fill="#080c14" stroke="rgba(0,255,255,0.5)" stroke-width="2"/>
+          <rect x="240" y="100" width="25" height="60" rx="4" fill="#080c14" stroke="rgba(0,255,255,0.5)" stroke-width="2"/>
+          <rect x="90" y="90" width="120" height="70" rx="10" fill="rgba(0,50,80,0.4)" stroke="rgba(0,255,255,0.6)" stroke-width="1.5"/>
+          <path d="M 150 160 L 160 250 L 160 380" fill="none" stroke="rgba(255,140,0,0.5)" stroke-width="6"/>
+          <rect x="145" y="270" width="30" height="50" rx="8" fill="rgba(40,20,0,0.8)" stroke="rgba(255,140,0,0.8)" stroke-width="1.5"/>
+          <rect x="140" y="380" width="40" height="60" rx="10" fill="rgba(40,20,0,0.8)" stroke="rgba(255,140,0,0.8)" stroke-width="1.5"/>
+          <path d="M 60 350 Q 150 330 240 350" fill="none" stroke="rgba(0,200,200,0.5)" stroke-width="10"/>
+          <rect x="35" y="320" width="25" height="60" rx="4" fill="#080c14" stroke="rgba(0,255,255,0.4)" stroke-width="1.5"/>
+          <rect x="240" y="320" width="25" height="60" rx="4" fill="#080c14" stroke="rgba(0,255,255,0.4)" stroke-width="1.5"/>
+          <rect x="100" y="340" width="100" height="60" rx="15" fill="rgba(100,80,20,0.3)" stroke="rgba(255,200,50,0.5)" stroke-width="1.5"/>
+          <text x="150" y="375" fill="rgba(255,200,50,0.4)" font-size="12" font-weight="bold" text-anchor="middle">FUEL</text>
         `;
       }
-
-      // ── Хотспоты текущего вида ──
       let dots = '';
-      HS.filter(h=>h[4]===view).forEach(([key,cx,cy,lbl]) => {
+      HS.filter(h => h[4] === view).forEach(([key, cx, cy, lbl]) => {
         const st = statusMap2[key];
         if (!st) return;
         const col = st.color;
-        const isRed = col==='#ff4d4d';
-        const isOra = col==='#ffa040';
-        const glowId = isRed ? 'glow-r' : isOra ? 'glow-y' : '';
-        const pulse = isRed ? `<animate attributeName="r" values="9;11;9" dur="1.4s" repeatCount="indefinite"/>` : '';
-        dots += `<g class="sv-hs" data-key="${key}" data-lbl="${lbl}" data-view="${view}" ${glowId?`filter="url(#${glowId})"`:''}">
-          <circle class="outer" cx="${cx}" cy="${cy}" r="11" fill="${col}" fill-opacity=".18" stroke="none"/>
-          <circle cx="${cx}" cy="${cy}" r="8" fill="${col}" fill-opacity=".8" stroke="${col}" stroke-width="1.5">${pulse}</circle>
-          <circle cx="${cx}" cy="${cy}" r="4" fill="rgba(255,255,255,.6)"/>
-          <text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="7.5" font-family="Segoe UI,sans-serif" fill="rgba(200,220,235,.75)" pointer-events="none">${lbl}</text>
-        </g>`;
+        const isRed = col === '#ff4d4d';
+        const isOra = col === '#ffa040';
+        const filter = isRed ? 'url(#neon-r)' : isOra ? 'url(#neon-y)' : 'url(#neon-b)';
+        dots += `
+          <g class="bp-hs" data-key="${key}" transform="translate(${cx}, ${cy})">
+            ${isRed || isOra ? `<circle class="bp-hs-ring" cx="0" cy="0" r="14" fill="none" stroke="${col}" stroke-width="2"/>` : ''}
+            <circle cx="0" cy="0" r="10" fill="rgba(0,0,0,0.8)" stroke="${col}" stroke-width="2" filter="${filter}"/>
+            <circle cx="0" cy="0" r="4" fill="${col}"/>
+            <text x="0" y="22" text-anchor="middle" font-size="9" font-family="Segoe UI, sans-serif" font-weight="600" fill="rgba(255,255,255,0.8)" pointer-events="none" filter="drop-shadow(0 2px 2px rgba(0,0,0,0.8))">${lbl}</text>
+          </g>
+        `;
       });
-
-      return `<svg viewBox="0 0 220 ${H}" xmlns="http://www.w3.org/2000/svg" style="max-height:460px">${body}${dots}</svg>`;
+      return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${defs}${body}${dots}</svg>`;
     }
 
-    // ── Сборка карточки ──
-    const viewLabels = { top:'🔭 Сверху', hood:'🔧 Капот', bottom:'⬇ Снизу' };
-    let activeView = 'top';
-
-    const tabBar = document.createElement('div'); tabBar.className='sv-tabs';
-    const svgWrap = document.createElement('div'); svgWrap.className='sv-wrap';
-    const tooltip = document.createElement('div'); tooltip.className='sv-tooltip'; tooltip.id='sv-tt';
-    svgWrap.appendChild(tooltip);
-    const legend = document.createElement('div'); legend.className='sv-legend';
-    legend.innerHTML=`
-      <span><i style="background:#0ff"></i>Норма</span>
-      <span><i style="background:#ffa040"></i>Внимание</span>
-      <span><i style="background:#ff4d4d"></i>Критично</span>
-      <span style="font-size:9px;color:rgba(0,255,255,.35);margin-left:4px">Нажми на точку для деталей</span>
+    schCard.innerHTML = `
+      <div class="bp-header">
+        <div class="bp-title">Peugeot 206 Blueprint</div>
+        <div class="bp-tabs">
+          <div class="bp-tab on" data-view="hood">Капот</div>
+          <div class="bp-tab" data-view="bottom">Снизу</div>
+        </div>
+      </div>
+      <div class="bp-viewport" id="bp-view">
+        <div class="bp-canvas" id="bp-canvas"></div>
+        <div class="bp-legend">
+          <span><i style="background:#0f8; box-shadow: 0 0 5px #0f8"></i> Норма</span>
+          <span><i style="background:#ffa040; box-shadow: 0 0 5px #ffa040"></i> Внимание</span>
+          <span><i style="background:#ff4d4d; box-shadow: 0 0 5px #ff4d4d"></i> Критично</span>
+        </div>
+        <div class="bp-controls">
+          <button class="bp-ctrl-btn" id="bp-z-in">+</button>
+          <button class="bp-ctrl-btn" id="bp-z-out">−</button>
+          <button class="bp-ctrl-btn" id="bp-z-reset" style="font-size:12px; font-weight:bold">⛶</button>
+        </div>
+      </div>
     `;
-
-    ['top','hood','bottom'].forEach(v=>{
-      const btn=document.createElement('button');
-      btn.className='sv-tab'+(v==='top'?' on':'');
-      btn.textContent=viewLabels[v];
-      btn.onclick=()=>{
-        activeView=v;
-        tabBar.querySelectorAll('.sv-tab').forEach(b=>b.classList.toggle('on',b===btn));
-        svgWrap.querySelector('svg').outerHTML; // placeholder
-        const existing=svgWrap.querySelector('svg');
-        if(existing) existing.remove();
-        const dummy=document.createElement('div');
-        dummy.innerHTML=buildSVG(v);
-        svgWrap.insertBefore(dummy.firstChild, tooltip);
-        bindHotspots();
-        tooltip.classList.remove('show');
-      };
-      tabBar.appendChild(btn);
-    });
-
-    // Первый рендер
-    const initDiv=document.createElement('div');
-    initDiv.innerHTML=buildSVG('top');
-    svgWrap.insertBefore(initDiv.firstChild, tooltip);
-
-    schCard.appendChild(tabBar);
-    schCard.appendChild(svgWrap);
-    schCard.appendChild(legend);
     c.appendChild(schCard);
 
-    // ── Обработка тапов/кликов на хотспоты ──
-    function bindHotspots(){
-      svgWrap.querySelectorAll('.sv-hs').forEach(g=>{
-        g.onclick=(e)=>{
-          const key=g.dataset.key;
-          const st=statusMap2[key];
-          if(!st){ tooltip.classList.remove('show'); return; }
-          const r=svgWrap.getBoundingClientRect();
-          const gBox=g.getBoundingClientRect();
-          let tx=gBox.left-r.left+20, ty=gBox.top-r.top-10;
-          if(tx+240>r.width) tx=r.width-240;
-          if(ty<0) ty=0;
+    // Bottom Sheet (один раз добавляем в body)
+    if (!document.getElementById('bp-sheet-overlay')) {
+      const bsHTML = `
+        <div class="bp-sheet-overlay" id="bp-sheet-overlay"></div>
+        <div class="bp-sheet" id="bp-sheet">
+          <div class="bp-sheet-drag"></div>
+          <div id="bp-sheet-content"></div>
+          <button class="bp-sheet-close" id="bp-sheet-close">Закрыть</button>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', bsHTML);
+      const overlay = document.getElementById('bp-sheet-overlay');
+      const sheet = document.getElementById('bp-sheet');
+      const closeBtn = document.getElementById('bp-sheet-close');
+      const closeSheet = () => { sheet.classList.remove('show'); overlay.classList.remove('show'); };
+      overlay.onclick = closeSheet;
+      closeBtn.onclick = closeSheet;
+    }
 
-          const pctLine = st.condOnly
-            ? `<div class="sv-tt-row"><span>Статус</span><b style="color:${st.color}">${st.statusText}</b></div>`
-            : `<div class="sv-tt-row"><span>Износ</span><b style="color:${st.color}">${st.pct.toFixed(0)}%</b></div>
-               <div class="sv-tt-row"><span>Осталось</span><b>${st.rem>0?fmtI(st.rem)+' км':'⚠ Просрочено'}</b></div>
-               <div class="sv-tt-row"><span>Каждые</span><b>${fmtI(st.km)} км</b></div>`;
-          const lastLine = st.lastKm>0
-            ? `<div class="sv-tt-row"><span>Последнее</span><b>${fmtI(st.lastKm)} км</b></div>` : '';
+    const canvasDiv = schCard.querySelector('#bp-canvas');
+    const viewport = schCard.querySelector('#bp-view');
+    let scale = 1, posX = 0, posY = 0;
+    let isDragging = false, startX, startY;
 
-          tooltip.innerHTML=`
-            <div class="sv-tt-name" style="color:${st.color}">${st.label}</div>
-            ${pctLine}${lastLine}
-            ${st.notes?`<div style="margin-top:6px;font-size:10px;color:#7a9aaa;border-top:1px solid rgba(255,255,255,.07);padding-top:5px">${st.notes}</div>`:''}
-          `;
-          tooltip.style.left=tx+'px';
-          tooltip.style.top=ty+'px';
-          tooltip.classList.add('show');
+    const updateTransform = () => {
+      const maxDrag = 150 * scale;
+      posX = Math.max(-maxDrag, Math.min(maxDrag, posX));
+      posY = Math.max(-maxDrag, Math.min(maxDrag, posY));
+      canvasDiv.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+    };
+    const resetZoom = () => { scale = 1; posX = 0; posY = 0; updateTransform(); };
+    schCard.querySelector('#bp-z-in').onclick = () => { scale = Math.min(scale + 0.3, 3); updateTransform(); };
+    schCard.querySelector('#bp-z-out').onclick = () => { scale = Math.max(scale - 0.3, 0.5); updateTransform(); };
+    schCard.querySelector('#bp-z-reset').onclick = resetZoom;
+
+    viewport.addEventListener('mousedown', e => {
+      if (e.target.closest('.bp-hs') || e.target.closest('.bp-controls')) return;
+      isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY;
+    });
+    window.addEventListener('mousemove', e => { if (!isDragging) return; posX = e.clientX - startX; posY = e.clientY - startY; updateTransform(); });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    viewport.addEventListener('wheel', e => { e.preventDefault(); const delta = e.deltaY > 0 ? -0.1 : 0.1; scale = Math.max(0.5, Math.min(scale + delta, 3)); updateTransform(); }, { passive: false });
+    viewport.addEventListener('touchstart', e => { if (e.touches.length !== 1 || e.target.closest('.bp-hs') || e.target.closest('.bp-controls')) return; isDragging = true; startX = e.touches[0].clientX - posX; startY = e.touches[0].clientY - posY; }, { passive: true });
+    viewport.addEventListener('touchmove', e => { if (!isDragging || e.touches.length !== 1) return; e.preventDefault(); posX = e.touches[0].clientX - startX; posY = e.touches[0].clientY - startY; updateTransform(); }, { passive: false });
+    viewport.addEventListener('touchend', () => { isDragging = false; });
+
+    const renderView = (view) => {
+      canvasDiv.innerHTML = buildBlueprintSVG(view);
+      resetZoom();
+      canvasDiv.querySelectorAll('.bp-hs').forEach(el => {
+        el.onclick = (e) => {
           e.stopPropagation();
+          const key = el.dataset.key;
+          const st = statusMap2[key];
+          if (!st) return;
+          const sContent = document.getElementById('bp-sheet-content');
+          let statsHtml = '';
+          if (st.condOnly) {
+            statsHtml = `<div class="bp-sheet-stat"><div class="lbl">Текущее состояние</div><div class="val" style="color:${st.color}">${st.statusText}</div></div>`;
+          } else {
+            statsHtml = `
+              <div class="bp-sheet-stat"><div class="lbl">Износ / Остаток</div><div class="val" style="color:${st.color}">${st.pct.toFixed(0)}% <span style="font-size:12px; font-weight:normal; opacity:0.6; margin-left:5px">(${st.rem > 0 ? fmtI(st.rem)+' км' : 'Просрочено'})</span></div></div>
+              <div class="bp-sheet-stat"><div class="lbl">Регламент замены</div><div class="val" style="color:var(--cyan)">${fmtI(st.km)} км</div></div>
+            `;
+          }
+          sContent.innerHTML = `
+            <div class="bp-sheet-title" style="color:${st.color}">
+              <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${st.color}; box-shadow: 0 0 10px ${st.color}"></span>
+              ${st.label}
+            </div>
+            <div class="bp-sheet-grid">${statsHtml}</div>
+            ${st.lastKm > 0 ? `<div style="font-size:11px; color:#6a8090; margin-bottom:12px">Последнее обслуживание: <b>${fmtI(st.lastKm)} км</b></div>` : ''}
+            ${st.notes ? `<div class="bp-sheet-notes"><b>📝 Примечание:</b><br>${st.notes}</div>` : ''}
+          `;
+          document.getElementById('bp-sheet-overlay').classList.add('show');
+          document.getElementById('bp-sheet').classList.add('show');
         };
       });
-    }
-    bindHotspots();
+    };
 
-    // Закрыть тултип при тапе мимо
-    svgWrap.addEventListener('click', e=>{ if(!e.target.closest('.sv-hs')) tooltip.classList.remove('show'); });
+    renderView('hood');
+    schCard.querySelectorAll('.bp-tab').forEach(tab => {
+      tab.onclick = () => {
+        schCard.querySelectorAll('.bp-tab').forEach(t => t.classList.remove('on'));
+        tab.classList.add('on');
+        renderView(tab.dataset.view);
+      };
+    });
 
-    // Wear intervals card
-    const wc=this._card();
-    wc.innerHTML='<div class="card-title">Прогноз обслуживания</div>';
-    items.forEach(it=>{
-      const div=document.createElement('div'); div.className='wear-row';
-      const critClass=(it.crit||it.criticality)==='critical'?'crit':(it.crit||it.criticality)==='warning'?'warn':'info';
-      const critLbl={critical:'КРИТ',warning:'ВНМ',info:'ОК'}[it.crit||it.criticality]||'ОК';
-      const condOnly=isCondOnly(it);
-      if(condOnly){
-        const cs=it.conditionStatus||'ok';
-        const pctMap={ok:0,watch:35,replace:70,critical:100};
-        div.innerHTML=`<div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span>
-          <select class="cond-sel" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:${cCol(cs)};font-size:10px;padding:3px 7px;cursor:pointer;outline:none;width:auto">
-            <option value="ok" ${cs==='ok'?'selected':''}>Норма</option>
-            <option value="watch" ${cs==='watch'?'selected':''}>Наблюдение</option>
-            <option value="replace" ${cs==='replace'?'selected':''}>Заменить</option>
-            <option value="critical" ${cs==='critical'?'selected':''}>Критично!</option>
-          </select></div>
-          <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs]||0}%;background:${cCol(cs)}"></div></div>
-          ${it.notes?`<div class="svc-notes">${it.notes}</div>`:''}`;
-        div.querySelector('.cond-sel').onchange=async e=>{
-          await this.db.set(S.SVC,{...it,conditionStatus:e.target.value,condOnly:true,conditionOnly:true});
-          e.target.style.color=cCol(e.target.value);
+    // ── Прогноз обслуживания (wear intervals) ──
+    const wc = this._card();
+    wc.innerHTML = '<div class="card-title">Прогноз обслуживания</div>';
+    items.forEach(it => {
+      const div = document.createElement('div'); div.className = 'wear-row';
+      const critClass = (it.crit || it.criticality) === 'critical' ? 'crit' : (it.crit || it.criticality) === 'warning' ? 'warn' : 'info';
+      const critLbl = { critical:'КРИТ', warning:'ВНМ', info:'ОК' }[it.crit || it.criticality] || 'ОК';
+      const condOnly = isCondOnly(it);
+      if (condOnly) {
+        const cs = it.conditionStatus || 'ok';
+        const pctMap = { ok:0, watch:35, replace:70, critical:100 };
+        div.innerHTML = `
+          <div class="wear-lbl">
+            <span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span>
+            <select class="cond-sel" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:${cCol(cs)};font-size:10px;padding:3px 7px;cursor:pointer;outline:none;width:auto">
+              <option value="ok" ${cs === 'ok' ? 'selected' : ''}>Норма</option>
+              <option value="watch" ${cs === 'watch' ? 'selected' : ''}>Наблюдение</option>
+              <option value="replace" ${cs === 'replace' ? 'selected' : ''}>Заменить</option>
+              <option value="critical" ${cs === 'critical' ? 'selected' : ''}>Критично!</option>
+            </select>
+          </div>
+          <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs] || 0}%;background:${cCol(cs)}"></div></div>
+          ${it.notes ? `<div class="svc-notes">${it.notes}</div>` : ''}
+        `;
+        div.querySelector('.cond-sel').onchange = async e => {
+          await this.db.set(S.SVC, { ...it, conditionStatus: e.target.value, condOnly: true, conditionOnly: true });
+          e.target.style.color = cCol(e.target.value);
         };
       } else {
-        const done=Math.max(0,odo-it.lastServiceOdo);
-        const pct=it.km>0?Math.min(100,(done/it.km)*100):0;
-        const rem=Math.max(0,it.km-done);
-        const col=wCol(pct);
-        const eta=avgDay>0&&rem>0?dStr(new Date(Date.now()+(rem/avgDay)*86400000)):'—';
-        div.innerHTML=`<div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span><span style="color:${col};font-weight:700">${pct.toFixed(0)}%</span></div>
+        const done = Math.max(0, odo - it.lastServiceOdo);
+        const pct = it.km > 0 ? Math.min(100, (done / it.km) * 100) : 0;
+        const rem = Math.max(0, it.km - done);
+        const col = wCol(pct);
+        const eta = avgDay > 0 && rem > 0 ? dStr(new Date(Date.now() + (rem / avgDay) * 86400000)) : '—';
+        div.innerHTML = `
+          <div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span><span style="color:${col};font-weight:700">${pct.toFixed(0)}%</span></div>
           <div class="wear-bar"><div class="wear-fill" style="width:${pct}%;background:${col}"></div></div>
-          ${it.notes?`<div class="svc-notes">${it.notes}</div>`:''}
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">каждые ${fmtI(it.km)} км · ост. ${fmtI(rem)} км · ~${eta}${it.lastServiceOdo?' · при '+fmtI(it.lastServiceOdo)+' км':''}</div>`;
+          ${it.notes ? `<div class="svc-notes">${it.notes}</div>` : ''}
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">каждые ${fmtI(it.km)} км · ост. ${fmtI(rem)} км · ~${eta}${it.lastServiceOdo ? ' · при ' + fmtI(it.lastServiceOdo) + ' км' : ''}</div>
+        `;
       }
       wc.appendChild(div);
     });
     c.appendChild(wc);
 
-    // Add service record
-    const sc=this._card();
-    const itemOpts=items.filter(it=>!isCondOnly(it)).map(it=>`<option value="${it.id}">${it.label}</option>`).join('');
-    sc.innerHTML=`<div class="card-title">Записать ТО / работу</div>
+    // ── Запись ТО ──
+    const sc = this._card();
+    const itemOpts = items.filter(it => !isCondOnly(it)).map(it => `<option value="${it.id}">${it.label}</option>`).join('');
+    sc.innerHTML = `
+      <div class="card-title">Записать ТО / работу</div>
       <div class="ig"><label class="lbl">Работа</label><select id="svc-it">${itemOpts}<option value="other">Другое…</option></select></div>
       <div class="g2">
         <div class="ig"><label class="lbl">Пробег (км)</label><input type="number" id="svc-o" value="${odo}"></div>
@@ -1432,54 +1289,70 @@ class App {
         <div class="ig"><label class="lbl">Дата</label><input type="date" id="svc-d" value="${today()}"></div>
         <div class="ig"><label class="lbl">Комментарий</label><input type="text" id="svc-n" placeholder="Что сделано"></div>
       </div>
-      <button class="btn c full" id="svc-add">Записать в журнал</button>`;
+      <button class="btn c full" id="svc-add">Записать в журнал</button>
+    `;
     c.appendChild(sc);
-    sc.querySelector('#svc-add').onclick=async()=>{
-      const itemId=parseInt(sc.querySelector('#svc-it').value);
-      const svcOdo=parseFloat(sc.querySelector('#svc-o').value);
-      const cost=parseFloat(sc.querySelector('#svc-c').value)||0;
-      const comment=sc.querySelector('#svc-n').value.trim();
-      const dt=sc.querySelector('#svc-d').value||today();
-      if(isNaN(svcOdo)) return;
-      const selItem=items.find(it=>it.id===itemId);
-      const label=selItem?selItem.label:'Другое';
-      await this.db.add(S.GARAGE,{type:selItem?.key||'other',label,odometer:svcOdo,cost,comment,date:new Date(dt+'T12:00:00').toISOString()});
-      if(selItem) await this.db.set(S.SVC,{...selItem,lastServiceOdo:svcOdo,conditionStatus:'ok'});
-      if(cost>0){
-        const bal=await this.db.cfg('balance');
-        await this.db.setCfg('balance',bal-cost);
-        await this.db.add(S.TX,{amount:cost,type:'expense',category:'Авто',comment:label+(comment?' · '+comment:''),date:new Date(dt+'T12:00:00').toISOString()});
+    sc.querySelector('#svc-add').onclick = async () => {
+      const itemId = parseInt(sc.querySelector('#svc-it').value);
+      const svcOdo = parseFloat(sc.querySelector('#svc-o').value);
+      const cost = parseFloat(sc.querySelector('#svc-c').value) || 0;
+      const comment = sc.querySelector('#svc-n').value.trim();
+      const dt = sc.querySelector('#svc-d').value || today();
+      if (isNaN(svcOdo)) return;
+      const selItem = items.find(it => it.id === itemId);
+      const label = selItem ? selItem.label : 'Другое';
+      await this.db.add(S.GARAGE, { type: selItem?.key || 'other', label, odometer: svcOdo, cost, comment, date: new Date(dt + 'T12:00:00').toISOString() });
+      if (selItem) await this.db.set(S.SVC, { ...selItem, lastServiceOdo: svcOdo, conditionStatus: 'ok' });
+      if (cost > 0) {
+        const bal = await this.db.cfg('balance');
+        await this.db.setCfg('balance', bal - cost);
+        await this.db.add(S.TX, { amount: cost, type: 'expense', category: 'Авто', comment: label + (comment ? ' · ' + comment : ''), date: new Date(dt + 'T12:00:00').toISOString() });
       }
       this._render();
     };
 
-    // Logs
-    const logs=(await this.db.all(S.GARAGE)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,15);
-    const jc=this._card();
-    jc.innerHTML='<div class="card-title">Журнал обслуживания</div>';
-    if(!logs.length){jc.insertAdjacentHTML('beforeend','<div style="color:var(--muted);text-align:center;padding:16px">Нет записей</div>');}
-    else logs.forEach(log=>{
-      const row=document.createElement('div'); row.className='log-row';
-      const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
-      row.innerHTML=`<div style="min-width:0;flex:1"><span class="badge">${log.label}</span><div class="log-meta">${dStr(log.date)} · ${fmtI(log.odometer)} км${log.comment?' · '+log.comment:''}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${log.cost?`<span style="color:var(--orange);font-size:12px;font-weight:700">−${fmt(log.cost)} ₽</span>`:''}</div>`;
-      row.querySelector('div:last-child').appendChild(del);
-      del.onclick=()=>confirmDel(del,async()=>{del._ok=true;await this.db.del(S.GARAGE,log.id);if(log.cost>0){const bal=await this.db.cfg('balance');await this.db.setCfg('balance',bal+log.cost);}this._render();});
-      jc.appendChild(row);
-    });
+    // ── Журнал обслуживания ──
+    const logs = (await this.db.all(S.GARAGE)).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+    const jc = this._card();
+    jc.innerHTML = '<div class="card-title">Журнал обслуживания</div>';
+    if (!logs.length) {
+      jc.insertAdjacentHTML('beforeend', '<div style="color:var(--muted);text-align:center;padding:16px">Нет записей</div>');
+    } else {
+      logs.forEach(log => {
+        const row = document.createElement('div'); row.className = 'log-row';
+        const del = document.createElement('button'); del.className = 'del-btn'; del.textContent = '×';
+        row.innerHTML = `
+          <div style="min-width:0;flex:1"><span class="badge">${log.label}</span><div class="log-meta">${dStr(log.date)} · ${fmtI(log.odometer)} км${log.comment ? ' · ' + log.comment : ''}</div></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${log.cost ? `<span style="color:var(--orange);font-size:12px;font-weight:700">−${fmt(log.cost)} ₽</span>` : ''}</div>
+        `;
+        row.querySelector('div:last-child').appendChild(del);
+        del.onclick = () => confirmDel(del, async () => {
+          del._ok = true;
+          await this.db.del(S.GARAGE, log.id);
+          if (log.cost > 0) {
+            const bal = await this.db.cfg('balance');
+            await this.db.setCfg('balance', bal + log.cost);
+          }
+          this._render();
+        });
+        jc.appendChild(row);
+      });
+    }
     c.appendChild(jc);
 
-    // Parts notes
-    const ac=this._card();
-    ac.innerHTML=`<div class="card-title">Артикулы и заметки</div>
+    // ── Артикулы и заметки ──
+    const ac = this._card();
+    ac.innerHTML = `
+      <div class="card-title">Артикулы и заметки</div>
       <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей — чтобы не гуглить перед ТО</div>
-      <textarea id="parts-n" placeholder="Масло: Castrol 5W-30&#10;Фильтр: MANN W712/75&#10;Свечи: NGK BPR5E&#10;...">${partsNotes||''}</textarea>
-      <button class="btn c full" id="parts-s">Сохранить</button>`;
+      <textarea id="parts-n" placeholder="Масло: Castrol 5W-30&#10;Фильтр: MANN W712/75&#10;Свечи: NGK BPR5E&#10;...">${partsNotes || ''}</textarea>
+      <button class="btn c full" id="parts-s">Сохранить</button>
+    `;
     c.appendChild(ac);
-    ac.querySelector('#parts-s').onclick=async()=>{
-      await this.db.setCfg('carPartsNotes',ac.querySelector('#parts-n').value);
-      const f=document.createElement('div');f.textContent='✓ Сохранено';f.style.cssText='color:var(--green);font-size:11px;margin-top:6px';
-      ac.appendChild(f);setTimeout(()=>f.remove(),2000);
+    ac.querySelector('#parts-s').onclick = async () => {
+      await this.db.setCfg('carPartsNotes', ac.querySelector('#parts-n').value);
+      const f = document.createElement('div'); f.textContent = '✓ Сохранено'; f.style.cssText = 'color:var(--green);font-size:11px;margin-top:6px';
+      ac.appendChild(f); setTimeout(() => f.remove(), 2000);
     };
   }
 
