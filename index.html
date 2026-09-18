@@ -16,50 +16,41 @@
 html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;height:100%;overflow-x:hidden}
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
 
-/* ── LOGO ANIMATION ── */
 @keyframes logo-flow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .logo{font-size:14px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,#0ff,#9b4dff,#5ae6ff,#bf9bff,#0ff);background-size:300%;animation:logo-flow 5s ease infinite;-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
 
-/* ── HEADER ── */
 #app-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(0,255,255,.07),rgba(155,77,255,.05));border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 14px 0;padding-top:calc(10px + env(safe-area-inset-top))}
 .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
 .header-acts{display:flex;gap:7px}
 .hdr-btn{background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.25);border-radius:8px;color:var(--cyan);padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px;line-height:1}
 
-/* ── TABS ── */
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:0}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;padding:8px 13px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(160,180,200,.5);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s;user-select:none}
 .tab.active{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
 
-/* ── CONTENT ── */
 #app-content{padding:13px 13px 20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;height:100%}
 
-/* ── SWIPE TRANSITION ── */
 .page-slide-left{animation:slideL .22s ease forwards}
 .page-slide-right{animation:slideR .22s ease forwards}
 @keyframes slideL{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
 @keyframes slideR{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
 
-/* ── CARDS ── */
-.card{background:var(--card);border:1px solid rgba(0,255,255,.11);border-radius:18px;padding:15px;margin-bottom:13px}
+.card{background:var(--card);border:1px solid rgba(0,255,255,.11);border-radius:18px;padding:15px;margin-bottom:13px;position:relative;overflow:hidden;}
 .card.danger{border-color:rgba(255,77,77,.4);box-shadow:0 0 18px rgba(255,77,77,.08)}
 .card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);border-left:3px solid var(--cyan);padding-left:8px;margin-bottom:13px}
 
-/* ── TYPOGRAPHY ── */
 .big{font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:-1px;line-height:1}
 .big.ok{color:var(--green)}.big.warn{color:var(--orange)}.big.bad{color:var(--red);text-shadow:0 0 12px rgba(255,77,77,.35)}
 .sub{font-size:11px;color:var(--muted);margin-top:5px}
 .lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.4px}
 
-/* ── INPUTS ── */
 input,select,textarea{width:100%;padding:10px 13px;background:rgba(0,0,0,.5);border:1px solid rgba(0,255,255,.2);border-radius:12px;color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border-color .2s;-webkit-appearance:none}
 input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
 select option{background:#0a0a14}
 textarea{resize:vertical;min-height:80px;line-height:1.6}
 .ig{margin-bottom:10px}
 
-/* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;font-size:12px;font-weight:700;border-radius:30px;cursor:pointer;border:1px solid;font-family:inherit;transition:all .2s;white-space:nowrap;letter-spacing:.4px}
 .btn.c{background:rgba(0,255,255,.1);border-color:var(--cyan);color:var(--cyan)}
 .btn.c:active{background:rgba(0,255,255,.25)}
@@ -71,21 +62,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .btn:disabled{opacity:.35;pointer-events:none}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-/* ── GRID ── */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 
-/* ── STATS ── */
 .stat{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;text-align:center}
 .stat .v{font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:3px}
 .stat .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
 
-/* ── PROGRESS ── */
 .prog-track{height:7px;background:rgba(255,255,255,.07);border-radius:7px;overflow:hidden;margin:7px 0 5px}
 .prog-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .5s}
-.prog-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 
-/* ── TX LOG ── */
 .log-row{padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;gap:8px}
 .log-row:last-child{border-bottom:none}
 .log-meta{font-size:10px;color:var(--muted);margin-top:2px}
@@ -95,7 +81,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .del-btn{background:none;border:1px solid rgba(255,80,80,.2);border-radius:7px;color:rgba(255,80,80,.45);font-size:13px;padding:3px 8px;cursor:pointer;flex-shrink:0;line-height:1;transition:color .2s,border-color .2s}
 .del-btn:active{color:var(--red);border-color:var(--red)}
 
-/* ── WEAR ── */
 .wear-row{margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.05)}
 .wear-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 .wear-lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;color:#a0b0bf;align-items:center;gap:6px}
@@ -103,19 +88,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .wear-fill{height:100%;border-radius:5px;transition:width .5s}
 .svc-notes{font-size:10px;color:#5a7080;font-style:italic;margin-top:3px}
 
-/* ── PILLS ── */
 .pill{display:inline-block;padding:2px 7px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.4px;margin-right:4px;flex-shrink:0}
 .pill.crit{background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.3)}
 .pill.warn{background:rgba(255,160,64,.12);color:var(--orange);border:1px solid rgba(255,160,64,.25)}
 .pill.info{background:rgba(68,170,255,.1);color:#5af;border:1px solid rgba(68,170,255,.2)}
 
-/* ── BUDGET ROW ── */
 .b-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
 .b-row:last-child{border-bottom:none}
 .b-key{color:#7a90a0;font-size:11px}
 .b-val{font-weight:700}
 
-/* ── RECIPE ── */
 .recipe{background:rgba(0,0,0,.35);border:1px solid rgba(155,77,255,.15);border-radius:14px;padding:13px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
 .recipe:active{border-color:rgba(155,77,255,.4)}
 .recipe-hd{display:flex;justify-content:space-between;align-items:center}
@@ -128,52 +110,33 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .rsec{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:8px 0 4px}
 .recipe-body ul{margin:3px 0;padding-left:16px}
 
-/* ── TIPS ── */
 .tip{background:rgba(0,255,255,.04);border:1px solid rgba(0,255,255,.1);border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:11px;color:#9ab8cc;line-height:1.7}
-
-/* ── REMINDER ── */
 .reminder{background:rgba(255,160,64,.07);border:1px solid rgba(255,160,64,.3);border-radius:12px;padding:11px;margin-bottom:10px;font-size:12px;color:var(--orange);line-height:1.65}
 .reminder.red{background:rgba(255,77,77,.07);border-color:rgba(255,77,77,.3);color:#ff6060}
 .reminder.green{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);color:var(--green)}
 
-/* ── CALC RESULT ── */
 .calc-result{background:rgba(0,0,0,.4);border:1px solid rgba(0,255,255,.12);border-radius:12px;padding:13px;font-size:12px;line-height:2}
 .calc-total{font-size:16px;font-weight:700;color:var(--cyan);margin-top:8px;border-top:1px solid rgba(0,255,255,.15);padding-top:8px}
 
-/* ── CANVAS ── */
 .canvas-wrap{border-radius:12px;overflow:hidden;background:rgba(0,0,0,.3);margin-top:8px}
 .canvas-wrap canvas{display:block;width:100%}
 
-/* ── DETAILS ── */
 details{margin-top:8px}
 details summary{font-size:11px;color:#5a8090;cursor:pointer;user-select:none;padding:6px 0;list-style:none}
 details summary::before{content:'›';margin-right:5px;display:inline-block;transition:transform .2s}
 details[open] summary::before{transform:rotate(90deg)}
 
-/* ── SEARCH ROW ── */
 .search-row{display:flex;gap:8px;margin-bottom:12px}
 .search-row input{flex:1}
 .search-row select{flex:0 0 auto;width:auto;min-width:110px}
 
-/* ── GOAL MINI ── */
 .goal-mini{margin-bottom:12px}
 .goal-mini-title{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;align-items:center}
-
-/* ── PAYDAY TAG ── */
 .payday-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(155,77,255,.15);border:1px solid rgba(155,77,255,.3);color:#bf9bff;letter-spacing:.5px}
 
-/* ── COLOR DOTS ── */
 .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
 .color-dot.selected{border-color:white;box-shadow:0 0 8px rgba(255,255,255,.4)}
 
-/* ── CAR SCHEMATIC ── */
-#car-schema{width:100%;max-width:340px;margin:10px auto 0;display:block}
-.schema-dot{cursor:pointer;transition:transform .15s}
-.schema-dot:active{transform:scale(1.25)}
-.schema-label{font-size:9px;fill:#a0b8cc;font-family:'Segoe UI',sans-serif;pointer-events:none}
-.schema-status{font-size:8px;font-weight:700;pointer-events:none}
-
-/* ── BAR CHART ── */
 .bar-chart{display:flex;flex-direction:column;gap:5px;margin-top:8px}
 .bar-row{display:flex;align-items:center;gap:8px;font-size:10px}
 .bar-row .bar-label{width:40px;text-align:right;color:var(--muted);flex-shrink:0;font-size:9px}
@@ -185,24 +148,16 @@ details[open] summary::before{transform:rotate(90deg)}
 .bar-legend span{display:flex;align-items:center;gap:5px}
 .bar-legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 
-/* ── HIST POPUP ── */
 .hist-list{max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,255,255,.2) transparent}
 .hist-list::-webkit-scrollbar{width:3px}
 .hist-list::-webkit-scrollbar-thumb{background:rgba(0,255,255,.25);border-radius:3px}
 
-/* ── FREE CASH ── */
 .free-cash{margin-top:8px;font-size:11px;color:var(--green);background:rgba(0,255,136,.07);padding:7px 10px;border-radius:8px;border:1px solid rgba(0,255,136,.15)}
 
-/* ── SEP ── */
-.sep{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5a7090;margin:13px 0 8px;display:flex;align-items:center;gap:8px}
-.sep::after{content:'';flex:1;height:1px;background:rgba(0,255,255,.08)}
-
-/* ── LEGEND ── */
 .chart-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px}
 .chart-legend span{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#a0b0c0}
 .chart-legend .ld{display:inline-block;width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
-/* ── MANDATORY TOGGLE ── */
 .mandatory-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:rgba(255,160,64,.06);border:1px solid rgba(255,160,64,.2);border-radius:12px;margin-top:8px;cursor:pointer;user-select:none;transition:background .2s}
 .mandatory-row.on{background:rgba(255,160,64,.12);border-color:rgba(255,160,64,.4)}
 .mandatory-toggle{position:relative;width:38px;height:20px;flex-shrink:0}
@@ -214,11 +169,7 @@ details[open] summary::before{transform:rotate(90deg)}
 .mandatory-lbl{font-size:11px;font-weight:700;color:var(--orange);flex:1}
 .mandatory-sub{font-size:9px;color:var(--muted)}
 .mandatory-badge{display:inline-block;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:700;background:rgba(255,160,64,.2);border:1px solid rgba(255,160,64,.35);color:var(--orange);margin-left:4px;vertical-align:middle}
-/* ── MANDATORY PROGRESS ── */
-.mand-prog{background:rgba(255,160,64,.07);border:1px solid rgba(255,160,64,.2);border-radius:12px;padding:12px;margin-bottom:12px}
-.mand-prog-bar{height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;margin:6px 0 4px}
-.mand-prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--orange),#ff6020);transition:width .5s}
-/* ── TX HISTORY FILTERS ── */
+
 .tx-filter-bar{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .tx-filter-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .tx-filter-row select, .tx-filter-row input[type=date]{flex:1;min-width:90px;padding:8px 10px;font-size:11px}
@@ -226,11 +177,17 @@ details[open] summary::before{transform:rotate(90deg)}
 .filter-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
 .tx-sort-btn{padding:6px 12px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid rgba(0,255,255,.2);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .2s}
 .tx-sort-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,255,.08)}
-/* ── TX PAGINATION ── */
 .tx-page-bar{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 .tx-page-btn{padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid rgba(0,255,255,.25);background:rgba(0,255,255,.06);color:var(--cyan);cursor:pointer;transition:all .2s}
 .tx-page-btn:hover{background:rgba(0,255,255,.14)}
 .tx-count-line{text-align:center;font-size:10px;color:var(--muted);margin-top:6px}
+
+.overlay-modal {position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay-modal.show {opacity:1;pointer-events:auto;}
+.car-card {display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.4);border:1px solid rgba(0,255,255,.15);border-radius:14px;padding:15px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.car-card:active {background:rgba(0,255,255,.1);border-color:var(--cyan);}
+.car-card-name {font-size:14px;font-weight:700;color:var(--cyan);}
+.car-card-odo {font-size:11px;color:var(--muted);margin-top:4px;}
 
 </style>
 </head>
@@ -241,7 +198,8 @@ details[open] summary::before{transform:rotate(90deg)}
     <div class="logo">SENTINEL OS</div>
     <div class="header-acts">
       <button class="hdr-btn" id="exp-btn">↓ БД</button>
-      <label class="hdr-btn" style="cursor:pointer">↑ БД<input type="file" id="imp-file" accept=".json" style="display:none"></label>
+      <button class="hdr-btn" id="imp-btn-trigger">↑ БД</button>
+      <input type="file" id="imp-file" accept=".json" style="display:none">
     </div>
   </div>
   <div class="tabs" id="tabs">
@@ -256,117 +214,50 @@ details[open] summary::before{transform:rotate(90deg)}
 
 <div id="app-content"></div>
 
+<div class="overlay-modal" id="global-modal">
+  <div class="card" style="width:100%;max-width:320px;" id="global-modal-content"></div>
+</div>
+
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════
-   ДАННЫЕ
-═══════════════════════════════════════ */
 const DB_NAME = 'SentinelCarbonV3';
-const DB_VER  = 4; // bump to add any missing stores
-const S = { TX:'transactions', GARAGE:'garage_logs', ODO:'odo_history', CFG:'settings', SVC:'service_items', GOALS:'goals' };
+const DB_VER  = 5; // Bumped to 5 to support multiple CARS
+const S = { 
+  TX:'transactions', 
+  GARAGE:'garage_logs', 
+  ODO:'odo_history', 
+  CFG:'settings', 
+  SVC:'service_items', 
+  GOALS:'goals',
+  CARS:'cars' 
+};
 
 const DEFAULTS = {
   balance:0, monthlyBudgetCap:15000, mandatoryPayments:0,
-  currentOdometer:0, lastOilOdo:0, lastTimingOdo:0, lastSparkOdo:0,
   printHourRate:100, printSetupFee:200, printMinPrice:500,
   advanceAmount:29000, salaryAmount:29000, carPartsNotes:'',
 };
 
-const SVC_ITEMS = [
-  {key:'oil',        label:'Масло + масляный фильтр',       km:8000,  crit:'critical',condOnly:false,notes:'5W-30 · 3.2 л · не реже раза в год'},
-  {key:'airfilter',  label:'Воздушный фильтр двигателя',    km:15000, crit:'warning', condOnly:false,notes:'Осматривать каждые 8к км'},
-  {key:'fuelfil',    label:'Топливный фильтр',              km:30000, crit:'warning', condOnly:false,notes:'В баке — менять при замене бензонасоса'},
-  {key:'cabinfilter',label:'Фильтр салона',                 km:15000, crit:'info',    condOnly:false,notes:'Раз в год минимум'},
-  {key:'spark',      label:'Свечи зажигания',               km:30000, crit:'critical',condOnly:false,notes:'NGK BPR5E · зазор 0.8мм · 4 шт.'},
-  {key:'brakefluid', label:'Тормозная жидкость',            km:30000, crit:'critical',condOnly:false,notes:'DOT-4 · каждые 2 года'},
-  {key:'brakef',     label:'Колодки тормозные передние',    km:30000, crit:'critical',condOnly:false,notes:'Остаток <3мм → замена срочно'},
-  {key:'discf',      label:'Диски тормозные передние',      km:60000, crit:'warning', condOnly:false,notes:'Мин. толщина 20мм · трещины и биение'},
-  {key:'brakershoes',label:'Колодки задние (барабанные)',   km:40000, crit:'warning', condOnly:false,notes:'Остаток <2мм → замена'},
-  {key:'timing',     label:'Ремень ГРМ + ролики + помпа',   km:60000, crit:'critical',condOnly:false,notes:'ТОЛЬКО комплектом! Обрыв = капремонт'},
-  {key:'coolant',    label:'Охлаждающая жидкость',          km:60000, crit:'warning', condOnly:false,notes:'G11 (зелёный) · 5.6 л · не смешивать'},
-  {key:'gearboxoil', label:'Масло в КПП',                   km:60000, crit:'info',    condOnly:false,notes:'75W-80 GL-4 · ~2 л'},
-  {key:'bearingfl',  label:'Подшипник ступицы пер. лев.',   km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч в поворотах влево'},
-  {key:'bearingfr',  label:'Подшипник ступицы пер. пр.',    km:0,     crit:'warning', condOnly:true, notes:'Гул 40+ км/ч в поворотах вправо'},
-  {key:'bearingrl',  label:'Подшипник ступицы задн. лев.',  km:0,     crit:'info',    condOnly:true, notes:'Гул на скорости, реже чем передние'},
-  {key:'bearingrr',  label:'Подшипник ступицы задн. пр.',   km:0,     crit:'info',    condOnly:true, notes:'Гул на скорости, реже чем передние'},
-  {key:'reardrumfl', label:'Барабан тормозной задн. лев.',  km:0,     crit:'info',    condOnly:true, notes:'Осмотр на биение и выработку'},
-  {key:'reardrumfr', label:'Барабан тормозной задн. пр.',   km:0,     crit:'info',    condOnly:true, notes:'Осмотр на биение и выработку'},
-  {key:'stablink',   label:'Стойки стабилизатора',          km:0,     crit:'info',    condOnly:true, notes:'Стук на кочках/поворотах · ~500₽/пара'},
-  {key:'cvjointl',   label:'ШРУС наружный левый',           km:0,     crit:'warning', condOnly:true, notes:'Хруст при вывернутом руле влево'},
-  {key:'cvjointr',   label:'ШРУС наружный правый',          km:0,     crit:'warning', condOnly:true, notes:'Хруст при вывернутом руле вправо'},
-  {key:'handbrake',  label:'Трос ручного тормоза',          km:0,     crit:'info',    condOnly:true, notes:'Плохо держит на уклоне → регулировка или замена'},
-  {key:'throttle',   label:'Дроссельная заслонка',          km:0,     crit:'info',    condOnly:true, notes:'Плавающие обороты → чистка очистителем карбюратора'},
-  {key:'lambda',     label:'Лямбда-зонд',                   km:0,     crit:'info',    condOnly:true, notes:'Рост расхода + плавающие обороты к 100-120к км'},
-  {key:'battery',    label:'Аккумулятор (АКБ)',              km:0,     crit:'warning', condOnly:true, notes:'Срок 3-5 лет · проверь CCA тестером при ТО'},
-  {key:'exhaust',    label:'Выхлопная система',             km:0,     crit:'info',    condOnly:true, notes:'Коррозия, прогары, посторонний шум'},
+// Generic service items for any new car
+const GENERIC_SVC_ITEMS = [
+  {key:'oil',        label:'Масло ДВС + масляный фильтр', km:10000, crit:'critical', notes:'Регулярное ТО'},
+  {key:'airfilter',  label:'Воздушный фильтр двигателя',  km:15000, crit:'warning',  notes:''},
+  {key:'cabinfilter',label:'Фильтр салона',               km:15000, crit:'info',     notes:'Защита от пыли и запахов'},
+  {key:'spark',      label:'Свечи зажигания',             km:30000, crit:'critical', notes:''},
+  {key:'brakef',     label:'Колодки тормозные передние',  km:30000, crit:'critical', notes:'Скрип — первый признак износа'},
+  {key:'braker',     label:'Колодки тормозные задние',    km:40000, crit:'warning',  notes:''},
+  {key:'brakefluid', label:'Тормозная жидкость',          km:40000, crit:'critical', notes:'DOT-4. Гигроскопична, менять раз в 2 года'},
+  {key:'timing',     label:'Ремень / Цепь ГРМ',           km:60000, crit:'critical', notes:'Обрыв опасен для двигателя'},
+  {key:'coolant',    label:'Антифриз',                    km:60000, crit:'warning',  notes:'Следить за уровнем и цветом'},
+  {key:'gearboxoil', label:'Масло в КПП',                 km:60000, crit:'info',     notes:''},
 ];
-
-// Позиции компонентов на схеме машины [x%, y%] (viewBox 220x420)
-const SCHEMA_POS = {
-  oil:       [110, 95,  'Масло'],
-  timing:    [110, 65,  'ГРМ'],
-  airfilter: [80,  75,  'Возд.ф'],
-  cabinfilter:[150, 200,'Сал.ф'],
-  fuelfil:   [145, 360, 'Топл.ф'],
-  spark:     [80,  95,  'Свечи'],
-  coolant:   [145, 80,  'Охл'],
-  gearboxoil:[110, 175, 'КПП'],
-  brakefluid:[155, 155, 'Торм.ж'],
-  brakef:    [110, 130, 'Кол.П'],
-  discf:     [110, 130, null],
-  brakershoes:[110,340, 'Кол.З'],
-  timing:    [80,  65,  'ГРМ'],
-  bearingfl: [45,  125, 'Ступ.ПЛ'],
-  bearingfr: [175, 125, 'Ступ.ПП'],
-  bearingrl: [45,  330, 'Ступ.ЗЛ'],
-  bearingrr: [175, 330, 'Ступ.ЗП'],
-  reardrumfl:[45,  345, 'Бараб.Л'],
-  reardrumfr:[175, 345, 'Бараб.П'],
-  stablink:  [110, 215, 'Стаб'],
-  cvjointl:  [55,  160, 'ШРУС Л'],
-  cvjointr:  [165, 160, 'ШРУС П'],
-  handbrake: [110, 310, 'Ручник'],
-  throttle:  [145, 95,  'Дрос'],
-  lambda:    [155, 275, 'Λ-зонд'],
-  battery:   [75,  75,  'АКБ'],
-  exhaust:   [145, 300, 'Выхл'],
-};
 
 const GOAL_COLORS = ['#ff4d4d','#ffa040','#0f8','#0ff','#9b4dff','#f06dff','#38c8f0','#ffeb40'];
 const CAT_EXP = ['Еда','Авто','Быт','Бензин','Развлечения','Здоровье','3D-расходники',
   'Моб. интернет','Аренда квартиры','Коммуналка','WiFi','Подписки','Другое'];
-// Категории, которые обычно являются обязательными платежами
 const MANDATORY_CATS_HINT = new Set(['Моб. интернет','Аренда квартиры','Коммуналка','WiFi','Подписки','Бензин']);
 const CAT_INC = ['ЗП','Аванс','Премия','3D-печать','Другое'];
-
-const CAR_TIPS = [
-  '🔧 ГРМ TU1JP: не знаешь когда менялся — меняй сразу. Обрыв при работающем движке = капремонт 30–60к₽.',
-  '🌡️ Перегрев TU1JP — смерть мотора. Стрелка к красному → сразу глуши, жди полного остывания.',
-  '🔊 Гул 60+ км/ч, меняется при смене полосы → передний подшипник умирает. Диагностика срочно.',
-  '🛑 Колодки: остаток <3мм → замена. Иначе диск тоже пойдёт под замену.',
-  '💨 Зимой давление шин падает 0.1 атм на каждые -10°C. Проверяй еженедельно.',
-  '🔩 ШРУС: хруст при вывернутом руле = рваный пыльник. Меняй пыльник сразу.',
-  '🔗 Стойки стаба — расходник ~500₽/пара. Стук на кочках/поворотах = они.',
-  '⚙️ Масло КПП часто забывают. Если не менялось после 60к км — пора.',
-  '🏎️ Диагностика перед зимой и весной — дешевле ремонта на трассе ночью.',
-  '🔋 АКБ служит 3–5 лет. Не помнишь когда меняли — проверь CCA тестером.',
-  '💧 Охлаждайку проверяй на холодном моторе. Постоянно падает — утечка.',
-  '🛞 Вибрация руля 80–100 км/ч = дисбаланс. Балансировка ~500₽.',
-  '🧊 Тормозная жидкость гигроскопична — меняй каждые 2 года без исключений.',
-  '🔌 Катушка зажигания TU1JP — частая болячка. Троит на холодную/дождь = она.',
-  '💨 Дроссель TU1JP любит загрязняться. Плавающие обороты → промой очистителем.',
-  '⛽ TU1JP: только 95-й бензин. 92-й → детонация и прогар клапанов.',
-  '🌡️ TU1JP: термостат 89°C. Долго греется или перегрев в пробке → менять.',
-  '💡 Печка дует холодным на горячем движке → кран отопителя (~800₽).',
-  '⚡ Peugeot 206: блокировка дверей живёт своей жизнью. Чаще виноват концевик.',
-  '🔧 TU1JP: свечные колодцы заливает маслом из прокладки клапанной крышки.',
-  '🔊 Стук задней подвески на кочках — сайлентблоки задней балки.',
-  '💨 Лямбда-зонд умирает к 100–120к. Расход вырос + плавают обороты — проверь.',
-  '🛞 Развал-схождение 206: задние колёса регулируются эксцентриками. Нет эксцентриков → замена балки.',
-  '🔦 Задние фонари: раз в год чисти и смазывай контакты.',
-  '🌡️ Датчик температуры TU1JP часто врёт. Вентилятор включается поздно → замени.',
-];
 
 const PRINT_TIPS = [
   '🧵 PETG — лучший для прочных деталей. Адгезия, минимальная усадка, до ~70°C.',
@@ -380,58 +271,24 @@ const PRINT_TIPS = [
   '🔁 Ретракт PETG: 4–6мм (Bowden) или 1–2мм (директ). Больше ≠ лучше.',
   '🌡️ TPU: скорость 20–30 мм/с, иначе нити. Директ-экструдер обязателен.',
 ];
-
 const RECIPES = [
   {name:'Гречка с тушёнкой',cat:'Обед',time:'15 мин',cal:'~450 ккал',
    ingr:['Гречка — 150г','Вода — 300мл','Тушёнка говяжья — 325г','Соль — 0.5 ч.л.'],
    steps:['Промыть гречку до прозрачной воды','Залить кипятком 1:2, посолить','Минимум огня, крышка — 12–15 мин, не открывать!','Тушёнку разогреть или добавить из банки','Смешать, подать с чёрным перцем']},
   {name:'Яичница с колбасой',cat:'Завтрак',time:'7 мин',cal:'~380 ккал',
    ingr:['Яйца — 3 шт','Колбаса — 80–100г','Масло — 1 ст.л.','Соль, перец'],
-   steps:['Разогреть сковороду с маслом','Нарезать колбасу, обжарить 2–3 мин','Разбить яйца, посолить','Накрыть крышкой 3–4 мин (мягкий желток) или 5–6 мин (твёрдый)']},
-  {name:'Паста с маслом и сыром',cat:'Обед',time:'12 мин',cal:'~520 ккал',
-   ingr:['Паста — 120г','Масло сливочное — 20г','Сыр твёрдый — 50г','Соль в воду','Чёрный перец'],
-   steps:['Кипяток хорошо посолить','Варить пасту по инструкции','За 30 сек зачерпнуть 3 ст.л. воды — нужно!','Слить пасту, вернуть в кастрюлю','Масло + вода + тёртый сыр — быстро перемешать']},
-  {name:'Рис жареный с яйцом',cat:'Обед',time:'10 мин',cal:'~420 ккал',
-   ingr:['Варёный рис (холодный) — 200г','Яйца — 2 шт','Соевый соус — 1 ст.л.','Масло — 1 ст.л.'],
-   steps:['Раскалить сковороду с маслом','Рис выложить, жарить 3–4 мин не трогая','Яйца разбить рядом, перемешать через 1–2 мин','Смешать всё, добавить соевый соус — ещё 1 мин']},
+   steps:['Разогреть сковороду с маслом','Нарезать колбасу, обжарить 2–3 мин','Разбить яйца, посолить','Накрыть крышкой 3–4 мин (мягкий желток)']},
   {name:'Омлет классический',cat:'Завтрак',time:'8 мин',cal:'~360 ккал',
    ingr:['Яйца — 3 шт','Молоко — 3 ст.л.','Масло сливочное — 15г','Соль'],
    steps:['Взбить яйца с молоком вилкой 30 сек, посолить','Разогреть сковороду, растопить масло','Вылить смесь, 20 сек — края схватятся','Минимум огня, крышка, 4–5 мин — готово']},
   {name:'Картошка в мундире',cat:'Ужин',time:'25 мин',cal:'~280 ккал',
    ingr:['Картофель — 4–5 шт','Соль — 1 ч.л.','Сметана/масло/укроп'],
    steps:['Вымыть щёткой, залить холодной водой, посолить','Варить 20–25 мин на среднем огне','Проверить зубочисткой: входит легко = готова','Подать со сметаной и укропом']},
-  {name:'Паста Карбонара',cat:'Ужин',time:'15 мин',cal:'~600 ккал',
-   ingr:['Спагетти — 200г','Бекон/ветчина — 100г','Яйца — 2 шт','Сыр твёрдый — 2 ст.л.','Перец'],
-   steps:['Варить спагетти строго по инструкции в солёной воде','Обжарить бекон до золотистого, выключить огонь','Взбить яйца + тёртый сыр + перец','Слить пасту, оставить 3 ст.л. воды','Добавить пасту к бекону, вылить яичную смесь','Быстро мешать 1–2 мин — яйца не должны свернуться!']},
-  {name:'Пицца на сковородке',cat:'Ужин',time:'15 мин',cal:'~520 ккал',
-   ingr:['Мука — 4 ст.л.','Молоко — 4 ст.л.','Яйца — 2 шт','Томат. паста, колбаса, сыр'],
-   steps:['Смешать муку + молоко + яйца + соль вилкой','Разогреть сковороду с маслом, вылить тесто','Крышка, 5–7 мин на среднем огне','Намазать пастой, выложить колбасу и сыр','Крышка ещё 3–4 мин до расплавления сыра']},
-  {name:'Куриный суп с лапшой',cat:'Обед',time:'25 мин',cal:'~280 ккал',
-   ingr:['Куриное филе — 200г','Вода — 1 л','Морковь, картофель','Вермишель — 50г','Соль, зелень'],
-   steps:['Варить филе 15 мин, вынуть и нарезать','Добавить овощи, варить 10 мин','Засыпать вермишель, 3–4 мин','Вернуть курицу, посолить, зелень']},
-  {name:'Овсянка с бананом',cat:'Завтрак',time:'7 мин',cal:'~380 ккал',
-   ingr:['Хлопья — 40г','Молоко/вода — 200мл','Банан — 1 шт','Мёд — 1 ч.л.','Соль — щепотка'],
-   steps:['Вскипятить молоко с солью','Засыпать хлопья, варить 3–5 мин помешивая','Добавить нарезанный банан','Снять с огня, добавить мёд, накрыть на 1 мин']},
-  {name:'Сырники из творога',cat:'Завтрак',time:'15 мин',cal:'~410 ккал',
-   ingr:['Творог — 200г','Яйцо — 1 шт','Мука — 2 ст.л.','Сахар — 1 ст.л.','Соль'],
-   seps:['Разомнуть творог, добавить яйцо, муку, сахар, соль','Сформировать лепёшки, обвалять в муке','Жарить на масле 2–3 мин с каждой стороны','Подать со сметаной или вареньем']},
-  {name:'Яичница "Шакшука"',cat:'Завтрак',time:'12 мин',cal:'~360 ккал',
-   ingr:['Яйца — 3 шт','Томаты — 400г (банка)','Лук, чеснок','Паприка, куркума','Масло, хлеб'],
-   steps:['Обжарить лук 3 мин, добавить чеснок + паприку 30 сек','Добавить томаты, тушить 5 мин','Сделать 3 углубления, разбить яйца','Крышка 4–5 мин — белок схватится, желток мягкий']},
-  {name:'Гречка "Купеческая"',cat:'Обед',time:'20 мин',cal:'~520 ккал',
-   ingr:['Куриное бедро/свинина — 150г','Гречка — 150г','Лук, морковь','Вода — 300мл','Лавровый лист'],
-   steps:['Обжарить мясо кубиком 3 мин на сильном огне','Добавить лук и тёртую морковь, жарить 5 мин','Засыпать гречку, мешать 1 мин — поджарится','Кипяток + соль + лавровый лист, крышка','Минимум огня, 15 мин. Не открывать!']},
   {name:'Курица в соевом соусе',cat:'Ужин',time:'20 мин',cal:'~480 ккал',
    ingr:['Куриное филе — 300г','Соевый соус — 3 ст.л.','Мёд — 1 ст.л.','Чеснок, имбирь','Масло'],
-   steps:['Нарезать филе 2×2 см, посолить, поперчить','Раскалить сковороду, кинуть курицу — не трогать 2–3 мин','Перевернуть, жарить 2 мин','Вылить соус+мёд+чеснок, тушить 5–7 мин до загустения']},
-  {name:'Картошка по-деревенски',cat:'Ужин',time:'25 мин',cal:'~350 ккал',
-   ingr:['Картофель — 4–5 шт','Масло — 2 ст.л.','Паприка, чеснок, соль'],
-   steps:['Нарезать дольками, замочить 5 мин, хорошо обсушить','Смешать с маслом, паприкой, чесноком, солью','Духовка 200°C или аэрогриль 190°C','Один слой на противень, 20–25 мин, перевернуть раз']},
+   steps:['Нарезать филе 2×2 см, посолить, поперчить','Раскалить сковороду, кинуть курицу — не трогать 2–3 мин','Перевернуть, жарить 2 мин','Вылить соус+мёд+чеснок, тушить 5–7 мин до загустения']}
 ];
 
-/* ═══════════════════════════════════════
-   INDEXEDDB
-═══════════════════════════════════════ */
 class DB {
   constructor(){ this.ready = this._open(); }
   _open(){
@@ -451,6 +308,7 @@ class DB {
         mk(S.CFG,   {keyPath:'key'});
         mk(S.SVC,   {keyPath:'id',autoIncrement:true},[['key','key']]);
         mk(S.GOALS, {keyPath:'id',autoIncrement:true});
+        mk(S.CARS,  {keyPath:'id',autoIncrement:true}); // NEW STORE FOR v5
       };
       req.onsuccess = e => { this.db=e.target.result; this._seed().then(res).catch(rej); };
       req.onerror   = e => rej(e.target.error);
@@ -460,21 +318,32 @@ class DB {
     for(const [k,v] of Object.entries(DEFAULTS)){
       if(await this.get(S.CFG,k)===null) await this.set(S.CFG,{key:k,value:v});
     }
-    // Sync service items — add any new keys not yet in DB
-    const existing = await this.all(S.SVC);
-    const existKeys = new Set(existing.map(it=>it.key));
-    if(!existing.length){
-      for(const it of SVC_ITEMS) await this.add(S.SVC,{...it,lastServiceOdo:0,conditionStatus:'ok',enabled:true});
-    } else {
-      // Add new items that don't exist yet
-      for(const it of SVC_ITEMS){
-        if(!existKeys.has(it.key)){
-          await this.add(S.SVC,{...it,lastServiceOdo:0,conditionStatus:'ok',enabled:true});
+    
+    // Auto-migrate legacy garage data to the new multi-car system
+    const cars = await this.all(S.CARS);
+    if(cars.length === 0) {
+        const legacyGlobalOdo = await this.cfg('currentOdometer');
+        // Create generic vehicle to store all pre-existing records (or just default initialization)
+        const carId = await this.add(S.CARS, { name: 'Мой Автомобиль', odo: legacyGlobalOdo || 0 });
+        
+        let svcs = await this.all(S.SVC);
+        if (svcs.length > 0) {
+            // Apply car_id to legacy specific items
+            for (const s of svcs) {
+                if (!s.car_id) { s.car_id = carId; await this.set(S.SVC, s); }
+            }
+        } else {
+            // New user - seed generic items
+            for (const it of GENERIC_SVC_ITEMS) {
+                await this.add(S.SVC, {...it, lastServiceOdo:0, conditionStatus:'ok', enabled:true, car_id: carId});
+            }
         }
-      }
-    }
-    if(!(await this.all(S.GOALS)).length){
-      await this.add(S.GOALS,{name:'Долг Сабине',targetAmount:100000,deadline:'2026-06-15',priority:1,monthlyAllocation:15000,color:GOAL_COLORS[0],active:true});
+
+        const odos = await this.all(S.ODO);
+        for (const o of odos) { if(!o.car_id){ o.car_id = carId; await this.set(S.ODO, o); } }
+
+        const logs = await this.all(S.GARAGE);
+        for (const lg of logs) { if(!lg.car_id){ lg.car_id = carId; await this.set(S.GARAGE, lg); } }
     }
   }
   _st(n,m='readonly'){return this.db.transaction(n,m).objectStore(n);}
@@ -487,16 +356,12 @@ class DB {
   async setCfg(k,v){await this.set(S.CFG,{key:k,value:v});}
 }
 
-/* ═══════════════════════════════════════
-   УТИЛИТЫ
-═══════════════════════════════════════ */
 const fmt   = n => Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtI  = n => Number(n||0).toLocaleString('ru-RU');
 const dStr  = d => new Date(d).toLocaleDateString('ru-RU');
 const today = () => new Date().toISOString().split('T')[0];
 const wCol  = p => p<60?'#0ff':p<85?'#ffa040':'#ff4d4d';
 const cCol  = c => ({ok:'#0f8',watch:'#ffa040',replace:'#ff8040',critical:'#ff4d4d'}[c]||'#0f8');
-// Handle both condOnly and conditionOnly for backwards compatibility
 const isCondOnly = it => !!(it.condOnly || it.conditionOnly);
                   
 function parseMoney(value) {
@@ -506,38 +371,105 @@ function parseMoney(value) {
   return isNaN(num) ? 0 : num;
 }
 
-function adjustedDate(y,m,d){
-  const dt=new Date(y,m,d); const dow=dt.getDay();
-  if(dow===0) dt.setDate(dt.getDate()-2);
-  if(dow===6) dt.setDate(dt.getDate()-1);
-  return dt;
+// Custom prompt to replace alert/confirm
+function customConfirm(title, message, onYes) {
+  const m = document.getElementById('global-modal');
+  const c = document.getElementById('global-modal-content');
+  c.innerHTML = `
+    <div class="card-title">${title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:15px;line-height:1.5">${message}</div>
+    <div class="btn-row">
+      <button class="btn c full" id="c-yes">Подтвердить</button>
+      <button class="btn r full" id="c-no">Отмена</button>
+    </div>
+  `;
+  m.classList.add('show');
+  c.querySelector('#c-no').onclick = () => m.classList.remove('show');
+  c.querySelector('#c-yes').onclick = () => { m.classList.remove('show'); onYes(); };
 }
 
-function calcNextPayday(txs){
-  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
-  const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-50);
-  const recent=(txs||[]).filter(t=>t.type==='income'&&['ЗП','Аванс','Премия'].includes(t.category)&&new Date(t.date)>=cutoff);
-  const mStart=new Date(y,m,1);
-  const thisZP    = recent.some(t=>t.category==='ЗП'    &&new Date(t.date)>=mStart);
-  const thisAvans = recent.some(t=>t.category==='Аванс' &&new Date(t.date)>=mStart);
-  if(thisZP&&!thisAvans){
-    const av=new Date(y,m,20);
-    if(av>now) return{date:av,days:Math.max(1,Math.ceil((av-now)/86400000)),label:'Аванс'};
-    const zp=adjustedDate(y,m+1,5);
-    return{date:zp,days:Math.max(1,Math.ceil((zp-now)/86400000)),label:'ЗП'};
-  }
-  if(thisAvans&&!thisZP){
-    const zp=adjustedDate(y,m+1,5);
-    return{date:zp,days:Math.max(1,Math.ceil((zp-now)/86400000)),label:'ЗП'};
-  }
-  if(thisZP&&thisAvans){
-    const pr=new Date(y,m+1,22);
-    return{date:pr,days:Math.max(1,Math.ceil((pr-now)/86400000)),label:'Премия 🎉'};
-  }
-  const zp5=adjustedDate(y,m,5), av20=new Date(y,m,20), zpN=adjustedDate(y,m+1,5);
-  if(now<zp5) return{date:zp5, days:Math.max(1,Math.ceil((zp5-now)/86400000)), label:'ЗП'};
-  if(now<av20) return{date:av20,days:Math.max(1,Math.ceil((av20-now)/86400000)),label:'Аванс'};
-  return          {date:zpN,  days:Math.max(1,Math.ceil((zpN-now)/86400000)),  label:'ЗП'};
+function showInlineMsg(container, msg, color='var(--red)') {
+    const el = document.createElement('div');
+    el.style.cssText = `color:${color};font-size:11px;margin-top:8px;padding:6px;background:rgba(0,0,0,.3);border-radius:6px;`;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+}
+
+// --- PAYDAY SMART LOGIC ---
+const RU_HOLIDAYS = [
+  '01-01','01-02','01-03','01-04','01-05','01-06','01-07','01-08',
+  '02-23','03-08','05-01','05-09','06-12','11-04'
+];
+function isHoliday(date) {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return RU_HOLIDAYS.includes(`${mm}-${dd}`);
+}
+function isWorkingDay(date) {
+    const dow = date.getDay();
+    if (dow === 0 || dow === 6) return false;
+    if (isHoliday(date)) return false;
+    return true;
+}
+function getAdjustedDate(y, m, d) {
+    let dt = new Date(y, m, d);
+    while (!isWorkingDay(dt)) dt.setDate(dt.getDate() - 1); // move back if weekend/holiday
+    return dt;
+}
+function getNthWorkingDay(y, m, n) {
+    let dt = new Date(y, m, 1);
+    let count = 0;
+    while (dt.getMonth() === m) {
+        if (isWorkingDay(dt)) {
+            count++;
+            if (count === n) return new Date(dt);
+        }
+        dt.setDate(dt.getDate() + 1);
+    }
+    return new Date(y, m, 28); // Fallback
+}
+
+function calcNextPayday(txs) {
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    
+    // Create candidate paydays
+    const pDates = [
+        { date: getAdjustedDate(y, m, 5), label: 'ЗП' },
+        { date: getAdjustedDate(y, m, 20), label: 'Аванс' },
+        { date: getNthWorkingDay(y, m, 15), label: 'Премия' },
+        { date: getAdjustedDate(y, m + 1, 5), label: 'ЗП' },
+        { date: getAdjustedDate(y, m + 1, 20), label: 'Аванс' },
+        { date: getNthWorkingDay(y, m + 1, 15), label: 'Премия' }
+    ].filter(p => {
+        // keep only today or future
+        const pDayStart = new Date(p.date); pDayStart.setHours(0,0,0,0);
+        const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+        return pDayStart >= todayStart;
+    }).sort((a, b) => a.date - b.date);
+
+    const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
+    const recentTxs = (txs || []).filter(t => t.type === 'income' && new Date(t.date) >= cutoff);
+
+    for (const p of pDates) {
+        // If there's an income transaction matching the category around this date, skip it
+        const windowStart = new Date(p.date); windowStart.setDate(windowStart.getDate() - 5);
+        const windowEnd = new Date(p.date); windowEnd.setDate(windowEnd.getDate() + 5);
+        
+        const alreadyPaid = recentTxs.some(t => {
+            const td = new Date(t.date);
+            return t.category.includes(p.label) && td >= windowStart && td <= windowEnd;
+        });
+
+        if (!alreadyPaid) {
+            const days = Math.max(0, Math.ceil((p.date - now) / 86400000));
+            return { date: p.date, days, label: p.label };
+        }
+    }
+    // Fallback
+    const fallback = getAdjustedDate(y, m+1, 5);
+    return { date: fallback, days: Math.max(1, Math.ceil((fallback - now) / 86400000)), label: 'ЗП' };
 }
 
 function confirmDel(btn,cb){
@@ -573,9 +505,6 @@ function calc3DPrice(wg,th,mat,hr,sf,mp){
   return{price,formula,breakdown};
 }
 
-/* ═══════════════════════════════════════
-   APP
-═══════════════════════════════════════ */
 const TABS = ['finance','goals','garage','print','hub','stats'];
 
 class App {
@@ -587,6 +516,9 @@ class App {
     // Transaction history filter state
     this._txShown=15; this._txSort="date_desc"; this._txType="";
     this._txDateFrom=""; this._txDateTo=""; this._txSearch=""; this._txCat="";
+    
+    this.activeCarId = null; // State for Garage tab
+
     this.db.ready.then(()=>this._init()).catch(e=>console.error('[Sentinel]',e));
   }
 
@@ -601,7 +533,11 @@ class App {
       this._render();
     });
     document.getElementById('exp-btn').onclick=()=>this._export();
+    
+    // Modernize import interaction
+    document.getElementById('imp-btn-trigger').onclick = () => document.getElementById('imp-file').click();
     document.getElementById('imp-file').onchange=e=>this._import(e.target.files[0]);
+    
     this._initSwipe();
     this._render();
   }
@@ -664,11 +600,9 @@ class App {
 
     const isGoal = t => t.type==='expense' && (t.category==='Цель'||(t.category==='Цель/Долг'&&goals.some(g=>g.name===t.comment)));
 
-    // ── Mandatory spending this month — derived from tagged transactions only (no manual budget)
     const mandTxs        = txs.filter(t=>t.type==='expense'&&t.isMandatory&&new Date(t.date)>=mStart);
     const mandatorySpent = mandTxs.reduce((s,t)=>s+t.amount,0);
 
-    // ── Predict next month mandatory from last 3 months average
     const mandAvgMonths=[];
     for(let i=1;i<=3;i++){
       const ms=new Date(now.getFullYear(),now.getMonth()-i,1);
@@ -678,11 +612,9 @@ class App {
     }
     const mandForecast = mandAvgMonths.length ? Math.round(mandAvgMonths.reduce((a,v)=>a+v,0)/mandAvgMonths.length) : 0;
 
-    // ── Mandatory by category this month (for breakdown)
     const mandByCat={};
     mandTxs.forEach(t=>{ mandByCat[t.category]=(mandByCat[t.category]||0)+t.amount; });
 
-    // ── Regular (non-mandatory, non-goal) spending
     const spentMonth = txs.filter(t=>t.type==='expense'&&new Date(t.date)>=mStart&&!isGoal(t)&&!t.isMandatory).reduce((s,t)=>s+t.amount,0);
     const todaySpent = txs.filter(t=>t.type==='expense'&&t.date.startsWith(todayStr)&&!isGoal(t)&&!t.isMandatory).reduce((s,t)=>s+t.amount,0);
 
@@ -697,7 +629,6 @@ class App {
     const survRes     = dailyBudget*payday.days;
     const freeCash    = Math.max(0,balance-survRes-1000);
 
-    // ── Balance card ──────────────────────────────────────
     const balCard=this._card(exceeded?' danger':'');
     const bCol=balance<=0?'bad':balance<survRes?'warn':'ok';
     balCard.innerHTML=`<div class="card-title">Текущий баланс</div>
@@ -716,7 +647,6 @@ class App {
       ed.querySelector('#bs').onclick=async()=>{const v=parseMoney(ed.querySelector('#bi').value);if(!isNaN(v)&&v>=0){await this.db.setCfg('balance',v);this._render();}};
     };
 
-    // ── Budget & paydays card ─────────────────────────────
     const dayCol=remainToday<0?'#ff4d4d':remainToday<200?'#ffa040':'#0f8';
     const budCard=this._card();
     budCard.innerHTML=`<div class="card-title">Бюджет и выплаты</div>
@@ -739,7 +669,6 @@ class App {
       if(cap>0){await this.db.setCfg('monthlyBudgetCap',cap);this._render();}
     };
 
-    // ── Mandatory payments tracker (always show, derived from tagged txs) ──
     {
       const mandCard=this._card();
       const catEntries=Object.entries(mandByCat).sort((a,b)=>b[1]-a[1]);
@@ -774,7 +703,6 @@ class App {
       c.appendChild(mandCard);
     }
 
-    // ── Goals mini preview ────────────────────────────────
     if(goals.length){
       const gCard=this._card();
       gCard.innerHTML='<div class="card-title">Цели</div>';
@@ -789,14 +717,9 @@ class App {
           <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
         </div>`);
       });
-      if(freeCash>500){
-        const topGoal=goals[0];
-        gCard.insertAdjacentHTML('beforeend',`<div style="font-size:11px;color:var(--green);margin-top:8px">💡 Свободных ${fmt(freeCash)} ₽ — можно добавить на «${topGoal.name}»</div>`);
-      }
       c.appendChild(gCard);
     }
 
-    // ── New transaction form ──────────────────────────────
     const txCard=this._card();
     const allGoals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     txCard.innerHTML=`<div class="card-title">Новая транзакция</div>
@@ -838,7 +761,6 @@ class App {
       } else {
         catEl.innerHTML=CAT_INC.map(x=>`<option value="${x}">${x}</option>`).join('');
       }
-      // Auto-suggest mandatory if category is in hint set
       updateMandSuggestion();
     };
 
@@ -875,7 +797,6 @@ class App {
       this._render();
     };
 
-    // ── Transaction history with filter/sort/pagination ───
     await this._renderTxHistory(c, txs, goals);
   }
 
@@ -883,7 +804,6 @@ class App {
     const histCard=this._card();
     const allCats=[...new Set([...CAT_EXP,...CAT_INC,'Цель'])];
 
-    // Filter bar
     histCard.innerHTML=`<div class="card-title">Операции</div>
       <div class="tx-filter-bar">
         <div class="tx-filter-row">
@@ -921,7 +841,6 @@ class App {
       <div id="tx-count-line" class="tx-count-line"></div>`;
     c.appendChild(histCard);
 
-    // Restore filter state
     const qEl=histCard.querySelector('#tx-q');
     const fcEl=histCard.querySelector('#tx-fc');
     const ftEl=histCard.querySelector('#tx-ft');
@@ -943,7 +862,6 @@ class App {
       else if(this._txType==='mandatory') fil=fil.filter(t=>t.isMandatory);
       if(this._txDateFrom){const d=new Date(this._txDateFrom+'T00:00:00');fil=fil.filter(t=>new Date(t.date)>=d);}
       if(this._txDateTo){const d=new Date(this._txDateTo+'T23:59:59');fil=fil.filter(t=>new Date(t.date)<=d);}
-      // sort
       if(this._txSort==='date_desc') fil.sort((a,b)=>new Date(b.date)-new Date(a.date));
       else if(this._txSort==='date_asc') fil.sort((a,b)=>new Date(a.date)-new Date(b.date));
       else if(this._txSort==='amt_desc') fil.sort((a,b)=>b.amount-a.amount);
@@ -961,7 +879,6 @@ class App {
 
       if(!fil.length){listEl.innerHTML='<div style="color:var(--muted);text-align:center;padding:16px">Нет операций</div>';return;}
 
-      // Stats for filtered set
       const fInc=fil.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
       const fExp=fil.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
       statsRow.innerHTML=`
@@ -992,7 +909,6 @@ class App {
         listEl.appendChild(row);
       });
 
-      // Pagination
       countLine.textContent=`Показано ${Math.min(this._txShown,fil.length)} из ${fil.length}`;
       if(fil.length>this._txShown){
         const rem=fil.length-this._txShown;
@@ -1020,7 +936,6 @@ class App {
       }
     };
 
-    // Events
     let debTimer;
     const save=()=>{
       this._txSearch=qEl.value;
@@ -1028,7 +943,7 @@ class App {
       this._txType=ftEl.value;
       this._txDateFrom=fromEl.value;
       this._txDateTo=toEl.value;
-      this._txShown=15; // reset pagination on filter change
+      this._txShown=15;
       renderList();
     };
 
@@ -1045,7 +960,6 @@ class App {
       };
     });
 
-    // Init
     this._txShown=this._txShown||15;
     renderList();
   }
@@ -1056,9 +970,7 @@ class App {
     const goals=await this.db.all(S.GOALS);
     const now=new Date();
     const balance=await this.db.cfg('balance');
-    const payday=calcNextPayday(txs);
 
-    // inject goal styles once
     if(!document.getElementById('goal-styles2')){
       const gs=document.createElement('style');gs.id='goal-styles2';
       gs.textContent=`
@@ -1100,7 +1012,6 @@ class App {
       const mLeft=Math.max(0.5,dLeft/30);
       const col=goal.color||'#0ff';
 
-      // ── Monthly contribution history (last 6 months) ──
       const monthlyHist=[];
       for(let i=5;i>=0;i--){
         const ms=new Date(now.getFullYear(),now.getMonth()-i,1);
@@ -1112,16 +1023,14 @@ class App {
       const recentMonths=monthlyHist.slice(-3);
       const avgMonthly=recentMonths.length?recentMonths.reduce((s,m)=>s+m.sum,0)/recentMonths.length:0;
 
-      // ── Smart calculations ──
-      const reqMonthly=mLeft>0?left/mLeft:left;              // needed/month to hit deadline
+      const reqMonthly=mLeft>0?left/mLeft:left;              
       const userAlloc=goal.monthlyAllocation||0;
-      const effectiveRate=Math.max(userAlloc,avgMonthly,1);  // best estimate of real pace
+      const effectiveRate=Math.max(userAlloc,avgMonthly,1);  
       const etaMonths=effectiveRate>0?left/effectiveRate:999;
       const etaDate=new Date(now.getFullYear(),now.getMonth()+Math.ceil(etaMonths),now.getDate());
       const onTrack=effectiveRate>=reqMonthly*0.9;
       const paceGap=reqMonthly-effectiveRate;
 
-      // ── Scenarios table ──
       const scenarios=[
         {rate:Math.round(reqMonthly/500)*500||reqMonthly, label:`Нужно (по плану)`},
         {rate:userAlloc, label:'Текущий план'},
@@ -1130,7 +1039,6 @@ class App {
       const fastRate=Math.round(reqMonthly*1.3/500)*500;
       if(fastRate>reqMonthly) scenarios.push({rate:fastRate, label:'Ускоренный темп'});
 
-      // ── Pace classification ──
       let paceClass='ok', paceIco='✅', paceTxt='';
       if(dLeft<0){
         paceClass='bad'; paceIco='⏰'; paceTxt=`Дедлайн прошёл ${Math.abs(dLeft)} дн. назад. Осталось ${fmt(left)} ₽ — нужно действовать!`;
@@ -1156,20 +1064,17 @@ class App {
           <button class="del-btn" data-gid="${goal.id}">×</button>
         </div>
 
-        <!-- Pace status -->
         <div class="g-pace ${paceClass}">
           <span class="g-pace-ico">${paceIco}</span>
           <span class="g-pace-txt">${paceTxt}</span>
         </div>
 
-        <!-- Stats row -->
         <div class="g3" style="margin-bottom:12px">
           <div class="stat"><div class="v" style="color:${col}">${fmt(saved)} ₽</div><div class="l">Накоплено</div></div>
           <div class="stat"><div class="v" style="color:var(--orange)">${fmt(left)} ₽</div><div class="l">Осталось</div></div>
           <div class="stat"><div class="v" style="color:${onTrack?'var(--green)':'var(--red)'}">${fmt(reqMonthly)} ₽</div><div class="l">Нужно/мес</div></div>
         </div>
 
-        <!-- Timeline bar -->
         <div style="margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
             <span>Прогресс к цели</span><span style="color:${col}">${pct.toFixed(1)}%</span>
@@ -1181,7 +1086,6 @@ class App {
           <div class="g-tl-labels"><span>0</span><span>${fmtI(goal.targetAmount/2)} ₽</span><span>${fmtI(goal.targetAmount)} ₽</span></div>
         </div>
 
-        <!-- Scenarios table -->
         <div class="g-scenarios">
           <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(0,255,255,.4);margin-bottom:8px">Сценарии закрытия</div>
           ${scenarios.map(sc=>{
@@ -1199,7 +1103,6 @@ class App {
           }).join('')}
         </div>
 
-        <!-- Monthly contribution history chart -->
         ${monthlyHist.some(m=>m.sum>0)?`
         <div style="margin-bottom:12px">
           <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(0,255,255,.4);margin-bottom:8px">История пополнений (6 мес.)</div>
@@ -1217,7 +1120,6 @@ class App {
           <div style="font-size:10px;color:var(--muted);text-align:right">ср. 3 мес: <b style="color:${col}">${fmt(avgMonthly)} ₽</b></div>
         </div>`:''}
 
-        <!-- Smart calculator -->
         <div class="g-calc-wrap">
           <div class="g-calc-title">🔢 Калькулятор — когда закрою?</div>
           <div class="g-calc-row">
@@ -1232,7 +1134,6 @@ class App {
           </div>`:''}
         </div>
 
-        <!-- История пополнений -->
         <details style="margin-top:12px">
           <summary>📜 История пополнений (${goalTxs.length})</summary>
           <div class="hist-list" style="margin-top:8px">
@@ -1245,7 +1146,6 @@ class App {
           </div>
         </details>
 
-        <!-- Редактировать -->
         <details style="margin-top:8px">
           <summary>✏ Редактировать цель</summary>
           <div style="margin-top:10px" class="g2">
@@ -1265,7 +1165,6 @@ class App {
           <button class="btn c full" id="ge-s-${goal.id}">Сохранить</button>
         </details>
 
-        <!-- Пополнение -->
         <div style="margin-top:12px">
           <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Внести пополнение:</div>
           <div style="display:flex;gap:8px">
@@ -1276,7 +1175,6 @@ class App {
       `;
       c.appendChild(gc);
 
-      // Live calculator
       gc.querySelector(`#gcalc-${goal.id}`).oninput=e=>{
         const rate=parseFloat(e.target.value)||0;
         const out=gc.querySelector(`#gcalc-out-${goal.id}`);
@@ -1314,11 +1212,10 @@ class App {
       };
     }
 
-    // New goal
     const nc=this._card();
     let newColor=GOAL_COLORS[0];
     nc.innerHTML=`<div class="card-title">Добавить цель</div>
-      <div class="ig"><label class="lbl">Название</label><input id="ng-n" placeholder="Долг, телефон, отпуск…"></div>
+      <div class="ig" id="ng-wrap-n"><label class="lbl">Название</label><input id="ng-n" placeholder="Отпуск, телефон…"></div>
       <div class="g2">
         <div class="ig"><label class="lbl">Сумма (₽)</label><input type="number" id="ng-t" placeholder="100000"></div>
         <div class="ig"><label class="lbl">Дедлайн</label><input type="date" id="ng-d" value="2026-12-31"></div>
@@ -1332,38 +1229,108 @@ class App {
     nc.querySelector('#ng-add').onclick=async()=>{
       const name=nc.querySelector('#ng-n').value.trim();
       const target=parseFloat(nc.querySelector('#ng-t').value);
-      if(!name||!target){alert('Введи название и сумму');return;}
+      if(!name||!target){
+          showInlineMsg(nc.querySelector('#ng-wrap-n'), 'Введите название и сумму');
+          return;
+      }
       await this.db.add(S.GOALS,{name,targetAmount:target,deadline:nc.querySelector('#ng-d').value,priority:parseInt(nc.querySelector('#ng-p').value)||2,monthlyAllocation:parseFloat(nc.querySelector('#ng-a').value)||0,color:newColor,active:true});
       this._render();
     };
-
-    // Backup
-    const bc=this._card();
-    bc.innerHTML=`<div class="card-title">Резервная копия</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Данные в IndexedDB — при очистке кэша удалятся. Делай бэкап!</div>
-      <label class="btn c" style="cursor:pointer">📂 Загрузить JSON<input type="file" accept=".json" id="imp2" style="display:none"></label>`;
-    c.appendChild(bc);
-    bc.querySelector('#imp2').onchange=e=>this._import(e.target.files[0]);
   }
 
   /* ═══════ GARAGE ═══════ */
-    async _garage(c){
-    const odo=await this.db.cfg('currentOdometer');
-    const hist=await this.db.all(S.ODO);
-    const items=(await this.db.all(S.SVC)).filter(it=>it.enabled!==false).sort((a,b)=>a.id-b.id);
-    const partsNotes=await this.db.cfg('carPartsNotes');
+  async _garage(c){
+    // Determine whether to show cars list or details
+    if(this.activeCarId === null) {
+      await this._renderCarsList(c);
+    } else {
+      await this._renderCarDetail(c);
+    }
+  }
 
-    let avgDay=20;
-    if(hist.length>=2){
-      const s=[...hist].sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const span=(new Date(s[s.length-1].date)-new Date(s[0].date))/86400000;
-      const delta=s[s.length-1].odometer-s[0].odometer;
-      if(span>0&&delta>0) avgDay=delta/span;
+  async _renderCarsList(c) {
+    const cars = await this.db.all(S.CARS);
+    const hd = this._card();
+    hd.innerHTML = `<div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Ваши автомобили</span>
+        <button class="hdr-btn" id="add-car-btn">+ Добавить</button>
+    </div>`;
+    
+    if(cars.length === 0) {
+        hd.insertAdjacentHTML('beforeend', `<div style="color:var(--muted);text-align:center;padding:15px;font-size:12px;">У вас пока нет добавленных автомобилей.</div>`);
+    } else {
+        cars.forEach(car => {
+            const el = document.createElement('div');
+            el.className = 'car-card';
+            el.innerHTML = `
+              <div>
+                <div class="car-card-name">🚗 ${car.name}</div>
+                <div class="car-card-odo">${fmtI(car.odo)} км</div>
+              </div>
+              <div style="color:var(--cyan);font-size:20px;">›</div>
+            `;
+            el.onclick = () => { this.activeCarId = car.id; this._render(); };
+            hd.appendChild(el);
+        });
     }
 
-    // Odometer card
-    const oc=this._card();
-    oc.innerHTML=`<div class="card-title">Peugeot 206 · 1.1i TU1JP</div>
+    // Add car form (hidden by default)
+    const addForm = document.createElement('div');
+    addForm.style.display = 'none';
+    addForm.style.marginTop = '15px';
+    addForm.style.paddingTop = '15px';
+    addForm.style.borderTop = '1px solid rgba(0,255,255,0.1)';
+    addForm.innerHTML = `
+        <div class="ig"><label class="lbl">Название (Марка, Модель)</label><input type="text" id="new-car-name" placeholder="Например, Ford Focus"></div>
+        <div class="ig"><label class="lbl">Текущий пробег (км)</label><input type="number" id="new-car-odo" placeholder="120000"></div>
+        <button class="btn c full" id="save-new-car">Сохранить</button>
+    `;
+    hd.appendChild(addForm);
+    c.appendChild(hd);
+
+    hd.querySelector('#add-car-btn').onclick = () => {
+        addForm.style.display = addForm.style.display === 'none' ? 'block' : 'none';
+    };
+
+    hd.querySelector('#save-new-car').onclick = async () => {
+        const name = hd.querySelector('#new-car-name').value.trim();
+        const odo = parseFloat(hd.querySelector('#new-car-odo').value) || 0;
+        if(!name) { showInlineMsg(hd, 'Введите название автомобиля'); return; }
+        
+        const carId = await this.db.add(S.CARS, { name, odo });
+        // Seed default items for this specific car
+        for (const it of GENERIC_SVC_ITEMS) {
+            await this.db.add(S.SVC, {...it, lastServiceOdo: odo, conditionStatus:'ok', enabled:true, car_id: carId});
+        }
+        this._render(); // Refresh list
+    };
+  }
+
+  async _renderCarDetail(c) {
+    const car = await this.db.get(S.CARS, this.activeCarId);
+    if(!car) { this.activeCarId = null; this._render(); return; }
+
+    const odo = car.odo;
+    const hist = (await this.db.all(S.ODO)).filter(o => o.car_id === car.id);
+    const items = (await this.db.all(S.SVC)).filter(it => it.car_id === car.id && it.enabled !== false).sort((a,b)=>a.id-b.id);
+    const partsNotes = car.partsNotes || '';
+
+    let avgDay = 20;
+    if(hist.length >= 2){
+      const s = [...hist].sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const span = (new Date(s[s.length-1].date)-new Date(s[0].date))/86400000;
+      const delta = s[s.length-1].odometer - s[0].odometer;
+      if(span>0 && delta>0) avgDay = delta/span;
+    }
+
+    // Top Header with ODO
+    const oc = this._card();
+    oc.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <button class="hdr-btn" id="back-btn" style="border-color:rgba(255,255,255,0.2);color:var(--muted)">‹ Назад к списку</button>
+        <button class="hdr-btn" id="del-car-btn" style="border-color:rgba(255,77,77,.3);color:var(--red);">Удалить авто</button>
+      </div>
+      <div class="card-title">${car.name}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div class="big">${fmtI(odo)} <span style="font-size:16px;color:rgba(0,255,255,.4)">км</span></div>
         <button class="btn c" id="odo-btn">Обновить пробег</button>
@@ -1371,6 +1338,21 @@ class App {
       <div class="sub">~${Math.round(avgDay*7)} км/нед · ~${Math.round(avgDay)} км/день</div>
       <div id="odo-ed"></div>`;
     c.appendChild(oc);
+
+    oc.querySelector('#back-btn').onclick = () => { this.activeCarId = null; this._render(); };
+    oc.querySelector('#del-car-btn').onclick = () => {
+        customConfirm('Удалить автомобиль?', `Вы уверены, что хотите удалить <b>${car.name}</b>? Вся история ТО будет потеряна.`, async () => {
+            // Delete car
+            await this.db.del(S.CARS, car.id);
+            // Delete associated items
+            const sv = await this.db.all(S.SVC); for(const i of sv){if(i.car_id===car.id) await this.db.del(S.SVC, i.id);}
+            const od = await this.db.all(S.ODO); for(const i of od){if(i.car_id===car.id) await this.db.del(S.ODO, i.id);}
+            const lg = await this.db.all(S.GARAGE); for(const i of lg){if(i.car_id===car.id) await this.db.del(S.GARAGE, i.id);}
+            this.activeCarId = null;
+            this._render();
+        });
+    };
+
     oc.querySelector('#odo-btn').onclick=()=>{
       const ed=oc.querySelector('#odo-ed');
       if(ed.innerHTML){ed.innerHTML='';return;}
@@ -1379,630 +1361,54 @@ class App {
         const v=parseFloat(ed.querySelector('#oi').value);
         const dt=ed.querySelector('#od').value||today();
         if(isNaN(v)||v<0) return;
-        await this.db.setCfg('currentOdometer',v);
-        await this.db.add(S.ODO,{odometer:v,date:new Date(dt+'T12:00:00').toISOString()});
+        
+        await this.db.set(S.CARS, { ...car, odo: v });
+        await this.db.add(S.ODO, { car_id: car.id, odometer: v, date: new Date(dt+'T12:00:00').toISOString() });
         this._render();
       };
     };
 
-    // ── Построение statusMap2 для всех деталей (нужно для схемы и прогноза) ──
-    const statusMap2 = {};
-    items.forEach(it => {
-      const condOnly = isCondOnly(it);
-      if (condOnly) {
-        const cs = it.conditionStatus||'ok';
-        statusMap2[it.key] = {
-          color: cCol(cs), pct: {ok:0,watch:35,replace:70,critical:100}[cs]||0,
-          statusText: {ok:'Норма',watch:'Наблюдение',replace:'Заменить',critical:'КРИТИЧНО'}[cs]||'Норма',
-          notes: it.notes||'', label: it.label||it.key,
-          lastKm: it.lastServiceOdo||0, km: 0, condOnly: true,
-        };
-      } else {
-        const done = Math.max(0, odo - (it.lastServiceOdo||0));
-        const pct  = it.km>0 ? Math.min(100,(done/it.km)*100) : 0;
-        const rem  = Math.max(0, (it.km||0)-done);
-        statusMap2[it.key] = {
-          color: wCol(pct), pct,
-          statusText: pct<60?'Норма':pct<85?'Внимание':'ПРОСРОЧЕНО',
-          notes: it.notes||'', label: it.label||it.key,
-          lastKm: it.lastServiceOdo||0, km: it.km||0, rem, condOnly: false,
-        };
-      }
-    });
-
-    // ═══════════════════════════════════════════════════════════════════
-    // НОВАЯ ИНТЕРАКТИВНАЯ СХЕМА (Blueprint с Pan & Zoom)
-    // ═══════════════════════════════════════════════════════════════════
-    // ══════════════════════════════════════════════════════════════════
-    // PEUGEOT 206 1.1i TU1JP — Interactive technical diagram
-    // Two views: TOP (вид сверху) · BOTTOM (вид снизу)
-    // ══════════════════════════════════════════════════════════════════
     const schCard = this._card();
-    schCard.style.padding = '0';
-    schCard.style.overflow = 'hidden';
+    schCard.style.padding = '15px';
+    schCard.innerHTML = `<div class="card-title">Состояние агрегатов</div>
+    <div style="background:rgba(0,0,0,.3);border-radius:12px;padding:20px;text-align:center;position:relative;">
+        <svg viewBox="0 0 200 420" width="100%" height="240px" style="max-width:180px; margin:0 auto; overflow:visible;">
+            <defs>
+                <linearGradient id="carGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(0,255,255,0.05)"/>
+                    <stop offset="100%" stop-color="rgba(0,255,255,0.02)"/>
+                </linearGradient>
+            </defs>
+            <!-- Car Body -->
+            <rect x="40" y="20" width="120" height="380" rx="35" fill="url(#carGrad)" stroke="rgba(0,255,255,0.3)" stroke-width="2"/>
+            
+            <!-- Windshield -->
+            <path d="M 50 110 Q 100 95 150 110 L 140 150 Q 100 135 60 150 Z" fill="rgba(0,255,255,0.1)" stroke="rgba(0,255,255,0.2)"/>
+            <!-- Rear Window -->
+            <path d="M 55 310 Q 100 325 145 310 L 135 270 Q 100 255 65 270 Z" fill="rgba(0,255,255,0.1)" stroke="rgba(0,255,255,0.2)"/>
+            
+            <!-- Wheels -->
+            <rect x="25" y="70" width="15" height="40" rx="4" fill="#08080c" stroke="rgba(0,255,255,0.4)"/>
+            <rect x="160" y="70" width="15" height="40" rx="4" fill="#08080c" stroke="rgba(0,255,255,0.4)"/>
+            <rect x="25" y="290" width="15" height="40" rx="4" fill="#08080c" stroke="rgba(0,255,255,0.4)"/>
+            <rect x="160" y="290" width="15" height="40" rx="4" fill="#08080c" stroke="rgba(0,255,255,0.4)"/>
+            
+            <!-- Generic Areas (Hotspots reference) -->
+            <circle cx="100" cy="65" r="30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="8" font-family="sans-serif">ДВИГАТЕЛЬ</text>
 
-    if (!document.getElementById('sch3-styles')) {
-      const sts = document.createElement('style'); sts.id = 'sch3-styles';
-      sts.textContent = `
-        .s3-hdr{padding:11px 14px;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(0,255,255,.1);display:flex;justify-content:space-between;align-items:center}
-        .s3-htitle{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#0ff;border-left:3px solid #0ff;padding-left:8px}
-        .s3-tabs{display:flex;gap:5px;background:rgba(0,0,0,.6);padding:3px;border-radius:9px;border:1px solid rgba(0,255,255,.15)}
-        .s3-tab{padding:5px 12px;border-radius:7px;font-size:9.5px;font-weight:700;letter-spacing:.4px;cursor:pointer;color:rgba(0,255,255,.4);transition:all .2s;user-select:none;font-family:inherit}
-        .s3-tab.on{background:rgba(0,255,255,.14);color:#0ff;text-shadow:0 0 8px rgba(0,255,255,.5)}
-        .s3-viewport{width:100%;height:430px;position:relative;background:#030508;overflow:hidden;touch-action:none;user-select:none}
-        .s3-canvas{width:100%;height:100%;transform-origin:center center;will-change:transform}
-        .s3-canvas svg{display:block;width:100%;height:100%}
-        .s3-hs{cursor:pointer}
-        .s3-hs:active .s3-dot{transform:scale(0.78);transform-box:fill-box;transform-origin:center}
-        .s3-dot{transition:transform .18s,r .18s;transform-box:fill-box;transform-origin:center}
-        .s3-ring-anim{transform-box:fill-box;transform-origin:center;animation:s3pulse 2s ease-in-out infinite}
-        @keyframes s3pulse{0%,100%{r:10;opacity:.7}50%{r:16;opacity:0}}
-        .s3-ctrl{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:5px;z-index:5}
-        .s3-cbtn{width:30px;height:30px;border-radius:8px;background:rgba(3,7,16,.85);border:1px solid rgba(0,255,255,.2);color:#0ff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);font-family:inherit;transition:background .2s}
-        .s3-cbtn:active{background:rgba(0,255,255,.2)}
-        .s3-legend{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:8px 10px;backdrop-filter:blur(4px)}
-        .s3-legend span{display:flex;align-items:center;gap:5px;font-size:9px;color:#7a9aaa;margin-bottom:3px;white-space:nowrap}
-        .s3-legend span:last-child{margin-bottom:0}
-        .s3-legend i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-        .s3-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:999;opacity:0;pointer-events:none;transition:opacity .25s}
-        .s3-overlay.show{opacity:1;pointer-events:auto}
-        .s3-sheet{position:fixed;bottom:-100%;left:0;width:100%;background:#0c0c18;border-top:1px solid rgba(0,255,255,.3);border-radius:22px 22px 0 0;z-index:1000;padding:16px 18px calc(18px + env(safe-area-inset-bottom));transition:bottom .32s cubic-bezier(.1,.8,.2,1);box-shadow:0 -12px 50px rgba(0,0,0,.9);max-height:88vh;overflow-y:auto}
-        .s3-sheet.show{bottom:0}
-        .s3-drag{width:38px;height:4px;background:rgba(255,255,255,.2);border-radius:4px;margin:0 auto 14px}
-        .s3-sh-ttl{font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:14px}
-        .s3-sh-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
-        .s3-sh-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-        .s3-sh-box{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.06);padding:10px 12px;border-radius:12px}
-        .s3-sh-box .l{font-size:9px;color:#6a8090;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
-        .s3-sh-box .v{font-size:14px;font-weight:700}
-        .s3-wtrack{height:8px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;margin:8px 0 10px}
-        .s3-wfill{height:100%;border-radius:8px;transition:width .5s}
-        .s3-sh-note{background:rgba(0,255,255,.05);border-left:3px solid rgba(0,255,255,.4);padding:11px 13px;font-size:11px;color:#9ab8cc;line-height:1.65;border-radius:0 10px 10px 0;margin-bottom:14px}
-        .s3-sh-close{width:100%;padding:13px;background:rgba(255,255,255,.05);border:none;border-radius:12px;color:#d8e0ea;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
-        .s3-sh-close:active{background:rgba(255,255,255,.1)}
-      `;
-      document.head.appendChild(sts);
-    }
+            <circle cx="100" cy="210" r="25" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="100" y="215" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="8" font-family="sans-serif">САЛОН</text>
 
-    // Bottom sheet singleton
-    if (!document.getElementById('s3-overlay')) {
-      document.body.insertAdjacentHTML('beforeend', `
-        <div class="s3-overlay" id="s3-overlay"></div>
-        <div class="s3-sheet" id="s3-sheet">
-          <div class="s3-drag"></div>
-          <div id="s3-sh-cnt"></div>
-          <button class="s3-sh-close" id="s3-sh-close">Закрыть</button>
-        </div>
-      `);
-      const closeS3 = () => {
-        document.getElementById('s3-overlay').classList.remove('show');
-        document.getElementById('s3-sheet').classList.remove('show');
-      };
-      document.getElementById('s3-overlay').onclick = closeS3;
-      document.getElementById('s3-sh-close').onclick = closeS3;
-    }
-
-    const openDetail = (key) => {
-      const st = statusMap2[key]; if (!st) return;
-      const col = st.color, pct = st.pct;
-      const wBar = !st.condOnly ? `<div class="s3-wtrack"><div class="s3-wfill" style="width:${pct}%;background:${col}"></div></div>` : '';
-      let grid = '';
-      if (st.condOnly) {
-        grid = `<div class="s3-sh-box"><div class="l">Состояние</div><div class="v" style="color:${col}">${st.statusText}</div></div>
-                <div class="s3-sh-box"><div class="l">Тип</div><div class="v" style="font-size:12px;color:#7a9aaa">По состоянию</div></div>`;
-      } else {
-        grid = `<div class="s3-sh-box"><div class="l">Износ</div><div class="v" style="color:${col}">${pct.toFixed(0)}%</div></div>
-                <div class="s3-sh-box"><div class="l">Осталось</div><div class="v" style="color:${col};font-size:12px">${st.rem > 0 ? fmtI(Math.round(st.rem)) + ' км' : '⚠ Просрочено'}</div></div>
-                <div class="s3-sh-box"><div class="l">Регламент</div><div class="v" style="font-size:12px;color:#8090a0">каждые ${fmtI(st.km)} км</div></div>
-                <div class="s3-sh-box"><div class="l">Последнее ТО</div><div class="v" style="font-size:12px;color:#8090a0">${st.lastKm > 0 ? fmtI(st.lastKm) + ' км' : '—'}</div></div>`;
-      }
-      document.getElementById('s3-sh-cnt').innerHTML = `
-        <div class="s3-sh-ttl">
-          <div class="s3-sh-dot" style="background:${col};box-shadow:0 0 12px ${col}60"></div>
-          ${st.label}
-        </div>
-        ${wBar}
-        <div class="s3-sh-g2">${grid}</div>
-        ${st.notes ? `<div class="s3-sh-note">📝 ${st.notes}</div>` : ''}
-      `;
-      document.getElementById('s3-overlay').classList.add('show');
-      document.getElementById('s3-sheet').classList.add('show');
-    };
-
-    // ── Hotspot definitions ──────────────────────────────────────────
-    // top: viewBox 0 0 300 490 (front=top, rear=bottom)
-    // bottom: viewBox 0 0 300 490
-    // ── Hotspots: HOOD (under bonnet) — TU1JP transverse, LHD
-    // viewBox 0 0 340 360  origin: front bumper = top
-    // LEFT side of diagram = driver side (LHD)
-    // ── renderDots: generate interactive hotspot SVG elements ──
-    const renderDots = (hotspots) => {
-      return hotspots.map(([key, cx, cy, lbl]) => {
-        const st = statusMap2[key] || { color: '#6a8090', pct: 0 };
-        const col = st.color;
-        const isOk = col === '#0f8';
-        // glowFilter only for non-ok
-        return `<g class="s3-hs" data-key="${key}" style="cursor:pointer">
-          <circle cx="${cx}" cy="${cy}" r="12" fill="transparent" stroke="none"/>
-          <circle cx="${cx}" cy="${cy}" class="s3-ring-anim" r="10" fill="none" stroke="${col}" stroke-width="1.2" opacity="${col==='#ff4d4d'?0.6:0}"/>
-          <circle cx="${cx}" cy="${cy}" class="s3-dot" r="7" fill="${col}" fill-opacity="0.85" stroke="${col}" stroke-width="1.5" stroke-opacity="0.5" filter="url(#ng)"/>
-          <circle cx="${cx}" cy="${cy}" r="4" fill="${col}" fill-opacity="0.4"/>
-          <text x="${cx}" y="${cy+15}" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="7" font-family="Segoe UI,sans-serif">${lbl}</text>
-        </g>`;
-      }).join('');
-    };
-
-    // ── Hotspots: BOTTOM VIEW
-    const HS_BOTTOM = [
-      ['oil',        118, 136, 'Масло'],
-      ['gearboxoil',  58, 114, 'Масло КПП'],
-      ['timing',     242, 114, 'ГРМ'],
-      ['exhaust',    153, 196, 'Λ-зонд'],
-      ['brakershoes', 40, 335, 'Кол.задн.Л'],
-      ['brakershoes', 260, 335, 'Кол.задн.П'],
-      ['bearingfl',   35, 128, 'Ступ.ПЛ'],
-      ['bearingfr',  265, 128, 'Ступ.ПП'],
-      ['bearingrl',   35, 335, 'Ступ.ЗЛ'],
-      ['bearingrr',  265, 335, 'Ступ.ЗП'],
-      ['stablink',   150, 172, 'Стаб.'],
-      ['handbrake',  150, 330, 'Ручник'],
-      ['fuelfil',    150, 358, 'Топл.бак/ф'],
-      ['cvjointl',    75, 128, 'ШРУС Л'],
-      ['cvjointr',   225, 128, 'ШРУС П'],
-    ];
-
-    const HS_HOOD = [
-      ['airfilter',   52, 58, 'Возд.фильтр'],
-      ['gearboxoil',  55,138, 'Масло КПП'],
-      ['brakefluid',  44,188, 'Торм.жидк.'],
-      ['cvjointl',    18,148, 'ШРУС Л'],
-      ['oil',        148,148, 'Масло'],
-      ['spark',      155, 96, 'Свечи (4)'],
-      ['timing',     288,148, 'ГРМ'],
-      ['throttle',   225, 82, 'Дроссель'],
-      ['lambda',     153,237, 'Λ-зонд'],
-      ['exhaust',    148,268, 'Выхлоп'],
-      ['coolant',    296, 58, 'Охл.жидк.'],
-      ['battery',    296,118, 'АКБ'],
-      ['fuelfil',    296,188, 'Топл.ф.'],
-      ['cvjointr',   322,148, 'ШРУС П'],
-      ['cabinfilter',170,296, 'Фильтр сал.'],
-    ];
-
-    // ── SVG: HOOD VIEW ──────────────────────────────────────────────
-    const svgHood = `<svg viewBox="0 0 340 360" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="ng"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <linearGradient id="bayGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#0e1c2c" stop-opacity=".98"/>
-          <stop offset="100%" stop-color="#060c14" stop-opacity=".98"/>
-        </linearGradient>
-        <linearGradient id="engGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#162236" stop-opacity=".9"/>
-          <stop offset="100%" stop-color="#0a1520" stop-opacity=".9"/>
-        </linearGradient>
-        <pattern id="hgrid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(0,255,255,.035)" stroke-width=".5"/>
-        </pattern>
-        <radialGradient id="engineGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="rgba(0,200,255,.06)"/>
-          <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-        </radialGradient>
-      </defs>
-      <rect width="340" height="360" fill="url(#hgrid)"/>
-
-      <!-- ══ BAY PERIMETER ══ -->
-      <rect x="18" y="14" width="304" height="16" rx="5"
-        fill="rgba(0,255,255,.07)" stroke="rgba(0,255,255,.35)" stroke-width="1.2"/>
-      <text x="170" y="25.5" text-anchor="middle" fill="rgba(0,255,255,.45)"
-        font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="2">ПЕРЕДНИЙ БАМПЕР / РАМКА</text>
-
-      <!-- Headlight recesses -->
-      <rect x="18" y="30" width="52" height="40" rx="4"
-        fill="rgba(0,0,0,.6)" stroke="rgba(100,180,255,.3)" stroke-width="1"/>
-      <text x="44" y="53" text-anchor="middle" fill="rgba(100,180,255,.25)"
-        font-size="7" font-family="Segoe UI,sans-serif">Фара Л</text>
-      <rect x="270" y="30" width="52" height="40" rx="4"
-        fill="rgba(0,0,0,.6)" stroke="rgba(100,180,255,.3)" stroke-width="1"/>
-      <text x="296" y="53" text-anchor="middle" fill="rgba(100,180,255,.25)"
-        font-size="7" font-family="Segoe UI,sans-serif">Фара П</text>
-
-      <!-- Bay walls -->
-      <line x1="18" y1="30" x2="18" y2="316" stroke="rgba(0,255,255,.25)" stroke-width="1.5"/>
-      <line x1="322" y1="30" x2="322" y2="316" stroke="rgba(0,255,255,.25)" stroke-width="1.5"/>
-      <rect x="18" y="30" width="304" height="286" rx="0" fill="url(#bayGrad)" stroke="none"/>
-
-      <!-- Firewall -->
-      <rect x="18" y="314" width="304" height="14" rx="4"
-        fill="rgba(0,255,255,.05)" stroke="rgba(0,255,255,.3)" stroke-width="1.2"/>
-      <text x="170" y="324" text-anchor="middle" fill="rgba(0,255,255,.38)"
-        font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="2">ПЕРЕГОРОДКА САЛОНА</text>
-
-      <!-- ══ RADIATOR ══ -->
-      <rect x="70" y="32" width="200" height="38" rx="5"
-        fill="rgba(0,60,100,.35)" stroke="rgba(0,200,255,.28)" stroke-width="1"/>
-      <line x1="90" y1="34" x2="90" y2="68" stroke="rgba(0,200,255,.12)" stroke-width=".8"/>
-      <line x1="113" y1="34" x2="113" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="136" y1="34" x2="136" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="159" y1="34" x2="159" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="182" y1="34" x2="182" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="205" y1="34" x2="205" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="228" y1="34" x2="228" y2="68" stroke="rgba(0,200,255,.1)" stroke-width=".8"/>
-      <line x1="251" y1="34" x2="251" y2="68" stroke="rgba(0,200,255,.12)" stroke-width=".8"/>
-      <text x="170" y="55" text-anchor="middle" fill="rgba(0,200,255,.32)"
-        font-size="8" font-family="Segoe UI,sans-serif" font-weight="700">РАДИАТОР</text>
-
-      <!-- ══ AIR FILTER BOX ══ -->
-      <rect x="22" y="32" width="46" height="52" rx="5"
-        fill="rgba(20,50,20,.6)" stroke="rgba(80,210,80,.38)" stroke-width="1.2"/>
-      <text x="45" y="60" text-anchor="middle" fill="rgba(80,210,80,.45)"
-        font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700">Возд.</text>
-      <text x="45" y="70" text-anchor="middle" fill="rgba(80,210,80,.45)"
-        font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700">Фильтр</text>
-      <path d="M 68 68 Q 110 74 168 82" fill="none"
-        stroke="rgba(80,210,80,.3)" stroke-width="5" stroke-linecap="round" stroke-dasharray="6,4"/>
-
-      <!-- ══ COOLANT EXPANSION TANK ══ -->
-      <rect x="272" y="32" width="48" height="52" rx="5"
-        fill="rgba(0,60,90,.5)" stroke="rgba(0,200,255,.38)" stroke-width="1.2"/>
-      <text x="296" y="58" text-anchor="middle" fill="rgba(0,200,255,.48)"
-        font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700">Охл.</text>
-      <text x="296" y="70" text-anchor="middle" fill="rgba(0,200,255,.48)"
-        font-size="7.5" font-family="Segoe UI,sans-serif">жидк.</text>
-
-      <!-- ══ BATTERY ══ -->
-      <rect x="272" y="92" width="48" height="52" rx="5"
-        fill="rgba(60,10,10,.6)" stroke="rgba(255,80,80,.38)" stroke-width="1.2"/>
-      <text x="296" y="117" text-anchor="middle" fill="rgba(255,80,80,.48)"
-        font-size="8" font-family="Segoe UI,sans-serif" font-weight="700">12V АКБ</text>
-      <circle cx="282" cy="96" r="4" fill="rgba(255,80,80,.25)" stroke="rgba(255,80,80,.5)" stroke-width="1"/>
-      <circle cx="314" cy="96" r="4" fill="rgba(100,200,100,.25)" stroke="rgba(100,200,100,.5)" stroke-width="1"/>
-      <text x="282" y="99" text-anchor="middle" fill="rgba(255,80,80,.7)" font-size="6" font-family="Segoe UI">−</text>
-      <text x="314" y="99" text-anchor="middle" fill="rgba(100,200,100,.7)" font-size="6" font-family="Segoe UI">+</text>
-
-      <!-- ══ ENGINE BLOCK TU1JP ══ -->
-      <rect x="72" y="88" width="196" height="118" rx="8"
-        fill="url(#engGrad)" stroke="rgba(0,255,255,.32)" stroke-width="1.5"/>
-      <ellipse cx="170" cy="148" rx="80" ry="50" fill="url(#engineGlow)"/>
-      <text x="170" y="136" text-anchor="middle" fill="rgba(0,255,255,.55)"
-        font-size="10" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">TU1JP 1.1i</text>
-      <text x="170" y="150" text-anchor="middle" fill="rgba(0,255,255,.28)"
-        font-size="7.5" font-family="Segoe UI,sans-serif">4 цил. · поперечно · 60 л.с.</text>
-
-      <!-- Cylinder head -->
-      <rect x="74" y="90" width="192" height="22" rx="5"
-        fill="rgba(0,255,255,.06)" stroke="rgba(0,255,255,.2)" stroke-width=".8"/>
-      <text x="170" y="104" text-anchor="middle" fill="rgba(0,255,255,.3)"
-        font-size="7.5" font-family="Segoe UI,sans-serif">ГОЛОВКА БЛОКА (ГБЦ)</text>
-
-      <!-- 4 spark plug positions -->
-      <circle cx="110" cy="101" r="6" fill="rgba(0,0,0,.5)" stroke="rgba(255,220,50,.4)" stroke-width="1.2"/>
-      <circle cx="140" cy="101" r="6" fill="rgba(0,0,0,.5)" stroke="rgba(255,220,50,.4)" stroke-width="1.2"/>
-      <circle cx="170" cy="101" r="6" fill="rgba(0,0,0,.5)" stroke="rgba(255,220,50,.4)" stroke-width="1.2"/>
-      <circle cx="200" cy="101" r="6" fill="rgba(0,0,0,.5)" stroke="rgba(255,220,50,.4)" stroke-width="1.2"/>
-      <text x="110" y="104" text-anchor="middle" fill="rgba(255,220,50,.5)" font-size="5.5" font-family="Segoe UI">1</text>
-      <text x="140" y="104" text-anchor="middle" fill="rgba(255,220,50,.5)" font-size="5.5" font-family="Segoe UI">2</text>
-      <text x="170" y="104" text-anchor="middle" fill="rgba(255,220,50,.5)" font-size="5.5" font-family="Segoe UI">3</text>
-      <text x="200" y="104" text-anchor="middle" fill="rgba(255,220,50,.5)" font-size="5.5" font-family="Segoe UI">4</text>
-
-      <!-- Throttle body -->
-      <circle cx="225" cy="82" r="12" fill="rgba(20,50,50,.65)" stroke="rgba(0,200,150,.35)" stroke-width="1.2"/>
-      <circle cx="225" cy="82" r="6" fill="rgba(0,200,150,.12)" stroke="rgba(0,200,150,.28)" stroke-width="1"/>
-      <text x="225" y="100" text-anchor="middle" fill="rgba(0,200,150,.35)"
-        font-size="7" font-family="Segoe UI,sans-serif">Дрос.</text>
-      <path d="M 225 94 Q 220 112 215 118" fill="none"
-        stroke="rgba(0,200,150,.25)" stroke-width="3" stroke-linecap="round"/>
-
-      <!-- Oil filler cap -->
-      <circle cx="148" cy="148" r="10" fill="rgba(120,80,0,.35)" stroke="rgba(200,140,30,.5)" stroke-width="1.5"/>
-      <text x="148" y="152" text-anchor="middle" fill="rgba(200,140,30,.5)"
-        font-size="6.5" font-family="Segoe UI,sans-serif" font-weight="700">OIL</text>
-
-      <!-- ══ GEARBOX (left/driver side) ══ -->
-      <path d="M 72 88 L 72 206 Q 38 200 34 168 Q 30 136 36 106 Q 42 88 72 88 Z"
-        fill="rgba(10,28,48,.75)" stroke="rgba(0,255,255,.22)" stroke-width="1.2"/>
-      <text x="52" y="148" text-anchor="middle" fill="rgba(0,255,255,.28)"
-        font-size="8" font-family="Segoe UI,sans-serif" font-weight="700"
-        transform="rotate(-90,52,148)">КПП</text>
-
-      <!-- ══ TIMING BELT COVER (right/passenger) ══ -->
-      <path d="M 268 88 L 268 206 Q 304 200 308 168 Q 312 136 306 106 Q 300 88 268 88 Z"
-        fill="rgba(10,22,40,.72)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
-      <text x="288" y="148" text-anchor="middle" fill="rgba(0,255,255,.26)"
-        font-size="8" font-family="Segoe UI,sans-serif" font-weight="700"
-        transform="rotate(90,288,148)">ГРМ</text>
-      <circle cx="288" cy="120" r="10" fill="none" stroke="rgba(0,255,255,.15)" stroke-width="1" stroke-dasharray="3,2"/>
-      <circle cx="288" cy="175" r="8" fill="none" stroke="rgba(0,255,255,.12)" stroke-width="1" stroke-dasharray="3,2"/>
-      <line x1="282" y1="130" x2="282" y2="167" stroke="rgba(0,255,255,.1)" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <line x1="294" y1="130" x2="294" y2="167" stroke="rgba(0,255,255,.1)" stroke-width="1.5" stroke-dasharray="4,3"/>
-
-      <!-- ══ HALFSHAFTS ══ -->
-      <line x1="34" y1="148" x2="18" y2="148"
-        stroke="rgba(100,175,255,.5)" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="18" cy="148" r="5" fill="rgba(80,140,200,.3)" stroke="rgba(100,175,255,.5)" stroke-width="1.5"/>
-      <line x1="308" y1="148" x2="322" y2="148"
-        stroke="rgba(100,175,255,.5)" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="322" cy="148" r="5" fill="rgba(80,140,200,.3)" stroke="rgba(100,175,255,.5)" stroke-width="1.5"/>
-
-      <!-- ══ BRAKE FLUID RESERVOIR ══ -->
-      <rect x="22" y="172" width="44" height="40" rx="5"
-        fill="rgba(50,10,10,.6)" stroke="rgba(255,80,80,.38)" stroke-width="1.2"/>
-      <text x="44" y="192" text-anchor="middle" fill="rgba(255,80,80,.45)"
-        font-size="7" font-family="Segoe UI,sans-serif" font-weight="700">ТОРМ.</text>
-      <text x="44" y="203" text-anchor="middle" fill="rgba(255,80,80,.45)"
-        font-size="7" font-family="Segoe UI,sans-serif">ЖИДК.</text>
-
-      <!-- ══ FUEL FILTER ══ -->
-      <rect x="274" y="172" width="44" height="40" rx="5"
-        fill="rgba(50,40,10,.6)" stroke="rgba(200,160,30,.38)" stroke-width="1.2"/>
-      <text x="296" y="192" text-anchor="middle" fill="rgba(200,160,30,.45)"
-        font-size="7" font-family="Segoe UI,sans-serif" font-weight="700">ТОПЛ.</text>
-      <text x="296" y="203" text-anchor="middle" fill="rgba(200,160,30,.45)"
-        font-size="7" font-family="Segoe UI,sans-serif">ФИЛЬТР</text>
-
-      <!-- ══ EXHAUST MANIFOLD ══ -->
-      <path d="M 108 206 Q 108 220 125 228" fill="none" stroke="rgba(255,120,20,.38)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M 138 206 Q 138 218 135 228" fill="none" stroke="rgba(255,120,20,.38)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M 168 206 Q 168 218 150 228" fill="none" stroke="rgba(255,120,20,.38)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M 198 206 Q 198 218 155 228" fill="none" stroke="rgba(255,120,20,.38)" stroke-width="2" stroke-linecap="round"/>
-      <!-- Collector -->
-      <rect x="120" y="226" width="42" height="22" rx="8"
-        fill="rgba(50,30,5,.7)" stroke="rgba(255,120,20,.5)" stroke-width="1.5"/>
-      <text x="141" y="240" text-anchor="middle" fill="rgba(255,120,20,.45)"
-        font-size="7" font-family="Segoe UI,sans-serif" font-weight="700">КОЛЛЕКТОР</text>
-      <!-- Lambda probe -->
-      <circle cx="153" cy="237" r="5" fill="rgba(255,160,30,.2)" stroke="rgba(255,160,30,.5)" stroke-width="1.2"/>
-      <!-- Downpipe -->
-      <path d="M 141 248 Q 148 268 148 284"
-        fill="none" stroke="rgba(255,120,20,.45)" stroke-width="4" stroke-linecap="round"/>
-      <rect x="132" y="258" width="28" height="20" rx="6"
-        fill="rgba(40,25,5,.7)" stroke="rgba(255,120,20,.4)" stroke-width="1.2"/>
-      <text x="146" y="271" text-anchor="middle" fill="rgba(255,120,20,.4)"
-        font-size="6.5" font-family="Segoe UI,sans-serif" font-weight="700">CAT</text>
-
-      <!-- ══ CABIN FILTER HINT ══ -->
-      <rect x="130" y="290" width="80" height="20" rx="5"
-        fill="rgba(10,30,50,.5)" stroke="rgba(0,180,255,.22)" stroke-width="1" stroke-dasharray="4,3"/>
-      <text x="170" y="303" text-anchor="middle" fill="rgba(0,180,255,.3)"
-        font-size="6.5" font-family="Segoe UI,sans-serif">Фильтр салона (за перегородкой)</text>
-
-      <!-- Side labels -->
-      <text x="10" y="180" fill="rgba(0,255,255,.28)" font-size="7" font-family="Segoe UI,sans-serif"
-        font-weight="700" transform="rotate(-90,10,180)" text-anchor="middle" letter-spacing="1">ВОДИТЕЛЬ</text>
-      <text x="330" y="180" fill="rgba(0,255,255,.22)" font-size="7" font-family="Segoe UI,sans-serif"
-        font-weight="700" transform="rotate(90,330,180)" text-anchor="middle" letter-spacing="1">ПАССАЖИР</text>
-
-      ${renderDots(HS_HOOD)}
-    </svg>`;
-
-    // ── SVG: BOTTOM VIEW ────────────────────────────────────────────
-    const svgBottom = `<svg viewBox="0 0 300 490" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="ng"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e1825" stop-opacity=".96"/><stop offset="100%" stop-color="#08101a" stop-opacity=".9"/></linearGradient>
-        <pattern id="grid2" width="22" height="22" patternUnits="userSpaceOnUse">
-          <path d="M22 0L0 0 0 22" fill="none" stroke="rgba(0,255,255,.04)" stroke-width=".5"/>
-        </pattern>
-      </defs>
-      <rect width="300" height="490" fill="url(#grid2)"/>
-      <text x="150" y="12" text-anchor="middle" fill="rgba(0,255,255,.38)" font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="3">ПЕРЕД</text>
-      <text x="150" y="485" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="3">ЗАД</text>
-      <text x="14" y="248" fill="rgba(0,255,255,.22)" font-size="7" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1" transform="rotate(-90,14,248)" text-anchor="middle">ЛЕВО</text>
-      <text x="286" y="248" fill="rgba(0,255,255,.22)" font-size="7" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1" transform="rotate(90,286,248)" text-anchor="middle">ПРАВО</text>
-
-      <!-- Underbody outline (same 206 silhouette from below) -->
-      <path d="
-        M 112 18 Q 150 13 188 18
-        Q 212 22 224 38 Q 232 55 236 80
-        L 240 128 Q 244 140 245 158
-        L 246 268 L 245 305
-        Q 242 326 236 346
-        Q 222 372 192 382
-        Q 150 390 108 382
-        Q 78 372 64 346
-        Q 58 326 55 305
-        L 54 268 L 55 158
-        Q 56 140 60 128
-        L 64 80 Q 68 55 76 38
-        Q 88 22 112 18 Z
-      " fill="url(#bg2)" stroke="rgba(0,255,255,.22)" stroke-width="1.5"/>
-
-      <!-- ═══ FRONT SUBFRAME ═══ -->
-      <rect x="58" y="45" width="184" height="28" rx="8" fill="rgba(18,42,66,.65)" stroke="rgba(0,200,255,.32)" stroke-width="1.5"/>
-      <text x="150" y="63" text-anchor="middle" fill="rgba(0,200,255,.38)" font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="1">ПЕРЕДНИЙ ПОДРАМНИК</text>
-      <!-- Subframe mount points -->
-      <circle cx="70"  cy="46" r="4" fill="none" stroke="rgba(0,200,255,.25)" stroke-width="1.5"/>
-      <circle cx="150" cy="46" r="3" fill="none" stroke="rgba(0,200,255,.18)" stroke-width="1"/>
-      <circle cx="230" cy="46" r="4" fill="none" stroke="rgba(0,200,255,.25)" stroke-width="1.5"/>
-      <circle cx="70"  cy="72" r="4" fill="none" stroke="rgba(0,200,255,.22)" stroke-width="1.5"/>
-      <circle cx="230" cy="72" r="4" fill="none" stroke="rgba(0,200,255,.22)" stroke-width="1.5"/>
-
-      <!-- ═══ ENGINE + GEARBOX (underbody view: oil pan + gearbox) ═══ -->
-      <!-- Engine oil pan -->
-      <rect x="75" y="78" width="152" height="70" rx="10" fill="rgba(16,36,58,.72)" stroke="rgba(0,255,255,.3)" stroke-width="1.5"/>
-      <text x="150" y="104" text-anchor="middle" fill="rgba(0,255,255,.45)" font-size="9" font-family="Segoe UI,sans-serif" font-weight="700">TU1JP · Поддон картера</text>
-      <text x="150" y="118" text-anchor="middle" fill="rgba(0,255,255,.22)" font-size="7.5" font-family="Segoe UI,sans-serif">1.1L · 4 цилиндра · 60 л.с.</text>
-      <!-- Panel ribs -->
-      <line x1="88"  y1="80" x2="88"  y2="146" stroke="rgba(0,255,255,.07)" stroke-width="1" stroke-dasharray="3,4"/>
-      <line x1="122" y1="80" x2="122" y2="146" stroke="rgba(0,255,255,.06)" stroke-width="1" stroke-dasharray="3,4"/>
-      <line x1="156" y1="80" x2="156" y2="146" stroke="rgba(0,255,255,.06)" stroke-width="1" stroke-dasharray="3,4"/>
-      <line x1="190" y1="80" x2="190" y2="146" stroke="rgba(0,255,255,.07)" stroke-width="1" stroke-dasharray="3,4"/>
-      <!-- Oil drain bolt -->
-      <circle cx="118" cy="136" r="7" fill="rgba(195,135,0,.18)" stroke="rgba(195,135,0,.52)" stroke-width="1.5"/>
-      <text x="118" y="140" text-anchor="middle" fill="rgba(195,135,0,.52)" font-size="6.5" font-family="Segoe UI,sans-serif">слив</text>
-      <!-- Gearbox housing (left of engine) -->
-      <path d="M 75 78 L 75 146 Q 60 140 56 126 Q 53 108 57 90 Q 62 78 75 78 Z"
-        fill="rgba(14,28,50,.72)" stroke="rgba(0,255,255,.22)" stroke-width="1.2"/>
-      <text x="58" y="114" text-anchor="middle" fill="rgba(0,255,255,.28)" font-size="7" font-family="Segoe UI,sans-serif" font-weight="700" transform="rotate(-90,58,114)">КПП</text>
-      <!-- Timing belt cover (right of engine) -->
-      <path d="M 227 78 L 227 146 Q 242 140 246 126 Q 249 108 245 90 Q 240 78 227 78 Z"
-        fill="rgba(14,28,50,.65)" stroke="rgba(0,255,255,.2)" stroke-width="1.2"/>
-      <text x="242" y="114" text-anchor="middle" fill="rgba(0,255,255,.26)" font-size="7" font-family="Segoe UI,sans-serif" font-weight="700" transform="rotate(90,242,114)">ГРМ</text>
-
-      <!-- ═══ FRONT CONTROL ARMS (рычаги) ═══ -->
-      <path d="M 48 130 L 62 118 L 62 148 Z" fill="rgba(0,150,200,.22)" stroke="rgba(0,200,255,.38)" stroke-width="1.5"/>
-      <path d="M 252 130 L 238 118 L 238 148 Z" fill="rgba(0,150,200,.22)" stroke="rgba(0,200,255,.38)" stroke-width="1.5"/>
-
-      <!-- ═══ HALFSHAFTS ═══ -->
-      <line x1="48"  y1="130" x2="75"  y2="128" stroke="rgba(100,175,255,.6)" stroke-width="4" stroke-linecap="round"/>
-      <line x1="252" y1="130" x2="225" y2="128" stroke="rgba(100,175,255,.6)" stroke-width="4" stroke-linecap="round"/>
-      <!-- CVJ inner (at gearbox) -->
-      <circle cx="75"  cy="128" r="6" fill="rgba(80,140,200,.3)" stroke="rgba(100,175,255,.5)" stroke-width="1.5"/>
-      <circle cx="225" cy="128" r="6" fill="rgba(80,140,200,.3)" stroke="rgba(100,175,255,.5)" stroke-width="1.5"/>
-
-      <!-- ═══ STEERING RACK ═══ -->
-      <rect x="78" y="152" width="144" height="13" rx="6.5" fill="rgba(28,55,75,.55)" stroke="rgba(0,200,200,.32)" stroke-width="1.2"/>
-      <text x="150" y="162" text-anchor="middle" fill="rgba(0,200,200,.35)" font-size="7.5" font-family="Segoe UI,sans-serif">РУЛЕВАЯ РЕЙКА</text>
-      <!-- Tie rods -->
-      <line x1="78"  y1="158" x2="50"  y2="142" stroke="rgba(0,200,200,.28)" stroke-width="1.5" stroke-dasharray="4,2"/>
-      <line x1="222" y1="158" x2="250" y2="142" stroke="rgba(0,200,200,.28)" stroke-width="1.5" stroke-dasharray="4,2"/>
-
-      <!-- ═══ FRONT ANTI-ROLL BAR ═══ -->
-      <path d="M 50 176 Q 92 167 150 169 Q 208 167 250 176" fill="none" stroke="rgba(0,200,255,.32)" stroke-width="2.5"/>
-      <!-- Stab links (vertical to control arm) -->
-      <line x1="80"  y1="170" x2="68"  y2="148" stroke="rgba(0,200,255,.22)" stroke-width="1.2" stroke-dasharray="3,2"/>
-      <line x1="220" y1="170" x2="232" y2="148" stroke="rgba(0,200,255,.22)" stroke-width="1.2" stroke-dasharray="3,2"/>
-
-      <!-- ═══ EXHAUST SYSTEM (complete path) ═══ -->
-      <!-- Manifold exit down from engine -->
-      <path d="M 148 148 L 152 165" stroke="rgba(255,135,25,.55)" stroke-width="4" stroke-linecap="round"/>
-      <!-- Catalytic converter -->
-      <rect x="142" y="166" width="22" height="26" rx="7" fill="rgba(55,38,8,.65)" stroke="rgba(255,135,25,.52)" stroke-width="1.5"/>
-      <text x="153" y="182" text-anchor="middle" fill="rgba(255,135,25,.42)" font-size="6.5" font-family="Segoe UI,sans-serif" font-weight="700">CAT</text>
-      <!-- Lambda probe location -->
-      <circle cx="153" cy="196" r="4" fill="rgba(255,160,30,.2)" stroke="rgba(255,160,30,.5)" stroke-width="1.2"/>
-      <!-- Main pipe routing (curves right of drivetrain) -->
-      <path d="M 153 200 Q 168 212 170 245 Q 170 280 168 318 L 166 360"
-        fill="none" stroke="rgba(255,135,25,.48)" stroke-width="3.5" stroke-linecap="round"/>
-      <!-- Resonator -->
-      <rect x="158" y="270" width="26" height="18" rx="8" fill="rgba(38,28,8,.72)" stroke="rgba(255,135,25,.42)" stroke-width="1.2"/>
-      <!-- Main muffler -->
-      <ellipse cx="164" cy="358" rx="19" ry="12" fill="rgba(32,26,12,.82)" stroke="rgba(255,135,25,.48)" stroke-width="1.5"/>
-      <!-- Exhaust tip -->
-      <path d="M 164 370 Q 162 378 160 384" stroke="rgba(255,135,25,.4)" stroke-width="3" stroke-linecap="round"/>
-
-      <!-- ═══ REAR TORSION BEAM (trailing arm rear axle) ═══ -->
-      <!-- Main beam bar -->
-      <path d="M 48 335 Q 92 322 150 320 Q 208 322 252 335"
-        fill="none" stroke="rgba(0,210,210,.42)" stroke-width="5" stroke-linecap="round"/>
-      <text x="150" y="315" text-anchor="middle" fill="rgba(0,210,210,.3)" font-size="7.5" font-family="Segoe UI,sans-serif" font-weight="700">ТОРСИОННАЯ БАЛКА</text>
-      <!-- Trailing arm pivot points (mounts to body) -->
-      <circle cx="54"  cy="308" r="5" fill="rgba(0,200,200,.15)" stroke="rgba(0,210,210,.32)" stroke-width="1.5"/>
-      <circle cx="246" cy="308" r="5" fill="rgba(0,200,200,.15)" stroke="rgba(0,210,210,.32)" stroke-width="1.5"/>
-      <!-- Trailing arm lines from pivot to hub -->
-      <line x1="54"  y1="308" x2="40"  y2="335" stroke="rgba(0,200,200,.28)" stroke-width="1.5"/>
-      <line x1="246" y1="308" x2="260" y2="335" stroke="rgba(0,200,200,.28)" stroke-width="1.5"/>
-      <!-- Rear shock absorber upper mount -->
-      <circle cx="72"  cy="302" r="5" fill="none" stroke="rgba(0,200,200,.28)" stroke-width="1.5"/>
-      <circle cx="228" cy="302" r="5" fill="none" stroke="rgba(0,200,200,.28)" stroke-width="1.5"/>
-
-      <!-- ═══ FUEL TANK ═══ -->
-      <rect x="88" y="335" width="124" height="50" rx="12" fill="rgba(48,40,14,.68)" stroke="rgba(200,178,28,.35)" stroke-width="1.5"/>
-      <text x="150" y="364" text-anchor="middle" fill="rgba(200,178,28,.42)" font-size="8.5" font-family="Segoe UI,sans-serif" font-weight="700">ТОПЛИВНЫЙ БАК</text>
-      <!-- Filler pipe to right side -->
-      <path d="M 212 345 Q 230 340 235 326" fill="none" stroke="rgba(200,178,28,.28)" stroke-width="2" stroke-dasharray="3,2"/>
-
-      <!-- ═══ REAR DRUM BRAKES ═══ -->
-      <circle cx="40"  cy="335" r="14" fill="rgba(18,28,46,.78)" stroke="rgba(0,255,255,.28)" stroke-width="1.5"/>
-      <circle cx="40"  cy="335" r="7"  fill="none" stroke="rgba(0,255,255,.15)" stroke-width="1"/>
-      <circle cx="260" cy="335" r="14" fill="rgba(18,28,46,.78)" stroke="rgba(0,255,255,.28)" stroke-width="1.5"/>
-      <circle cx="260" cy="335" r="7"  fill="none" stroke="rgba(0,255,255,.15)" stroke-width="1"/>
-
-      <!-- ═══ HANDBRAKE CABLES ═══ -->
-      <path d="M 150 330 Q 100 326 48 335" fill="none" stroke="rgba(160,160,170,.2)" stroke-width="1.5" stroke-dasharray="3,3"/>
-      <path d="M 150 330 Q 200 326 252 335" fill="none" stroke="rgba(160,160,170,.2)" stroke-width="1.5" stroke-dasharray="3,3"/>
-
-      <!-- ═══ WHEELS (bottom view — elliptical tires) ═══ -->
-      <!-- FL -->
-      <ellipse cx="35"  cy="128" rx="14" ry="35" fill="rgba(15,24,42,.95)" stroke="rgba(0,255,255,.58)" stroke-width="2"/>
-      <ellipse cx="35"  cy="128" rx="7"  ry="18" fill="none" stroke="rgba(0,255,255,.22)" stroke-width="1"/>
-      <!-- FR -->
-      <ellipse cx="265" cy="128" rx="14" ry="35" fill="rgba(15,24,42,.95)" stroke="rgba(0,255,255,.58)" stroke-width="2"/>
-      <ellipse cx="265" cy="128" rx="7"  ry="18" fill="none" stroke="rgba(0,255,255,.22)" stroke-width="1"/>
-      <!-- RL -->
-      <ellipse cx="35"  cy="335" rx="14" ry="35" fill="rgba(15,24,42,.9)" stroke="rgba(0,255,255,.42)" stroke-width="1.8"/>
-      <ellipse cx="35"  cy="335" rx="7"  ry="18" fill="none" stroke="rgba(0,255,255,.18)" stroke-width="1"/>
-      <!-- RR -->
-      <ellipse cx="265" cy="335" rx="14" ry="35" fill="rgba(15,24,42,.9)" stroke="rgba(0,255,255,.42)" stroke-width="1.8"/>
-      <ellipse cx="265" cy="335" rx="7"  ry="18" fill="none" stroke="rgba(0,255,255,.18)" stroke-width="1"/>
-
-      <!-- Hotspots -->
-      ${renderDots(HS_BOTTOM)}
-    </svg>`;
-
-    // ── Build the card HTML ──────────────────────────────────────────
-    schCard.innerHTML = `
-      <div class="s3-hdr">
-        <div class="s3-htitle">Peugeot 206 Blueprint</div>
-        <div class="s3-tabs">
-          <div class="s3-tab on" data-view="hood">Под капотом</div>
-          <div class="s3-tab" data-view="bottom">Вид снизу</div>
-        </div>
-      </div>
-      <div class="s3-viewport" id="s3-vp">
-        <div class="s3-canvas" id="s3-cv"></div>
-        <div class="s3-legend">
-          <span><i style="background:#0f8;box-shadow:0 0 5px #0f8"></i>Норма</span>
-          <span><i style="background:#ffa040;box-shadow:0 0 5px #ffa040"></i>Внимание</span>
-          <span><i style="background:#ff4d4d;box-shadow:0 0 5px #ff4d4d"></i>Критично</span>
-        </div>
-        <div class="s3-ctrl">
-          <button class="s3-cbtn" id="s3-zi">+</button>
-          <button class="s3-cbtn" id="s3-zo">−</button>
-          <button class="s3-cbtn" id="s3-zr" style="font-size:11px;font-weight:700">⛶</button>
-        </div>
-      </div>
+            <circle cx="100" cy="355" r="20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="100" y="360" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="8" font-family="sans-serif">ВЫХЛОП</text>
+        </svg>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Следите за индикаторами ниже, чтобы вовремя проходить ТО</div>
     `;
     c.appendChild(schCard);
 
-    const cvs = schCard.querySelector('#s3-cv');
-    const vpt = schCard.querySelector('#s3-vp');
-    let scale = 1, px = 0, py = 0, dragging = false, sx = 0, sy = 0;
-
-    const applyT = () => {
-      px = Math.max(-160*scale, Math.min(160*scale, px));
-      py = Math.max(-200*scale, Math.min(200*scale, py));
-      cvs.style.transform = `translate(${px}px,${py}px) scale(${scale})`;
-    };
-    const resetT = () => { scale=1; px=0; py=0; applyT(); };
-
-    schCard.querySelector('#s3-zi').onclick = () => { scale=Math.min(scale+0.3,3.5); applyT(); };
-    schCard.querySelector('#s3-zo').onclick = () => { scale=Math.max(scale-0.3,0.5); applyT(); };
-    schCard.querySelector('#s3-zr').onclick = resetT;
-
-    vpt.addEventListener('mousedown', e=>{
-      if(e.target.closest('.s3-hs')||e.target.closest('.s3-ctrl')||e.target.closest('.s3-legend')) return;
-      dragging=true; sx=e.clientX-px; sy=e.clientY-py;
-    });
-    window.addEventListener('mousemove', e=>{ if(!dragging) return; px=e.clientX-sx; py=e.clientY-sy; applyT(); });
-    window.addEventListener('mouseup', ()=>{ dragging=false; });
-    vpt.addEventListener('wheel', e=>{ e.preventDefault(); scale=Math.max(0.5,Math.min(scale+(e.deltaY>0?-0.1:0.1),3.5)); applyT(); },{passive:false});
-    vpt.addEventListener('touchstart', e=>{ if(e.touches.length!==1||e.target.closest('.s3-hs')||e.target.closest('.s3-ctrl')) return; dragging=true; sx=e.touches[0].clientX-px; sy=e.touches[0].clientY-py; },{passive:true});
-    vpt.addEventListener('touchmove', e=>{ if(!dragging||e.touches.length!==1) return; e.preventDefault(); px=e.touches[0].clientX-sx; py=e.touches[0].clientY-sy; applyT(); },{passive:false});
-    vpt.addEventListener('touchend', ()=>{ dragging=false; });
-
-    // Pinch-to-zoom
-    let lastPinch=0;
-    vpt.addEventListener('touchstart', e=>{ if(e.touches.length===2) lastPinch=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:true});
-    vpt.addEventListener('touchmove', e=>{ if(e.touches.length!==2) return; e.preventDefault(); const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); if(lastPinch>0) scale=Math.max(0.5,Math.min(scale*(d/lastPinch),3.5)); lastPinch=d; applyT(); },{passive:false});
-
-    const renderView = (view) => {
-      cvs.innerHTML = view==='hood' ? svgHood : svgBottom;
-      resetT();
-      cvs.querySelectorAll('.s3-hs').forEach(el=>{
-        el.onclick = e=>{ e.stopPropagation(); openDetail(el.dataset.key); };
-      });
-    };
-
-    renderView('hood');
-    schCard.querySelectorAll('.s3-tab').forEach(tab=>{
-      tab.onclick=()=>{
-        schCard.querySelectorAll('.s3-tab').forEach(t=>t.classList.remove('on'));
-        tab.classList.add('on');
-        renderView(tab.dataset.view);
-      };
-    });
-    // ── Прогноз обслуживания (wear intervals) ──
+    // Wear Forecast
     const wc = this._card();
     wc.innerHTML = '<div class="card-title">Прогноз обслуживания</div>';
     items.forEach(it => {
@@ -2010,6 +1416,7 @@ class App {
       const critClass = (it.crit || it.criticality) === 'critical' ? 'crit' : (it.crit || it.criticality) === 'warning' ? 'warn' : 'info';
       const critLbl = { critical:'КРИТ', warning:'ВНМ', info:'ОК' }[it.crit || it.criticality] || 'ОК';
       const condOnly = isCondOnly(it);
+      
       if (condOnly) {
         const cs = it.conditionStatus || 'ok';
         const pctMap = { ok:0, watch:35, replace:70, critical:100 };
@@ -2027,11 +1434,11 @@ class App {
           ${it.notes ? `<div class="svc-notes">${it.notes}</div>` : ''}
         `;
         div.querySelector('.cond-sel').onchange = async e => {
-          await this.db.set(S.SVC, { ...it, conditionStatus: e.target.value, condOnly: true, conditionOnly: true });
+          await this.db.set(S.SVC, { ...it, conditionStatus: e.target.value });
           e.target.style.color = cCol(e.target.value);
         };
       } else {
-        const done = Math.max(0, odo - it.lastServiceOdo);
+        const done = Math.max(0, odo - (it.lastServiceOdo || 0));
         const pct = it.km > 0 ? Math.min(100, (done / it.km) * 100) : 0;
         const rem = Math.max(0, it.km - done);
         const col = wCol(pct);
@@ -2047,7 +1454,7 @@ class App {
     });
     c.appendChild(wc);
 
-    // ── Запись ТО ──
+    // Record Maintenance
     const sc = this._card();
     const itemOpts = items.filter(it => !isCondOnly(it)).map(it => `<option value="${it.id}">${it.label}</option>`).join('');
     sc.innerHTML = `
@@ -2064,27 +1471,31 @@ class App {
       <button class="btn c full" id="svc-add">Записать в журнал</button>
     `;
     c.appendChild(sc);
+    
     sc.querySelector('#svc-add').onclick = async () => {
-      const itemId = parseInt(sc.querySelector('#svc-it').value);
+      const itemId = sc.querySelector('#svc-it').value;
       const svcOdo = parseFloat(sc.querySelector('#svc-o').value);
       const cost = parseMoney(sc.querySelector('#svc-c').value);
       const comment = sc.querySelector('#svc-n').value.trim();
       const dt = sc.querySelector('#svc-d').value || today();
       if (isNaN(svcOdo)) return;
-      const selItem = items.find(it => it.id === itemId);
+      
+      const selItem = itemId !== 'other' ? items.find(it => it.id === parseInt(itemId)) : null;
       const label = selItem ? selItem.label : 'Другое';
-      await this.db.add(S.GARAGE, { type: selItem?.key || 'other', label, odometer: svcOdo, cost, comment, date: new Date(dt + 'T12:00:00').toISOString() });
+      
+      await this.db.add(S.GARAGE, { car_id: car.id, type: selItem?.key || 'other', label, odometer: svcOdo, cost, comment, date: new Date(dt + 'T12:00:00').toISOString() });
       if (selItem) await this.db.set(S.SVC, { ...selItem, lastServiceOdo: svcOdo, conditionStatus: 'ok' });
+      
       if (cost > 0) {
         const bal = await this.db.cfg('balance');
         await this.db.setCfg('balance', bal - cost);
-        await this.db.add(S.TX, { amount: cost, type: 'expense', category: 'Авто', comment: label + (comment ? ' · ' + comment : ''), date: new Date(dt + 'T12:00:00').toISOString() });
+        await this.db.add(S.TX, { amount: cost, type: 'expense', category: 'Авто', comment: `${car.name}: ${label}` + (comment ? ' · ' + comment : ''), date: new Date(dt + 'T12:00:00').toISOString() });
       }
       this._render();
     };
 
-    // ── Журнал обслуживания ──
-    const logs = (await this.db.all(S.GARAGE)).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+    // Maintenance Log
+    const logs = (await this.db.all(S.GARAGE)).filter(lg => lg.car_id === car.id).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
     const jc = this._card();
     jc.innerHTML = '<div class="card-title">Журнал обслуживания</div>';
     if (!logs.length) {
@@ -2112,19 +1523,18 @@ class App {
     }
     c.appendChild(jc);
 
-    // ── Артикулы и заметки ──
+    // Notes
     const ac = this._card();
     ac.innerHTML = `
       <div class="card-title">Артикулы и заметки</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей — чтобы не гуглить перед ТО</div>
-      <textarea id="parts-n" placeholder="Масло: Castrol 5W-30&#10;Фильтр: MANN W712/75&#10;Свечи: NGK BPR5E&#10;...">${partsNotes || ''}</textarea>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Запиши артикулы масла, фильтров, свечей</div>
+      <textarea id="parts-n" placeholder="Масло: ...&#10;Фильтр: ...">${partsNotes || ''}</textarea>
       <button class="btn c full" id="parts-s">Сохранить</button>
     `;
     c.appendChild(ac);
     ac.querySelector('#parts-s').onclick = async () => {
-      await this.db.setCfg('carPartsNotes', ac.querySelector('#parts-n').value);
-      const f = document.createElement('div'); f.textContent = '✓ Сохранено'; f.style.cssText = 'color:var(--green);font-size:11px;margin-top:6px';
-      ac.appendChild(f); setTimeout(() => f.remove(), 2000);
+      await this.db.set(S.CARS, { ...car, partsNotes: ac.querySelector('#parts-n').value });
+      showInlineMsg(ac, '✓ Сохранено', 'var(--green)');
     };
   }
 
@@ -2145,10 +1555,9 @@ class App {
     c.appendChild(paramCard);
     paramCard.querySelector('#pr-save').onclick=async()=>{
       await this.db.setCfg('printHourRate',parseMoney(paramCard.querySelector('#pr-r').value)||hr);
-await this.db.setCfg('printSetupFee',parseMoney(paramCard.querySelector('#pr-f').value)||sf);
-await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m').value)||mp);
-      const f=document.createElement('div');f.textContent='✓ Сохранено';f.style.cssText='color:var(--green);font-size:11px;margin-top:6px';paramCard.appendChild(f);
-      setTimeout(()=>f.remove(),700);
+      await this.db.setCfg('printSetupFee',parseMoney(paramCard.querySelector('#pr-f').value)||sf);
+      await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m').value)||mp);
+      showInlineMsg(paramCard, '✓ Сохранено', 'var(--green)');
     };
 
     const cc=this._card();
@@ -2167,7 +1576,8 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       <div id="c-res" style="display:none;margin-top:12px"></div>`;
     c.appendChild(cc);
     let lastTotal=0;
-        cc.querySelector('#c-calc').onclick=()=>{
+    
+    cc.querySelector('#c-calc').onclick=()=>{
       const wg=parseFloat(cc.querySelector('#c-wg').value);
       const hours = parseFloat(cc.querySelector('#c-th-h').value) || 0;
       const minutes = parseFloat(cc.querySelector('#c-th-m').value) || 0;
@@ -2176,6 +1586,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       const res=cc.querySelector('#c-res'); res.style.display='block';
       if(!wg||wg<=0){res.innerHTML='<div style="color:var(--red)">Введи вес модели</div>';return;}
       if(wg>50&&th<=0){res.innerHTML='<div style="color:var(--orange)">Для >50г укажи время из слайсера</div>';return;}
+      
       const {price,formula,breakdown}=calc3DPrice(wg,th,mat,hr,sf,mp);
       lastTotal=price;
       res.innerHTML=`<div class="calc-result">
@@ -2184,6 +1595,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
         <div class="calc-total">Итого: ${fmt(price)} ₽</div>
       </div>
       <button class="btn g full" id="c-inc">→ Зачислить как доход</button>`;
+      
       res.querySelector('#c-inc').onclick=async()=>{
         if(lastTotal<=0) return;
         const desc=cc.querySelector('#c-desc').value.trim()||'3D-печать';
@@ -2213,14 +1625,13 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
   /* ═══════ HUB ═══════ */
   async _hub(c){
     const txs=await this.db.all(S.TX);
-    const odo=await this.db.cfg('currentOdometer');
-    const items=await this.db.all(S.SVC);
     const goals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     const balance=await this.db.cfg('balance');
     const budgetCap=await this.db.cfg('monthlyBudgetCap');
     const mandatory=await this.db.cfg('mandatoryPayments');
     const now=new Date(), todayStr=today();
     const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+    
     const isGoal=t=>t.type==='expense'&&(t.category==='Цель'||(t.category==='Цель/Долг'&&goals.some(g=>g.name===t.comment)));
     const spentMonth=txs.filter(t=>t.type==='expense'&&new Date(t.date)>=mStart&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
     const todaySpent=txs.filter(t=>t.type==='expense'&&t.date.startsWith(todayStr)&&!isGoal(t)).reduce((s,t)=>s+t.amount,0);
@@ -2232,29 +1643,24 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
     const dailyBudget=Math.min(budRem/dRem,maxBal);
     const survRes=dailyBudget*payday.days;
     const freeCash=Math.max(0,balance-survRes-mandatory-1000);
+    
     const lastExp=txs.filter(t=>t.type==='expense').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
     const daysSince=lastExp?Math.floor((now-new Date(lastExp.date))/86400000):999;
-    const overdueItems=items.filter(it=>!isCondOnly(it)&&it.enabled!==false&&it.km>0&&(odo-it.lastServiceOdo)>=it.km);
-    const critItems=items.filter(it=>isCondOnly(it)&&it.conditionStatus==='critical');
 
-    // Reminders
     const remCard=this._card();
     remCard.innerHTML='<div class="card-title">Центр уведомлений</div>';
     let any=false;
     if(daysSince>=3){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход: ${lastExp?dStr(lastExp.date):'давно'} (${daysSince} дн. назад). Что-то не записал?</div>`);}
     if(freeCash>500){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder">💰 Свободных денег: <b>${fmt(freeCash)} ₽</b> — можно на цели!</div>`);}
-    if(overdueItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🚗 Просрочено ТО: ${overdueItems.map(it=>it.label).join(', ')}</div>`);}
-    if(critItems.length){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">⚠️ Критичное состояние: ${critItems.map(it=>it.label).join(', ')}</div>`);}
     goals.forEach(goal=>{
       const saved=txs.filter(t=>t.type==='expense'&&t.category==='Цель'&&t.comment===goal.name).reduce((s,t)=>s+t.amount,0);
       const dl=new Date(goal.deadline);
       const dL=Math.ceil((dl-now)/86400000);
       if(dL>0&&dL<14&&saved<goal.targetAmount){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🎯 "${goal.name}" — ${dL} дн. до дедлайна! Накоплено ${fmt(saved)} из ${fmt(goal.targetAmount)}</div>`);}
     });
-    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Всё под контролем, Дима! Хорошая работа.</div>');
+    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Всё под контролем! Хорошая работа.</div>');
     c.appendChild(remCard);
 
-    // Summary
     const sc=this._card();
     sc.innerHTML=`<div class="card-title">Сводка</div>
       <div class="g3">
@@ -2264,18 +1670,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       </div>`;
     c.appendChild(sc);
 
-    // Car tips
-    const autoCard=this._card();
-    autoCard.innerHTML='<div class="card-title">💡 Совет по Peugeot 206</div><div id="auto-tips"></div><button class="btn c full" id="ref-tips">🔄 Другой совет</button>';
-    c.appendChild(autoCard);
-    const showTips=()=>{
-      const seed=Date.now();
-      const t1=CAR_TIPS[seed%CAR_TIPS.length], t2=CAR_TIPS[(seed+7)%CAR_TIPS.length];
-      autoCard.querySelector('#auto-tips').innerHTML=[t1,t2].map(t=>`<div class="tip">${t}</div>`).join('');
-    };
-    autoCard.querySelector('#ref-tips').onclick=showTips; showTips();
-
-    // Print tips
     const prCard=this._card();
     const sb=now.getDate()+now.getMonth()*31;
     prCard.innerHTML=`<div class="card-title">🖨 Совет по 3D-печати</div>
@@ -2283,7 +1677,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       <div class="tip">${PRINT_TIPS[(sb+5)%PRINT_TIPS.length]}</div>`;
     c.appendChild(prCard);
 
-    // Recipes
     const recCard=this._card();
     recCard.innerHTML=`<div class="card-title">🍳 Быстрые рецепты</div>
       <div class="search-row">
@@ -2292,6 +1685,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       </div>
       <div id="rec-list"></div>`;
     c.appendChild(recCard);
+    
     const renderRec=()=>{
       const cat=recCard.querySelector('#rec-cat').value;
       const q=recCard.querySelector('#rec-q').value.toLowerCase();
@@ -2331,7 +1725,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       this.statsEnd=now.toISOString().split('T')[0];
     }
 
-    // Period selector
     const pCard=this._card();
     pCard.innerHTML=`<div class="card-title">Период анализа</div>
       <div class="g2" style="margin-bottom:10px">
@@ -2346,6 +1739,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
         <button class="btn v" id="qa">Всё время</button>
       </div>`;
     c.appendChild(pCard);
+    
     const upd=(s,e)=>{this.statsStart=s;this.statsEnd=e;this._render();};
     pCard.querySelector('#ap').onclick=()=>{const s=pCard.querySelector('#as').value,e=pCard.querySelector('#ae').value;if(s&&e&&s<=e)upd(s,e);};
     pCard.querySelector('#qt').onclick=()=>{const t=today();upd(t,t);};
@@ -2363,7 +1757,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
     const totalExp=pTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
     const saldo=totalInc-totalExp;
 
-    // Summary
     const sumCard=this._card();
     sumCard.innerHTML=`<div class="card-title">${this.statsStart} — ${this.statsEnd}</div>
       <div class="g3">
@@ -2373,7 +1766,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       </div>`;
     c.appendChild(sumCard);
 
-    // Monthly bar chart
     const monthlyData={};
     txs.forEach(t=>{
       const d=new Date(t.date);
@@ -2383,6 +1775,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       else monthlyData[key].exp+=t.amount;
     });
     const months=Object.keys(monthlyData).sort().slice(-9);
+    
     if(months.length>0){
       const barCard=this._card();
       barCard.innerHTML='<div class="card-title">Доходы vs Расходы по месяцам</div>';
@@ -2411,7 +1804,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       c.appendChild(barCard);
     }
 
-    // Expense pie chart
     const expByCat={};
     pTxs.filter(t=>t.type==='expense').forEach(t=>{expByCat[t.category]=(expByCat[t.category]||0)+t.amount;});
     const cats=Object.keys(expByCat).sort((a,b)=>expByCat[b]-expByCat[a]);
@@ -2427,7 +1819,6 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       const wrap=document.createElement('div'); wrap.className='canvas-wrap';
       const canvas=document.createElement('canvas'); canvas.width=420; canvas.height=220;
       wrap.appendChild(canvas); pieCard.appendChild(wrap);
-      // Legend (ALL labels here, none on chart)
       const leg=document.createElement('div'); leg.className='chart-legend';
       cats.forEach((cat,i)=>{
         leg.insertAdjacentHTML('beforeend',`<span><span class="ld" style="background:${COLORS[i%COLORS.length]}"></span>${cat}: ${fmt(vals[i])} ₽ (${((vals[i]/totalE)*100).toFixed(1)}%)</span>`);
@@ -2445,10 +1836,8 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
           ctx.strokeStyle='rgba(8,8,14,.7)';ctx.lineWidth=2;ctx.stroke();
           a+=sw;
         });
-        // Donut hole
         ctx.beginPath();ctx.arc(cx,cy,R*.46,0,2*Math.PI);
         ctx.fillStyle='rgba(8,8,14,.95)';ctx.fill();
-        // Center text — larger font, clear position
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillStyle='#0ff';ctx.font=`bold 13px Segoe UI,sans-serif`;
         ctx.fillText(fmtI(Math.round(totalE))+' ₽',cx,cy-8);
@@ -2458,12 +1847,13 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
     }
     c.appendChild(pieCard);
 
-    // ── Mandatory payments donut chart (separate, between expense pie and income pie)
+    // Mandatory
     const mandByCatStat={};
     pTxs.filter(t=>t.type==='expense'&&t.isMandatory).forEach(t=>{mandByCatStat[t.category]=(mandByCatStat[t.category]||0)+t.amount;});
     const mandCats=Object.keys(mandByCatStat).sort((a,b)=>mandByCatStat[b]-mandByCatStat[a]);
     const mandVals=mandCats.map(k=>mandByCatStat[k]);
     const totalM=mandVals.reduce((s,v)=>s+v,0)||0;
+    
     if(mandCats.length){
       const mandPieCard=this._card();
       mandPieCard.innerHTML='<div class="card-title">Обязательные платежи</div>';
@@ -2474,7 +1864,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       const legM=document.createElement('div'); legM.className='chart-legend';
       mandCats.forEach((cat,i)=>{legM.insertAdjacentHTML('beforeend',`<span><span class="ld" style="background:${MCOLORS[i%MCOLORS.length]}"></span>${cat}: ${fmt(mandVals[i])} ₽ (${((mandVals[i]/totalM)*100).toFixed(1)}%)</span>`);});
       mandPieCard.appendChild(legM);
-      // Forecast note
+      
       const mForecastStat = (() => {
         const now2=new Date(); const months2=[];
         for(let i=1;i<=3;i++){
@@ -2485,7 +1875,9 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
         }
         return months2.length?Math.round(months2.reduce((a,v)=>a+v,0)/months2.length):0;
       })();
+      
       if(mForecastStat>0) mandPieCard.insertAdjacentHTML('beforeend',`<div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Прогноз следующего месяца: <b style="color:var(--orange)">~${fmt(mForecastStat)} ₽</b></div>`);
+      
       requestAnimationFrame(()=>{
         const ctx=cvM.getContext('2d');
         const W=cvM.width,H=cvM.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-8;
@@ -2508,10 +1900,10 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       c.appendChild(mandPieCard);
     }
 
-    // Income pie
     const incByCat={};
     pTxs.filter(t=>t.type==='income').forEach(t=>{incByCat[t.category]=(incByCat[t.category]||0)+t.amount;});
     const incCats=Object.keys(incByCat).sort((a,b)=>incByCat[b]-incByCat[a]);
+    
     if(incCats.length){
       const incCard=this._card();
       incCard.innerHTML='<div class="card-title">Доходы по источникам</div>';
@@ -2523,6 +1915,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       const ICOLORS=['#0f8','#22d4a4','#38f8b0','#0ea5e9','#34d399','#6ee7b7','#10b981','#059669'];
       incCats.forEach((cat,i)=>{leg2.insertAdjacentHTML('beforeend',`<span><span class="ld" style="background:${ICOLORS[i%ICOLORS.length]}"></span>${cat}: ${fmt(incByCat[cat])} ₽ (${((incByCat[cat]/totalI)*100).toFixed(1)}%)</span>`);});
       incCard.appendChild(leg2);
+      
       requestAnimationFrame(()=>{
         const ctx=cv2.getContext('2d');
         const W=cv2.width,H=cv2.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-8;
@@ -2544,10 +1937,10 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       c.appendChild(incCard);
     }
 
-    // Balance line chart
     const sorted=[...pTxs].sort((a,b)=>new Date(a.date)-new Date(b.date));
     const pts=[]; let run=0;
     sorted.forEach(t=>{run=t.type==='income'?run+t.amount:run-t.amount;pts.push(run);});
+    
     if(pts.length>=2){
       const lineCard=this._card();
       lineCard.innerHTML='<div class="card-title">Динамика баланса за период</div>';
@@ -2555,12 +1948,14 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
       const lc=document.createElement('canvas'); lc.width=420; lc.height=130;
       lw.appendChild(lc); lineCard.appendChild(lw);
       c.appendChild(lineCard);
+      
       requestAnimationFrame(()=>{
         const ctx=lc.getContext('2d'),W=lc.width,H=lc.height,n=pts.length;
         const minY=Math.min(...pts),maxY=Math.max(...pts),rng=maxY-minY||1;
         const px=14,py=16;
         const toX=i=>px+(i/(n-1))*(W-px*2);
         const toY=v=>H-py-((v-minY)/rng)*(H-py*2);
+        
         ctx.clearRect(0,0,W,H);
         const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(0,255,255,.15)');gr.addColorStop(1,'rgba(0,255,255,0)');
         ctx.beginPath();ctx.moveTo(toX(0),toY(pts[0]));pts.forEach((v,i)=>ctx.lineTo(toX(i),toY(v)));
@@ -2568,7 +1963,7 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
         ctx.beginPath();ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.lineJoin='round';
         pts.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.stroke();
         pts.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),2.5,0,2*Math.PI);ctx.fillStyle='#0ff';ctx.fill();});
-        // Labels: top-left and bottom-left to avoid overlap with the line
+        
         ctx.fillStyle='rgba(160,180,200,.7)';ctx.font='10px Segoe UI,sans-serif';
         ctx.textAlign='left';
         ctx.textBaseline='top'; ctx.fillText('↑ '+fmt(maxY)+' ₽', 4, 2);
@@ -2582,25 +1977,34 @@ await this.db.setCfg('printMinPrice',parseMoney(paramCard.querySelector('#pr-m')
     const data={version:5,exportedAt:new Date().toISOString(),
       transactions:await this.db.all(S.TX),garage_logs:await this.db.all(S.GARAGE),
       odo_history:await this.db.all(S.ODO),service_items:await this.db.all(S.SVC),
-      goals:await this.db.all(S.GOALS),settings:await this.db.all(S.CFG)};
+      goals:await this.db.all(S.GOALS),settings:await this.db.all(S.CFG),
+      cars:await this.db.all(S.CARS)};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=`sentinel-backup-${today()}.json`;
     document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   }
+  
   async _import(file){
     if(!file) return;
     const text=await file.text();
-    let data; try{data=JSON.parse(text);}catch{alert('Неверный формат файла');return;}
-    if(!confirm(`Загрузить резервную копию от ${data.exportedAt||'?'}?\nВсе текущие данные будут заменены!`)) return;
-    const map={transactions:S.TX,garage_logs:S.GARAGE,odo_history:S.ODO,service_items:S.SVC,goals:S.GOALS,settings:S.CFG};
-    for(const [key,sn] of Object.entries(map)){
-      if(!data[key]) continue;
-      const ex=await this.db.all(sn);
-      for(const r of ex) await this.db.del(sn,r.id||r.key);
-      for(const r of data[key]) await this.db.set(sn,r);
+    let data; 
+    try { data=JSON.parse(text); } 
+    catch { 
+        showInlineMsg(document.getElementById('imp-btn-trigger').parentElement, 'Неверный формат файла JSON');
+        return; 
     }
-    this._render();
+    
+    customConfirm('Восстановить резервную копию?', `Загрузить копию от ${data.exportedAt ? dStr(data.exportedAt) : '?'}? Все текущие данные будут заменены!`, async () => {
+        const map={transactions:S.TX,garage_logs:S.GARAGE,odo_history:S.ODO,service_items:S.SVC,goals:S.GOALS,settings:S.CFG,cars:S.CARS};
+        for(const [key,sn] of Object.entries(map)){
+          if(!data[key]) continue;
+          const ex=await this.db.all(sn);
+          for(const r of ex) await this.db.del(sn,r.id||r.key);
+          for(const r of data[key]) await this.db.set(sn,r);
+        }
+        this._render();
+    });
   }
 }
 
