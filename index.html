@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Sentinel OS">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
-<title>Sentinel OS: Carbon AMOLED v7</title>
+<title>Sentinel OS: Carbon AMOLED v8</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 :root{
@@ -57,7 +57,7 @@ body{
 }
 .hdr-btn:active{transform:scale(.96);background:rgba(0,240,255,.22)}
 .header-pills{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;
 }
 .hdr-pill{
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
@@ -404,7 +404,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;width:100%;padding:0;b
 'use strict';
 
 const DB_NAME = 'SentinelCarbonV3';
-const DB_VER  = 7;
+const DB_VER  = 8;
 const S = {
   TX:'transactions',
   GARAGE:'garage_logs',
@@ -414,13 +414,13 @@ const S = {
   GOALS:'goals',
   CARS:'cars',
   FIL:'filaments',
-  TPL:'quick_templates'
+  TPL:'quick_templates',
+  REC:'recipes',
+  CTASK:'car_tasks'
 };
 
 const DEFAULTS = {
   balance:137663.49,
-  cardBalance:162.58,
-  savingsBalance:137500.91,
   monthlyBudgetCap:20000,
   mandatoryPayments:0,
   printHourRate:100, printSetupFee:200, printMinPrice:250,
@@ -564,29 +564,16 @@ class DB {
         mk(S.CARS,  {keyPath:'id',autoIncrement:true});
         mk(S.FIL,   {keyPath:'id',autoIncrement:true});
         mk(S.TPL,   {keyPath:'id',autoIncrement:true});
+        mk(S.REC,   {keyPath:'id',autoIncrement:true});
+        mk(S.CTASK, {keyPath:'id',autoIncrement:true});
       };
       req.onsuccess = e => { this.db=e.target.result; this._seed().then(res).catch(rej); };
       req.onerror   = e => rej(e.target.error);
     });
   }
   async _seed(){
-    const hadCard = await this.get(S.CFG, 'cardBalance');
-    const hadSav  = await this.get(S.CFG, 'savingsBalance');
-    const existingBal = await this.get(S.CFG, 'balance');
-
     for(const [k,v] of Object.entries(DEFAULTS)){
       if(await this.get(S.CFG,k)===null) await this.set(S.CFG,{key:k,value:v});
-    }
-
-    // If upgrading from v6 where only 'balance' existed, split cleanly into card + savings
-    if(hadCard === null && hadSav === null && existingBal !== null && typeof existingBal.value === 'number'){
-      const total = existingBal.value;
-      if(Math.abs(total - 137663.49) > 1){
-        const crd = total >= 162.58 ? 162.58 : total;
-        const sav = Math.max(0, +(total - crd).toFixed(2));
-        await this.setCfg('cardBalance', crd);
-        await this.setCfg('savingsBalance', sav);
-      }
     }
 
     const cars = await this.all(S.CARS);
@@ -614,6 +601,10 @@ class DB {
     if(tpls.length === 0){
       for(const t of DEFAULT_TEMPLATES) await this.add(S.TPL, t);
     }
+    const recs = await this.all(S.REC);
+    if(recs.length === 0){
+      for(const r of RECIPES) await this.add(S.REC, r);
+    }
   }
   _st(n,m='readonly'){return this.db.transaction(n,m).objectStore(n);}
   get(s,k){return new Promise((r,e)=>{const q=this._st(s).get(k);q.onsuccess=()=>r(q.result!==undefined?q.result:null);q.onerror=()=>e(q.error);});}
@@ -624,33 +615,14 @@ class DB {
   async cfg(k){const r=await this.get(S.CFG,k);return r!==null?r.value:DEFAULTS[k];}
   async setCfg(k,v){await this.set(S.CFG,{key:k,value:v});}
 
-  async adjustAccountBalance(type, amount, account='card', transferDir='savings_to_card', reverse=false){
-    let card = Number(await this.cfg('cardBalance')) || 0;
-    let sav  = Number(await this.cfg('savingsBalance')) || 0;
+  async adjustAccountBalance(type, amount, account='card', transferDir='', reverse=false){
+    let bal = Number(await this.cfg('balance')) || 0;
     const sign = reverse ? -1 : 1;
     const amt = Number(amount) || 0;
-
-    if(type === 'transfer'){
-      if(transferDir === 'savings_to_card' || account === 'savings_to_card'){
-        sav  = +(sav - sign * amt).toFixed(2);
-        card = +(card + sign * amt).toFixed(2);
-      } else {
-        card = +(card - sign * amt).toFixed(2);
-        sav  = +(sav + sign * amt).toFixed(2);
-      }
-    } else if(type === 'income'){
-      if(account === 'savings') sav = +(sav + sign * amt).toFixed(2);
-      else card = +(card + sign * amt).toFixed(2);
-    } else {
-      if(account === 'savings') sav = +(sav - sign * amt).toFixed(2);
-      else card = +(card - sign * amt).toFixed(2);
-    }
-
-    const total = +(card + sav).toFixed(2);
-    await this.setCfg('cardBalance', card);
-    await this.setCfg('savingsBalance', sav);
-    await this.setCfg('balance', total);
-    return { card, sav, total };
+    if(type === 'income') bal = +(bal + sign * amt).toFixed(2);
+    else if(type === 'expense') bal = +(bal - sign * amt).toFixed(2);
+    await this.setCfg('balance', bal);
+    return { total: bal };
   }
 }
 
@@ -701,9 +673,9 @@ function parseSberText(raw) {
 
   // Clean noise that confuses sum extraction: card masks (****8609, MIR-8609, •• 8609), dates, times (13:43), balance tail, 6-digit auth codes
   let cleanForSum = text
-    .replace(/(?:остаток|баланс|доступно)[:\s]*[\d\s]+[.,]?\d*\s*(?:₽|р|руб|RUB)?/gi, ' ')
-    .replace(/(?:счёт|счет|карта|mir|мир|visa|mc|сберкарта)[\s*•\-№]*\d{4}/gi, ' ')
-    .replace(/[*•]{2,}\s*\d{4}/g, ' ')
+    .replace(/(?:остаток|баланс|доступно)[:\s]*[\d\s]+[.,]?\d*\s*(?:₽|р\.?|руб\.?|RUB)?/gi, ' ')
+    .replace(/(?:накопительный\s+сч[её]т|сч[её]т|карта|mir|мир|visa|mc|сберкарта)[\s*•\-№]*\d{4}/gi, ' ')
+    .replace(/[*•]+\s*\d{4}\b/g, ' ')
     .replace(/\b\d{2}\.\d{2}\.(?:20\d{2}|\d{2})\b/g, ' ')
     .replace(/\b\d{2}:\d{2}(?::\d{2})?\b/g, ' ')
     .replace(/\b\d{6}\b/g, ' ');
@@ -724,17 +696,11 @@ function parseSberText(raw) {
   let transferDir = 'savings_to_card';
   let comment = '';
 
-  // Detect internal transfers between Savings (VKLAD) and Card (KARTA)
-  if (/vklad-karta|вклад-карта|с накопительного/i.test(low)) {
-    type = 'transfer';
-    category = 'Накопительный → Карта';
-    transferDir = 'savings_to_card';
-    comment = 'Перевод с накопительного счёта на карту';
-  } else if (/karta-vklad|карта-вклад|на накопительный/i.test(low)) {
-    type = 'transfer';
-    category = 'Карта → Накопительный';
-    transferDir = 'card_to_savings';
-    comment = 'Перевод с карты на накопительный счёт';
+  // Detect savings interest payout ("Накопительный счет *7231 Выплатили проценты 854,84р. Баланс: 114 758,91р.")
+  if (/выплатили проценты|начисление процентов|проценты по сч|проценты по вкладу|капитализация/i.test(low)) {
+    type = 'income';
+    category = 'Проценты по вкладу';
+    comment = 'Проценты по накопительному счёту';
   } else if (/заработная плата|зарплата/i.test(low)) {
     type = 'income';
     category = 'ЗП';
@@ -1078,231 +1044,122 @@ class App {
   }
 
   async _updateHeaderPills(){
-    const cardBal = await this.db.cfg('cardBalance');
-    const savBal  = await this.db.cfg('savingsBalance');
+    const balance = await this.db.cfg('balance');
     const txs = await this.db.all(S.TX);
     const payday = calcNextPayday(txs);
     const hdr = document.getElementById('hdr-quick-status');
     if(!hdr) return;
     hdr.innerHTML = `
-      <div class="hdr-pill" id="hp-card" style="color:${cardBal<100?'var(--orange)':'var(--cyan)'}" title="Остаток на дебетовой карте Сбера">
-        <span>💳</span><span>${fmt(cardBal)} ₽</span>
-      </div>
-      <div class="hdr-pill" id="hp-sav" style="color:#d0b3ff" title="Основной накопительный счёт">
-        <span>🏦</span><span>${fmtI(savBal)} ₽</span>
+      <div class="hdr-pill" id="hp-bal" style="color:${balance<0?'var(--red)':'var(--cyan)'}" title="Общий баланс">
+        <span>💎 Баланс:</span><span>${fmt(balance)} ₽</span>
       </div>
       <div class="hdr-pill" id="hp-pay" style="color:var(--green)" title="Ближайшая выплата">
-        <span>⏳</span><span>${payday.label}: ${payday.days}д</span>
+        <span>⏳ ${payday.label}:</span><span>через ${payday.days} дн.</span>
       </div>
     `;
-    hdr.querySelector('#hp-card').onclick = () => this._openSberSyncModal('card');
-    hdr.querySelector('#hp-sav').onclick  = () => this._openSberSyncModal('savings');
-    hdr.querySelector('#hp-pay').onclick  = () => {
+    hdr.querySelector('#hp-bal').onclick = () => this._openSberSyncModal();
+    hdr.querySelector('#hp-pay').onclick = () => {
       if(this.tab!=='finance'){ this.tab='finance'; this._syncNavUI(); this._render(false); }
     };
   }
 
-  /* ═══════ SBERBANK DUAL-ACCOUNT SYNC & TRANSFER MODAL ═══════ */
-  async _openSberSyncModal(focusTab='sync'){
-    const cardBal = await this.db.cfg('cardBalance');
-    const savBal  = await this.db.cfg('savingsBalance');
-    const totalBal = +(cardBal + savBal).toFixed(2);
+  /* ═══════ UNIFIED BALANCE SYNC MODAL ═══════ */
+  async _openSberSyncModal(){
+    const balance = await this.db.cfg('balance');
     const m = document.getElementById('global-modal');
     const c = document.getElementById('global-modal-content');
 
     c.innerHTML = `
       <div class="card-title">
-        <span>🏦 Счета: Карта Сбера и Накопительный</span>
+        <span>⚖️ Сверка общего баланса</span>
         <button class="del-btn" id="m-close">✕</button>
       </div>
-
-      <div class="seg-bar">
-        <div class="seg-btn ${focusTab!=='transfer'?'active':''}" data-st="sync">⚖️ Сверка остатков</div>
-        <div class="seg-btn ${focusTab==='transfer'?'active':''}" data-st="transfer">⇄ Перевод между счетами</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.45">
+        Введи свою общую сумму денег (можно сложить прямо в поле, например: <b>137500.91+162.58</b>) — приложение посчитает разницу или просто обновит баланс:
       </div>
-
-      <!-- TAB 1: RECONCILIATION -->
-      <div id="st-pane-sync" style="display:${focusTab!=='transfer'?'block':'none'}">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.45">
-          Укажи актуальный остаток на <b>карте</b> и/или на <b>накопительном счёте</b> из приложения СберБанк Онлайн:
-        </div>
+      <div class="b-row" style="margin-bottom:10px">
+        <span class="b-key">Сейчас в приложении:</span>
+        <span class="b-val" style="color:var(--cyan)">${fmt(balance)} ₽</span>
+      </div>
+      <div class="ig">
+        <label class="lbl">Фактический общий остаток (₽)</label>
+        <input type="text" inputmode="decimal" id="sync-actual" placeholder="${balance}" style="font-size:18px;font-weight:800;color:var(--cyan)">
+      </div>
+      <div id="sync-diff-box" style="display:none;margin:10px 0;padding:11px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(0,240,255,.2)"></div>
+      <div id="sync-cat-wrap" style="display:none">
         <div class="g2">
           <div class="ig">
-            <label class="lbl">💳 На карте сейчас (₽)</label>
-            <input type="text" inputmode="decimal" id="sync-card" value="${cardBal}" style="font-size:16px;font-weight:800;color:var(--cyan)">
-          </div>
-          <div class="ig">
-            <label class="lbl">🏦 На накопительном (₽)</label>
-            <input type="text" inputmode="decimal" id="sync-sav" value="${savBal}" style="font-size:16px;font-weight:800;color:#d0b3ff">
-          </div>
-        </div>
-        <div id="sync-diff-box" style="margin:8px 0;padding:10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(0,240,255,.2);font-size:11.5px">
-          Общий баланс: <b style="color:var(--green)">${fmt(totalBal)} ₽</b>
-        </div>
-        <div id="sync-cat-wrap" style="display:none">
-          <div class="g2">
-            <div class="ig">
-              <label class="lbl">Категория разницы</label>
-              <select id="sync-cat">${CAT_EXP.map(x=>`<option value="${x}">${x}</option>`).join('')}</select>
-            </div>
-            <div class="ig">
-              <label class="lbl">Комментарий</label>
-              <input type="text" id="sync-comm" value="Сверка со Сбером">
-            </div>
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn c full" id="sync-just-bal">💾 Сохранить точные остатки счетов</button>
-          <button class="btn v full" id="sync-apply-tx" style="margin-top:4px">📝 Записать разницу в историю и выровнять</button>
-        </div>
-      </div>
-
-      <!-- TAB 2: INTERNAL TRANSFER -->
-      <div id="st-pane-transfer" style="display:${focusTab==='transfer'?'block':'none'}">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.45">
-          Перевод между своим накопительным счётом и картой меняет остатки на счетах, но <b>не искажает</b> твои расходы и общий капитал:
-        </div>
-        <div class="seg-bar">
-          <div class="seg-btn active" data-tdir="savings_to_card">🏦 Накопительный → 💳 Карта</div>
-          <div class="seg-btn" data-tdir="card_to_savings">💳 Карта → 🏦 Накопительный</div>
-        </div>
-        <div class="ig">
-          <label class="lbl">Сумма перевода (₽)</label>
-          <input type="text" inputmode="decimal" id="tr-amt" placeholder="Например: 500" style="font-size:18px;font-weight:800;color:var(--cyan)">
-          <div class="mini-pills">
-            <span class="mini-pill" data-tradd="300">+300 ₽</span>
-            <span class="mini-pill" data-tradd="500">+500 ₽</span>
-            <span class="mini-pill" data-tradd="1000">+1 000 ₽</span>
-            <span class="mini-pill" data-tradd="2000">+2 000 ₽</span>
-            <span class="mini-pill" data-tradd="5000">+5 000 ₽</span>
-          </div>
-        </div>
-        <div class="g2">
-          <div class="ig">
-            <label class="lbl">Дата перевода</label>
-            <input type="date" id="tr-date" value="${today()}">
+            <label class="lbl">Категория разницы</label>
+            <select id="sync-cat">${CAT_EXP.map(x=>`<option value="${x}">${x}</option>`).join('')}</select>
           </div>
           <div class="ig">
             <label class="lbl">Комментарий</label>
-            <input type="text" id="tr-comm" placeholder="Пополнение карты">
+            <input type="text" id="sync-comm" value="Сверка баланса">
           </div>
         </div>
-        <button class="btn g full" id="tr-exec">⇄ Выполнить перевод между счетами</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn c full" id="sync-apply-tx">📝 Записать разницу и выровнять</button>
+        <button class="btn v full" id="sync-just-bal" style="margin-top:4px">💾 Просто изменить баланс (без записи)</button>
       </div>
     `;
 
     m.classList.add('show');
     c.querySelector('#m-close').onclick = closeModal;
 
-    // Switch panes
-    c.querySelectorAll('[data-st]').forEach(b=>{
-      b.onclick = () => {
-        c.querySelectorAll('[data-st]').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        const isTr = b.dataset.st === 'transfer';
-        c.querySelector('#st-pane-sync').style.display = isTr ? 'none' : 'block';
-        c.querySelector('#st-pane-transfer').style.display = isTr ? 'block' : 'none';
-      };
-    });
-
-    // Reconciliation logic
-    const inpCard = c.querySelector('#sync-card');
-    const inpSav  = c.querySelector('#sync-sav');
+    const inp = c.querySelector('#sync-actual');
     const diffBox = c.querySelector('#sync-diff-box');
     const catWrap = c.querySelector('#sync-cat-wrap');
 
-    const updateDiff = () => {
-      const nc = parseMoney(inpCard.value);
-      const ns = parseMoney(inpSav.value);
-      const newTotal = +(nc + ns).toFixed(2);
-      const diff = +(newTotal - totalBal).toFixed(2);
+    inp.oninput = () => {
+      if(!inp.value.trim()){ diffBox.style.display='none'; catWrap.style.display='none'; return; }
+      const actual = parseMoney(inp.value);
+      const diff = +(actual - balance).toFixed(2);
+      diffBox.style.display = 'block';
       if(Math.abs(diff) < 0.01){
-        diffBox.innerHTML = `Новый общий баланс: <b>${fmt(newTotal)} ₽</b> (без разницы с текущим)`;
+        diffBox.innerHTML = `<span style="color:var(--green);font-weight:700">✓ Баланс идеально совпадает (${fmt(actual)} ₽)!</span>`;
         catWrap.style.display = 'none';
       } else if(diff < 0){
-        diffBox.innerHTML = `Новый общий баланс: <b>${fmt(newTotal)} ₽</b> · Неучтённый расход: <b style="color:var(--red)">−${fmt(Math.abs(diff))} ₽</b>`;
+        diffBox.innerHTML = `Новое значение: <b>${fmt(actual)} ₽</b> · Неучтённый расход: <b style="color:var(--red)">−${fmt(Math.abs(diff))} ₽</b>`;
         catWrap.style.display = 'block';
       } else {
-        diffBox.innerHTML = `Новый общий баланс: <b>${fmt(newTotal)} ₽</b> · Неучтённый доход: <b style="color:var(--green)">+${fmt(diff)} ₽</b>`;
+        diffBox.innerHTML = `Новое значение: <b>${fmt(actual)} ₽</b> · Неучтённый доход: <b style="color:var(--green)">+${fmt(diff)} ₽</b>`;
         catWrap.style.display = 'none';
       }
     };
-    inpCard.oninput = updateDiff;
-    inpSav.oninput  = updateDiff;
-
-    c.querySelector('#sync-just-bal').onclick = async () => {
-      const nc = parseMoney(inpCard.value);
-      const ns = parseMoney(inpSav.value);
-      await this.db.setCfg('cardBalance', nc);
-      await this.db.setCfg('savingsBalance', ns);
-      await this.db.setCfg('balance', +(nc + ns).toFixed(2));
-      closeModal();
-      this._render(true);
-    };
 
     c.querySelector('#sync-apply-tx').onclick = async () => {
-      const nc = parseMoney(inpCard.value);
-      const ns = parseMoney(inpSav.value);
-      const newTotal = +(nc + ns).toFixed(2);
-      const diff = +(newTotal - totalBal).toFixed(2);
+      if(!inp.value.trim()) return;
+      const actual = parseMoney(inp.value);
+      const diff = +(actual - balance).toFixed(2);
       if(Math.abs(diff) >= 0.01){
         const isExp = diff < 0;
         const cat = isExp ? c.querySelector('#sync-cat').value : 'Другое';
-        const comm = c.querySelector('#sync-comm')?.value || 'Сверка со Сбером';
+        const comm = c.querySelector('#sync-comm')?.value || 'Сверка баланса';
         await this.db.add(S.TX, {
           amount: Math.abs(diff),
           type: isExp ? 'expense' : 'income',
           category: cat,
           comment: comm,
           date: new Date().toISOString(),
-          isMandatory: false,
-          account: 'card'
+          isMandatory: false
         });
       }
-      await this.db.setCfg('cardBalance', nc);
-      await this.db.setCfg('savingsBalance', ns);
-      await this.db.setCfg('balance', newTotal);
+      await this.db.setCfg('balance', actual);
       closeModal();
       this._render(true);
     };
 
-    // Internal Transfer logic
-    let trDir = 'savings_to_card';
-    c.querySelectorAll('[data-tdir]').forEach(btn=>{
-      btn.onclick = () => {
-        c.querySelectorAll('[data-tdir]').forEach(x=>x.classList.remove('active'));
-        btn.classList.add('active');
-        trDir = btn.dataset.tdir;
-      };
-    });
-    const trAmtInp = c.querySelector('#tr-amt');
-    c.querySelectorAll('[data-tradd]').forEach(pill=>{
-      pill.onclick = () => {
-        const cur = parseMoney(trAmtInp.value);
-        trAmtInp.value = cur + Number(pill.dataset.tradd);
-      };
-    });
-    c.querySelector('#tr-exec').onclick = async () => {
-      const amt = parseMoney(trAmtInp.value);
-      if(!amt || amt <= 0) return;
-      const dt = c.querySelector('#tr-date').value || today();
-      const comm = c.querySelector('#tr-comm').value.trim() || (trDir==='savings_to_card' ? 'Перевод с накопительного счёта на карту' : 'Перевод с карты на накопительный счёт');
-      await this.db.add(S.TX, {
-        amount: amt,
-        type: 'transfer',
-        transferDir: trDir,
-        category: trDir==='savings_to_card' ? 'Накопительный → Карта' : 'Карта → Накопительный',
-        comment: comm,
-        date: new Date(dt + 'T12:00:00').toISOString(),
-        isMandatory: false
-      });
-      await this.db.adjustAccountBalance('transfer', amt, 'card', trDir, false);
+    c.querySelector('#sync-just-bal').onclick = async () => {
+      if(!inp.value.trim()) return;
+      const actual = parseMoney(inp.value);
+      await this.db.setCfg('balance', actual);
       closeModal();
       this._render(true);
     };
   }
 
-  /* ═══════ GLOBAL QUICK ACTION SHEET (+ FAB) — FIXED INPUTS & DATE PICKER ═══════ */
+  /* ═══════ GLOBAL QUICK ACTION SHEET (+ FAB) ═══════ */
   async _openQuickActionModal(prefill = null){
     const tpls = await this.db.all(S.TPL);
     const m = document.getElementById('global-modal');
@@ -1316,12 +1173,12 @@ class App {
       </div>
 
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить текст из Сбера</button>
-        <button class="btn v sm" id="q-open-sync" style="flex:1">⚖️ Сверка / Вклад</button>
+        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить сообщение Сбера</button>
+        <button class="btn v sm" id="q-open-sync" style="flex:1">⚖️ Сверка баланса</button>
       </div>
 
       <div id="q-sber-area" style="display:none;margin-bottom:10px">
-        <textarea id="q-sber-txt" placeholder="Вставь сюда СМС или строку из выписки Сбера (например: KRASNOE&BELOE 175,67 или Озон Банк 576,00)..." style="min-height:60px;font-size:12px"></textarea>
+        <textarea id="q-sber-txt" placeholder="Вставь СМС или уведомление Сбера (например: Выплатили проценты 854,84р или KRASNOE&BELOE 175,67)..." style="min-height:60px;font-size:12px"></textarea>
       </div>
 
       <div class="chips-scroll" id="q-tpl-bar">
@@ -1331,13 +1188,12 @@ class App {
       <div class="seg-bar" style="margin-top:4px">
         <div class="seg-btn active" data-qt="expense">➖ Расход</div>
         <div class="seg-btn" data-qt="income">➕ Доход</div>
-        <div class="seg-btn" data-qt="transfer">⇄ Между счетами</div>
       </div>
 
       <div class="g2">
         <div class="ig">
           <label class="lbl">Сумма (можно 250+180)</label>
-          <input type="text" inputmode="decimal" autocomplete="off" id="q-amt" placeholder="Введи сумму ₽" style="font-size:17px;font-weight:800;color:var(--cyan)" value="${prefill?.amount!==undefined?prefill.amount:''}">
+          <input type="text" inputmode="decimal" autocomplete="off" id="q-amt" placeholder="Сумма ₽" style="font-size:17px;font-weight:800;color:var(--cyan)" value="${prefill?.amount?prefill.amount:''}">
           <div class="mini-pills">
             <span class="mini-pill" data-qadd="100">+100</span>
             <span class="mini-pill" data-qadd="250">+250</span>
@@ -1347,15 +1203,8 @@ class App {
           </div>
         </div>
         <div class="ig">
-          <label class="lbl" id="q-cat-lbl">Категория</label>
+          <label class="lbl">Категория</label>
           <select id="q-cat"></select>
-          <div style="margin-top:8px" id="q-acc-wrap">
-            <label class="lbl">Счёт операции</label>
-            <select id="q-acc" style="padding:7px 10px;font-size:12px">
-              <option value="card">💳 Карта Сбера</option>
-              <option value="savings">🏦 Накопительный счёт</option>
-            </select>
-          </div>
         </div>
       </div>
 
@@ -1371,7 +1220,7 @@ class App {
         </div>
         <div class="ig">
           <label class="lbl">Комментарий</label>
-          <input type="text" id="q-comm" placeholder="Магазин / деталь" value="${prefill?.comment||''}">
+          <input type="text" id="q-comm" placeholder="Необязательно" value="${prefill?.comment||''}">
         </div>
       </div>
 
@@ -1391,9 +1240,8 @@ class App {
     c.querySelector('#q-close').onclick = closeModal;
     c.querySelector('#q-open-sync').onclick = () => { closeModal(); this._openSberSyncModal(); };
 
-    let curType = prefill?.type || 'expense';
+    let curType = prefill?.type === 'income' ? 'income' : 'expense';
     const catSel = c.querySelector('#q-cat');
-    const accWrap = c.querySelector('#q-acc-wrap');
     const mandRow = c.querySelector('#q-mand-row');
     const mandCb = c.querySelector('#q-mand');
     const amtInp = c.querySelector('#q-amt');
@@ -1402,17 +1250,10 @@ class App {
 
     const updateCats = () => {
       c.querySelectorAll('[data-qt]').forEach(b=>b.classList.toggle('active', b.dataset.qt===curType));
-      if(curType === 'transfer'){
-        catSel.innerHTML = CAT_TR.map(x=>`<option value="${x}">${x}</option>`).join('');
-        accWrap.style.display = 'none';
-        mandRow.style.display = 'none';
-      } else {
-        const list = curType === 'expense' ? CAT_EXP : CAT_INC;
-        catSel.innerHTML = list.map(x=>`<option value="${x}">${x}</option>`).join('');
-        if(prefill?.category && list.includes(prefill.category)) catSel.value = prefill.category;
-        accWrap.style.display = 'block';
-        mandRow.style.display = curType === 'expense' ? 'flex' : 'none';
-      }
+      const list = curType === 'expense' ? CAT_EXP : CAT_INC;
+      catSel.innerHTML = list.map(x=>`<option value="${x}">${x}</option>`).join('');
+      if(prefill?.category && list.includes(prefill.category)) catSel.value = prefill.category;
+      mandRow.style.display = curType === 'expense' ? 'flex' : 'none';
     };
     updateCats();
     if(prefill?.isMandatory){ mandCb.checked = true; mandRow.classList.add('on'); }
@@ -1426,7 +1267,6 @@ class App {
 
     mandCb.onchange = () => mandRow.classList.toggle('on', mandCb.checked);
 
-    // Quick amount add buttons
     c.querySelectorAll('[data-qadd]').forEach(pill=>{
       pill.onclick = () => {
         const cur = parseMoney(amtInp.value);
@@ -1435,14 +1275,12 @@ class App {
     });
     c.querySelector('#q-clr').onclick = () => { amtInp.value = ''; amtInp.focus(); };
 
-    // Quick date buttons
     c.querySelectorAll('[data-qdt]').forEach(pill=>{
       pill.onclick = () => {
         dateInp.value = dateOffsetStr(Number(pill.dataset.qdt));
       };
     });
 
-    // Quick template click — does NOT erase an already typed amount if tpl.amount == 0!
     c.querySelectorAll('#q-tpl-bar .q-chip').forEach(chip=>{
       chip.onclick = () => {
         const tpl = tpls.find(x=>x.id===Number(chip.dataset.tid));
@@ -1457,13 +1295,12 @@ class App {
       };
     });
 
-    // Smart Sber Clipboard / Text Parser
     const sberArea = c.querySelector('#q-sber-area');
     const sberTxt = c.querySelector('#q-sber-txt');
     const applyParsed = (txt) => {
       const res = parseSberText(txt);
       if(!res) return;
-      curType = res.type || 'expense';
+      curType = res.type === 'income' ? 'income' : 'expense';
       updateCats();
       if(res.amount > 0) amtInp.value = res.amount;
       catSel.value = res.category;
@@ -1503,33 +1340,17 @@ class App {
       const comm = commInp.value.trim();
       const dt = dateInp.value || today();
       const dateFull = new Date(dt + 'T12:00:00').toISOString();
+      const isMand = curType==='expense' && mandCb.checked;
 
-      if(curType === 'transfer'){
-        const tDir = cat.includes('Накопительный → Карта') ? 'savings_to_card' : 'card_to_savings';
-        await this.db.add(S.TX, {
-          amount: amt,
-          type: 'transfer',
-          transferDir: tDir,
-          category: cat,
-          comment: comm || (tDir==='savings_to_card' ? 'Перевод с накопительного на карту' : 'Перевод с карты на накопительный'),
-          date: dateFull,
-          isMandatory: false
-        });
-        await this.db.adjustAccountBalance('transfer', amt, 'card', tDir, false);
-      } else {
-        const acc = c.querySelector('#q-acc').value || 'card';
-        const isMand = curType==='expense' && mandCb.checked;
-        await this.db.add(S.TX, {
-          amount: amt,
-          type: curType,
-          category: cat,
-          comment: comm,
-          date: dateFull,
-          isMandatory: isMand,
-          account: acc
-        });
-        await this.db.adjustAccountBalance(curType, amt, acc, '', false);
-      }
+      await this.db.add(S.TX, {
+        amount: amt,
+        type: curType,
+        category: cat,
+        comment: comm,
+        date: dateFull,
+        isMandatory: isMand
+      });
+      await this.db.adjustAccountBalance(curType, amt);
       closeModal();
       this._render(true);
     };
@@ -1572,15 +1393,13 @@ class App {
 
   _card(extra=''){const el=document.createElement('div');el.className='card'+extra;return el;}
 
-  /* ═══════ FINANCE ═══════ */
+  /* ═══════ FINANCE (UNIFIED BALANCE) ═══════ */
   async _finance(c){
-    const cardBal    = await this.db.cfg('cardBalance');
-    const savBal     = await this.db.cfg('savingsBalance');
-    const balance    = +(cardBal + savBal).toFixed(2);
+    const balance    = await this.db.cfg('balance');
     const budgetCap  = await this.db.cfg('monthlyBudgetCap');
     const advAmt     = await this.db.cfg('advanceAmount');
     const salAmt     = await this.db.cfg('salaryAmount');
-    const txs        = await this.db.all(S.TX);
+    const txs        = (await this.db.all(S.TX)).filter(t=>t.type==='expense'||t.type==='income');
     const goals      = (await this.db.all(S.GOALS)).filter(g=>g.active);
     const tpls       = await this.db.all(S.TPL);
     const now        = new Date(), todayStr=today();
@@ -1617,42 +1436,28 @@ class App {
     const survRes     = dailyBudget*payday.days;
     const freeCash    = Math.max(0,balance-survRes-1000);
 
-    // 1. HERO DUAL-ACCOUNT & TOTAL CAPITAL CARD
+    // 1. HERO UNIFIED BALANCE CARD
     const balCard=this._card(exceeded?' danger':' glow');
     const bCol=balance<=0?'bad':balance<survRes?'warn':'ok';
     balCard.innerHTML=`
       <div class="card-title">
-        <span>💎 Общий капитал (Накопительный + Карта)</span>
-        <button class="btn c sm" id="btn-sync-bal">⚖️ Сверка</button>
+        <span>💎 Текущий баланс (Все деньги)</span>
+        <span style="font-size:9.5px;color:var(--muted);text-transform:none">Единый счёт</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div class="big ${bCol}">${fmt(balance)} ₽</div>
-        <span style="font-size:11px;color:var(--muted)">Нажми на счёт для сверки или перевода</span>
-      </div>
-
-      <div class="acc-grid">
-        <div class="acc-box sav" id="box-sav">
-          <div class="acc-lbl"><span>🏦 Накопительный</span><span>✏️</span></div>
-          <div class="acc-val" style="color:#d0b3ff">${fmt(savBal)} ₽</div>
-          <div style="font-size:9.5px;color:var(--muted);margin-top:3px">Основное хранение средств</div>
-        </div>
-        <div class="acc-box crd" id="box-crd">
-          <div class="acc-lbl"><span>💳 Карта Сбера ••8609</span><span>✏️</span></div>
-          <div class="acc-val" style="color:var(--cyan)">${fmt(cardBal)} ₽</div>
-          <div style="font-size:9.5px;color:var(--muted);margin-top:3px">Для повседневных покупок</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn c sm" id="btn-sync-bal">⚖️ Сверка</button>
+          <button class="btn v sm" id="set-bal" title="Изменить баланс вручную">✏️</button>
         </div>
       </div>
-
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn v sm" id="btn-q-tr-in" style="flex:1">⇄ Пополнить карту с накопительного</button>
-        <button class="btn c sm" id="btn-q-tr-out" style="flex:1">⇄ Убрать с карты на вклад</button>
-      </div>
+      <div id="bal-ed"></div>
 
       ${exceeded?`<div class="reminder red" style="margin-top:10px">⚠ Дневной лимит превышен на ${fmt(Math.abs(remainToday))} ₽</div>`:''}
-      ${freeCash>500?`<div class="free-cash">💰 Свободный резерв: <b>${fmt(freeCash)} ₽</b> (сверх бюджета до выплаты)</div>`:''}
+      ${freeCash>500?`<div class="free-cash">💰 Свободный резерв: <b>${fmt(freeCash)} ₽</b> (сверх лимита до выплаты)</div>`:''}
 
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">
-        <div style="font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">⚡ Быстрый расход в 1 нажатие:</div>
+        <div style="font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">⚡ Быстрая запись по шаблону:</div>
         <div class="chips-scroll" id="fin-quick-chips">
           ${tpls.map(t=>`<div class="q-chip" data-tid="${t.id}">${t.label}</div>`).join('')}
           <div class="q-chip" id="add-tpl-chip" style="border-style:dashed;color:var(--cyan)">+ Шаблон</div>
@@ -1661,11 +1466,18 @@ class App {
     `;
     c.appendChild(balCard);
 
-    balCard.querySelector('#btn-sync-bal').onclick = () => this._openSberSyncModal('sync');
-    balCard.querySelector('#box-sav').onclick      = () => this._openSberSyncModal('sync');
-    balCard.querySelector('#box-crd').onclick      = () => this._openSberSyncModal('sync');
-    balCard.querySelector('#btn-q-tr-in').onclick  = () => this._openSberSyncModal('transfer');
-    balCard.querySelector('#btn-q-tr-out').onclick = () => this._openSberSyncModal('transfer');
+    balCard.querySelector('#btn-sync-bal').onclick = () => this._openSberSyncModal();
+    balCard.querySelector('#set-bal').onclick = () => {
+      const ed = balCard.querySelector('#bal-ed');
+      if(ed.innerHTML){ ed.innerHTML=''; return; }
+      ed.innerHTML = `<div style="display:flex;gap:8px;margin-top:10px"><input type="text" inputmode="decimal" id="bi" placeholder="${balance}" value="${balance}" style="flex:1"><button class="btn c" id="bs">Сохранить</button></div>`;
+      const bi = ed.querySelector('#bi');
+      bi.focus(); bi.select();
+      ed.querySelector('#bs').onclick = async () => {
+        const v = parseMoney(bi.value);
+        if(!isNaN(v) && v >= 0){ await this.db.setCfg('balance', v); this._render(true); }
+      };
+    };
 
     balCard.querySelectorAll('#fin-quick-chips .q-chip[data-tid]').forEach(chip=>{
       chip.onclick = () => {
@@ -1681,7 +1493,7 @@ class App {
         <div class="ig"><label class="lbl">Название кнопки (с эмодзи)</label><input id="nt-lbl" placeholder="☕ Кофе"></div>
         <div class="g2">
           <div class="ig"><label class="lbl">Категория</label><select id="nt-cat">${CAT_EXP.map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
-          <div class="ig"><label class="lbl">Сумма по умолч. (0 = любая)</label><input type="text" inputmode="decimal" id="nt-amt" value="0"></div>
+          <div class="ig"><label class="lbl">Сумма по умолч. (оставь пустым, если разная)</label><input type="text" inputmode="decimal" id="nt-amt" placeholder="Необязательно"></div>
         </div>
         <button class="btn c full" id="nt-save">Сохранить шаблон</button>
       `;
@@ -1740,23 +1552,25 @@ class App {
       this._render(true);
     };
 
-    // 3. INLINE NEW TRANSACTION CARD (FIXED DATE PICKER + QUICK DATE PILLS + ACCOUNT SELECTOR)
+    // 3. INLINE NEW TRANSACTION CARD
     const txCard=this._card();
     const allGoals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     txCard.innerHTML=`
       <div class="card-title">
         <span>✍️ Записать транзакцию</span>
-        <button class="btn c sm" id="tx-paste-btn">📋 Распознать из Сбера</button>
+        <button class="btn c sm" id="tx-paste-btn">📋 Вставить текст из Сбера</button>
+      </div>
+      <div id="inline-sber-box" style="display:none;margin-bottom:10px">
+        <textarea id="inline-sber-txt" placeholder="Вставь сюда СМС из Сбера (например: Накопительный счет *7231 Выплатили проценты 854,84р или покупку)..." style="min-height:56px;font-size:12px"></textarea>
       </div>
       <div class="seg-bar">
         <div class="seg-btn active" data-it="expense">➖ Расход</div>
         <div class="seg-btn" data-it="income">➕ Доход</div>
-        <div class="seg-btn" data-it="transfer">⇄ Между счетами</div>
       </div>
       <div class="g2">
         <div class="ig">
           <label class="lbl">Сумма (можно 300+150)</label>
-          <input type="text" inputmode="decimal" autocomplete="off" id="tx-amt" placeholder="0.00" style="font-weight:800;color:var(--cyan)">
+          <input type="text" inputmode="decimal" autocomplete="off" id="tx-amt" placeholder="Сумма ₽" style="font-weight:800;color:var(--cyan)">
           <div class="mini-pills">
             <span class="mini-pill" data-tadd="100">+100</span>
             <span class="mini-pill" data-tadd="250">+250</span>
@@ -1767,13 +1581,6 @@ class App {
         <div class="ig">
           <label class="lbl">Категория</label>
           <select id="tx-cat"></select>
-          <div id="tx-acc-wrap" style="margin-top:8px">
-            <label class="lbl">Счёт</label>
-            <select id="tx-acc" style="padding:7px 10px;font-size:12px">
-              <option value="card">💳 Карта Сбера</option>
-              <option value="savings">🏦 Накопительный</option>
-            </select>
-          </div>
         </div>
       </div>
       <div class="g2">
@@ -1805,7 +1612,6 @@ class App {
 
     let inlineType = 'expense';
     const catEl=txCard.querySelector('#tx-cat');
-    const accWrap=txCard.querySelector('#tx-acc-wrap');
     const mandWrap=txCard.querySelector('#mandatory-wrap');
     const mandRow=txCard.querySelector('#mand-row');
     const mandCb=txCard.querySelector('#tx-mandatory');
@@ -1814,19 +1620,13 @@ class App {
 
     const fillCats=()=>{
       txCard.querySelectorAll('[data-it]').forEach(b=>b.classList.toggle('active', b.dataset.it===inlineType));
-      if(inlineType==='transfer'){
-        mandWrap.style.display='none';
-        accWrap.style.display='none';
-        catEl.innerHTML=CAT_TR.map(x=>`<option value="${x}">${x}</option>`).join('');
-      } else if(inlineType==='expense'){
+      if(inlineType==='expense'){
         mandWrap.style.display='block';
-        accWrap.style.display='block';
         let html=CAT_EXP.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}</option>`).join('');
         if(allGoals.length){html+='<option disabled>── Цели ──</option>';allGoals.forEach(g=>{html+=`<option value="ЦЕЛЬ:${g.name}">🎯 ${g.name}</option>`;});}
         catEl.innerHTML=html;
       } else {
         mandWrap.style.display='none';
-        accWrap.style.display='block';
         mandCb.checked=false;mandRow.classList.remove('on');
         catEl.innerHTML=CAT_INC.map(x=>`<option value="${x}">${x}</option>`).join('');
       }
@@ -1855,25 +1655,38 @@ class App {
       };
     });
 
+    const inlineSberBox = txCard.querySelector('#inline-sber-box');
+    const inlineSberTxt = txCard.querySelector('#inline-sber-txt');
+    const applyInlineParsed = (txt) => {
+      const parsed = parseSberText(txt);
+      if(!parsed) return;
+      inlineType = parsed.type === 'income' ? 'income' : 'expense';
+      fillCats();
+      if(parsed.amount > 0) txAmtEl.value = parsed.amount;
+      catEl.value = parsed.category;
+      if(parsed.dateISO) txDateEl.value = parsed.dateISO;
+      txCard.querySelector('#tx-comment').value = parsed.comment;
+      mandCb.checked = !!parsed.isMandatory;
+      mandRow.classList.toggle('on', mandCb.checked);
+    };
+
     txCard.querySelector('#tx-paste-btn').onclick = async () => {
       try {
-        const clip = await navigator.clipboard.readText();
-        const parsed = parseSberText(clip);
-        if(parsed && parsed.amount > 0){
-          inlineType = parsed.type || 'expense';
-          fillCats();
-          txAmtEl.value = parsed.amount;
-          catEl.value = parsed.category;
-          if(parsed.dateISO) txDateEl.value = parsed.dateISO;
-          txCard.querySelector('#tx-comment').value = parsed.comment;
-          mandCb.checked = !!parsed.isMandatory;
-          mandRow.classList.toggle('on', mandCb.checked);
-          showInlineMsg(txCard, `✓ Распознано: ${parsed.amount} ₽ → ${parsed.category} (${parsed.dateISO})`);
-          return;
+        if(navigator.clipboard && navigator.clipboard.readText){
+          const clip = await navigator.clipboard.readText();
+          if(clip && clip.trim()){
+            inlineSberBox.style.display = 'block';
+            inlineSberTxt.value = clip.trim();
+            applyInlineParsed(clip);
+            showInlineMsg(txCard, `✓ Распознано из буфера!`);
+            return;
+          }
         }
       } catch (_) {}
-      this._openQuickActionModal();
+      inlineSberBox.style.display = inlineSberBox.style.display === 'none' ? 'block' : 'none';
+      inlineSberTxt.focus();
     };
+    inlineSberTxt.oninput = () => applyInlineParsed(inlineSberTxt.value);
 
     txCard.querySelector('#tx-add').onclick=async()=>{
       const amt=parseMoney(txAmtEl.value);
@@ -1884,22 +1697,10 @@ class App {
       let cat=catEl.value, comment=txCard.querySelector('#tx-comment').value.trim();
       const dt=txDateEl.value||todayStr;
       const dateFull=new Date(dt+'T12:00:00').toISOString();
-
-      if(inlineType==='transfer'){
-        const tDir=cat.includes('Накопительный → Карта')?'savings_to_card':'card_to_savings';
-        await this.db.add(S.TX,{
-          amount:amt,type:'transfer',transferDir:tDir,category:cat,
-          comment:comment||(tDir==='savings_to_card'?'Перевод с накопительного на карту':'Перевод с карты на накопительный'),
-          date:dateFull,isMandatory:false
-        });
-        await this.db.adjustAccountBalance('transfer',amt,'card',tDir,false);
-      } else {
-        const acc=txCard.querySelector('#tx-acc').value||'card';
-        const isMandatory=inlineType==='expense'&&mandCb.checked;
-        if(cat.startsWith('ЦЕЛЬ:')){comment=cat.substring(5);cat='Цель';}
-        await this.db.add(S.TX,{amount:amt,type:inlineType,category:cat,comment,date:dateFull,isMandatory:isMandatory||false,account:acc});
-        await this.db.adjustAccountBalance(inlineType,amt,acc,'',false);
-      }
+      const isMandatory=inlineType==='expense'&&mandCb.checked;
+      if(cat.startsWith('ЦЕЛЬ:')){comment=cat.substring(5);cat='Цель';}
+      await this.db.add(S.TX,{amount:amt,type:inlineType,category:cat,comment,date:dateFull,isMandatory:isMandatory||false});
+      await this.db.adjustAccountBalance(inlineType,amt);
       this._render(true);
     };
 
@@ -1927,14 +1728,11 @@ class App {
 
   async _renderTxHistory(c, txs, goals){
     const histCard=this._card();
-    const allCats=[...new Set([...CAT_EXP,...CAT_INC,...CAT_TR,'Цель'])];
+    const allCats=[...new Set([...CAT_EXP,...CAT_INC,'Цель'])];
 
     histCard.innerHTML=`
       <div class="card-title">
         <span>История операций (${txs.length})</span>
-        <button class="btn sm ${this._hideTransfers?'c':'v'}" id="toggle-hide-tr">
-          ${this._hideTransfers?'👁 Показать переводы вклада':'🙈 Скрыть переводы вклада'}
-        </button>
       </div>
       <div class="tx-filter-bar">
         <div class="tx-filter-row">
@@ -1949,7 +1747,6 @@ class App {
             <option value="">Все типы</option>
             <option value="expense">➖ Расходы</option>
             <option value="income">➕ Доходы</option>
-            <option value="transfer">⇄ Между счетами</option>
             <option value="mandatory">★ Обязательные</option>
           </select>
         </div>
@@ -1984,20 +1781,13 @@ class App {
     fromEl.value=this._txDateFrom||'';
     toEl.value=this._txDateTo||today();
 
-    histCard.querySelector('#toggle-hide-tr').onclick = () => {
-      this._hideTransfers = !this._hideTransfers;
-      this._render(true);
-    };
-
     const getFiltered=()=>{
       let fil=[...txs];
-      if(this._hideTransfers) fil=fil.filter(t=>t.type!=='transfer');
       const q=(this._txSearch||'').toLowerCase();
       if(q) fil=fil.filter(t=>(t.comment||'').toLowerCase().includes(q)||(t.category||'').toLowerCase().includes(q));
       if(this._txCat) fil=fil.filter(t=>t.category===this._txCat);
       if(this._txType==='income') fil=fil.filter(t=>t.type==='income');
       else if(this._txType==='expense') fil=fil.filter(t=>t.type==='expense');
-      else if(this._txType==='transfer') fil=fil.filter(t=>t.type==='transfer');
       else if(this._txType==='mandatory') fil=fil.filter(t=>t.isMandatory);
       if(this._txDateFrom){const d=new Date(this._txDateFrom+'T00:00:00');fil=fil.filter(t=>new Date(t.date)>=d);}
       if(this._txDateTo){const d=new Date(this._txDateTo+'T23:59:59');fil=fil.filter(t=>new Date(t.date)<=d);}
@@ -2030,12 +1820,10 @@ class App {
         const row=document.createElement('div'); row.className='log-row';
         const del=document.createElement('button'); del.className='del-btn'; del.textContent='×';
         const mandBadge=tx.isMandatory?'<span class="mandatory-badge">ОБЯЗ</span>':'';
-        const isTr = tx.type === 'transfer';
-        const badgeCls = isTr ? 'badge tr' : 'badge';
-        const amtCls = isTr ? 't' : (tx.type==='income'?'i':'e');
-        const prefix = isTr ? '⇄ ' : (tx.type==='income'?'+':'−');
+        const amtCls = tx.type==='income'?'i':'e';
+        const prefix = tx.type==='income'?'+':'−';
         row.innerHTML=`<div style="min-width:0;flex:1">
-          <span class="${badgeCls}">${tx.category}</span>${mandBadge}
+          <span class="badge">${tx.category}</span>${mandBadge}
           <div class="log-meta">${dStr(tx.date)}${tx.comment?' · '+tx.comment:''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -2045,7 +1833,7 @@ class App {
         del.onclick=()=>confirmDel(del,async()=>{
           del._ok=true;
           await this.db.del(S.TX,tx.id);
-          await this.db.adjustAccountBalance(tx.type, tx.amount, tx.account||'card', tx.transferDir||'savings_to_card', true);
+          await this.db.adjustAccountBalance(tx.type, tx.amount, 'card', '', true);
           this._render(true);
         });
         listEl.appendChild(row);
@@ -2097,7 +1885,7 @@ class App {
     renderList();
   }
 
-  /* ═══════ 3D PRINT PRO STUDIO — CLEAR 4-TAB INTERFACE WITH EASY EDITING ═══════ */
+  /* ═══════ 3D PRINT PRO STUDIO — CLEAR 4-TAB INTERFACE WITH LIVE PROFIT & MANUAL PRICE INPUT ═══════ */
   async _print(c){
     const hr     = await this.db.cfg('printHourRate');
     const sf     = await this.db.cfg('printSetupFee');
@@ -2115,7 +1903,6 @@ class App {
       this._selTier = activeFil.tier || 2;
     }
 
-    // Top Navigation Bar for 3D Print Section so everything is crystal clear
     const navCard = this._card(' glow');
     navCard.innerHTML = `
       <div class="card-title">
@@ -2124,7 +1911,7 @@ class App {
       </div>
       <div class="seg-bar" style="margin-bottom:0">
         <div class="seg-btn ${this.printSubTab==='calc'?'active':''}" data-pst="calc">🧮 Калькулятор</div>
-        <div class="seg-btn ${this.printSubTab==='spools'?'active':''}" data-pst="spools">🧵 Мои пластики (${filaments.length})</div>
+        <div class="seg-btn ${this.printSubTab==='spools'?'active':''}" data-pst="spools">🧵 Пластики (${filaments.length})</div>
         <div class="seg-btn ${this.printSubTab==='rates'?'active':''}" data-pst="rates">⚙️ Тарифы</div>
         <div class="seg-btn ${this.printSubTab==='history'?'active':''}" data-pst="history">📦 Заказы (${all3dInc.length})</div>
       </div>
@@ -2138,7 +1925,6 @@ class App {
       };
     });
 
-    // Helper modal for Adding / Editing a Filament Spool
     const openSpoolModal = (spoolToEdit = null) => {
       const m = document.getElementById('global-modal');
       const mc = document.getElementById('global-modal-content');
@@ -2161,11 +1947,11 @@ class App {
         <div class="g2">
           <div class="ig">
             <label class="lbl">Цена катушки (₽)</label>
-            <input type="text" inputmode="decimal" id="af-price" value="${spoolToEdit?.spoolPrice||1400}" style="font-weight:800;color:var(--cyan)">
+            <input type="text" inputmode="decimal" id="af-price" placeholder="1400" value="${spoolToEdit?.spoolPrice||''}" style="font-weight:800;color:var(--cyan)">
           </div>
           <div class="ig">
             <label class="lbl">Чистый вес катушки (г)</label>
-            <input type="text" inputmode="decimal" id="af-weight" value="${spoolToEdit?.spoolWeight||1000}">
+            <input type="text" inputmode="decimal" id="af-weight" placeholder="1000" value="${spoolToEdit?.spoolWeight||1000}">
           </div>
         </div>
         <div class="ig">
@@ -2207,10 +1993,10 @@ class App {
         <!-- STEP 1: MATERIAL -->
         <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-            <div><span class="step-badge">ШАГ 1</span><b>Выбери пластик</b></div>
+            <div><span class="step-badge">ШАГ 1</span><b>Выбери пластик или впиши цену катушки</b></div>
             <div style="display:flex;gap:6px">
-              <button class="btn c sm" id="calc-edit-fil">✏️ Изменить этот пластик</button>
-              <button class="btn v sm" id="calc-add-fil">+ Новый пластик</button>
+              <button class="btn c sm" id="calc-edit-fil">✏️ Изменить</button>
+              <button class="btn v sm" id="calc-add-fil">+ Пластик</button>
             </div>
           </div>
 
@@ -2226,17 +2012,17 @@ class App {
 
           <div class="g2" style="margin-top:8px">
             <div class="ig" style="margin-bottom:0">
-              <label class="lbl">Цена выбранной катушки (₽)</label>
-              <input type="text" inputmode="decimal" id="c-spool-p" value="${activeFil.spoolPrice}">
+              <label class="lbl">Цена катушки (₽) — влияет на расчёт</label>
+              <input type="text" inputmode="decimal" id="c-spool-p" placeholder="1350" value="${activeFil.spoolPrice}">
             </div>
             <div class="ig" style="margin-bottom:0">
-              <label class="lbl">Вес катушки (г) · ${(activeFil.spoolPrice/(activeFil.spoolWeight||1000)).toFixed(2)} ₽/г</label>
-              <input type="text" inputmode="decimal" id="c-spool-w" value="${activeFil.spoolWeight||1000}">
+              <label class="lbl" id="c-gram-rate-lbl">Вес катушки (г) · ${(activeFil.spoolPrice/(activeFil.spoolWeight||1000)).toFixed(2)} ₽/г</label>
+              <input type="text" inputmode="decimal" id="c-spool-w" placeholder="1000" value="${activeFil.spoolWeight||1000}">
             </div>
           </div>
         </div>
 
-        <!-- STEP 2: PART WEIGHT & PRINT TIME -->
+        <!-- STEP 2: PART WEIGHT & PRINT TIME (NO ANNOYING ZEROS!) -->
         <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)">
           <div style="margin-bottom:8px"><span class="step-badge">ШАГ 2</span><b>Данные из слайсера (вес и время)</b></div>
           <div class="g3">
@@ -2246,11 +2032,11 @@ class App {
             </div>
             <div class="ig" style="margin-bottom:0">
               <label class="lbl">Часы печати</label>
-              <input type="text" inputmode="decimal" id="c-th-h" placeholder="2" value="0">
+              <input type="text" inputmode="decimal" id="c-th-h" placeholder="0 ч">
             </div>
             <div class="ig" style="margin-bottom:0">
               <label class="lbl">Минуты печати</label>
-              <input type="text" inputmode="decimal" id="c-th-m" placeholder="30" value="0">
+              <input type="text" inputmode="decimal" id="c-th-m" placeholder="0 мин">
             </div>
           </div>
         </div>
@@ -2274,9 +2060,9 @@ class App {
           </div>
 
           <div class="g3">
-            <div class="ig"><label class="lbl">Количество (шт)</label><input type="text" inputmode="numeric" id="c-qty" value="1"></div>
-            <div class="ig"><label class="lbl">Постобработка (₽)</label><input type="text" inputmode="decimal" id="c-post" value="0"></div>
-            <div class="ig"><label class="lbl">Моделирование (₽)</label><input type="text" inputmode="decimal" id="c-cad" value="0"></div>
+            <div class="ig"><label class="lbl">Количество (шт)</label><input type="text" inputmode="numeric" id="c-qty" placeholder="1" value="1"></div>
+            <div class="ig"><label class="lbl">Постобработка (₽)</label><input type="text" inputmode="decimal" id="c-post" placeholder="0 ₽"></div>
+            <div class="ig"><label class="lbl">Моделирование (₽)</label><input type="text" inputmode="decimal" id="c-cad" placeholder="0 ₽"></div>
           </div>
 
           <div class="g2" style="align-items:center;margin-bottom:6px">
@@ -2298,6 +2084,16 @@ class App {
         if(activeFil && activeFil.id) openSpoolModal(activeFil);
         else openSpoolModal(null);
       };
+
+      const spPInp = cc.querySelector('#c-spool-p');
+      const spWInp = cc.querySelector('#c-spool-w');
+      const updateGramRateLbl = () => {
+        const p = parseMoney(spPInp.value) || 1400;
+        const w = parseMoney(spWInp.value) || 1000;
+        cc.querySelector('#c-gram-rate-lbl').textContent = `Вес катушки (г) · ${(p/w).toFixed(2)} ₽/г`;
+      };
+      spPInp.oninput = updateGramRateLbl;
+      spWInp.oninput = updateGramRateLbl;
 
       cc.querySelectorAll('#fil-chips .q-chip').forEach(chip=>{
         chip.onclick = () => {
@@ -2347,99 +2143,108 @@ class App {
         });
 
         let currentFinalPrice = quote.recPrice;
+        const health = evaluatePriceHealth(currentFinalPrice, quote, weightG, qty, postProcFee, cadFee);
+        const sliderMin = Math.max(50, Math.round(quote.totalCost * 0.8));
+        const sliderMax = Math.max(quote.corridorMax * 1.8, currentFinalPrice + 1000);
 
-        const renderQuoteUI = (finalPrice) => {
-          const health = evaluatePriceHealth(finalPrice, quote, weightG, qty, postProcFee, cadFee);
-          const sliderMin = Math.max(100, Math.round(quote.totalCost * 0.9));
-          const sliderMax = Math.max(quote.corridorMax * 1.6, finalPrice + 500);
+        res.innerHTML = `
+          <div class="calc-result">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:6px;margin-bottom:6px;flex-wrap:wrap;gap:4px">
+              <span>Катушка: <b>${fmtI(spoolPrice)} ₽/${spoolWeight}г</b> (${quote.gramCost.toFixed(2)} ₽/г)</span>
+              <span>${quote.tier.name} (×${quote.tier.mult})</span>
+            </div>
+            <div class="b-row"><span class="b-key">Себестоимость пластика (с запасом на брак):</span><span class="b-val">${fmt(quote.rawMaterialCost)} ₽</span></div>
+            <div class="b-row"><span class="b-key">Амортизация принтера, сопла и свет:</span><span class="b-val">${fmt(quote.machineCost)} ₽</span></div>
+            <div class="b-row"><span class="b-key">Полная себестоимость партии (${qty} шт):</span><span class="b-val" style="color:var(--orange)">${fmt(quote.totalCost)} ₽</span></div>
+            <div class="b-row"><span class="b-key">Оптимальная рыночная вилка:</span><span class="b-val" style="color:var(--green)">${fmtI(quote.corridorMin)} – ${fmtI(quote.corridorMax)} ₽</span></div>
 
-          res.innerHTML = `
-            <div class="calc-result">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:6px;margin-bottom:6px">
-                <span>Пластик: <b>${activeFil.name}</b> (${quote.gramCost.toFixed(2)} ₽/г)</span>
-                <span>${quote.tier.name} (×${quote.tier.mult})</span>
-              </div>
-              <div class="b-row"><span class="b-key">Себестоимость пластика (с запасом на брак):</span><span class="b-val">${fmt(quote.rawMaterialCost)} ₽</span></div>
-              <div class="b-row"><span class="b-key">Амортизация принтера, сопла и свет:</span><span class="b-val">${fmt(quote.machineCost)} ₽</span></div>
-              <div class="b-row"><span class="b-key">Полная себестоимость партии (${qty} шт):</span><span class="b-val" style="color:var(--orange)">${fmt(quote.totalCost)} ₽</span></div>
-              <div class="b-row"><span class="b-key">Рекомендуемая вилка цены:</span><span class="b-val" style="color:var(--green)">${fmtI(quote.corridorMin)} – ${fmtI(quote.corridorMax)} ₽</span></div>
-
-              <div class="calc-total">
-                <span>Итого для клиента:</span>
-                <span id="final-price-lbl">${fmtI(finalPrice)} ₽</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px">
-                <span style="color:var(--green)">Чистая прибыль: <b>+${fmtI(health.netProfit)} ₽</b> (${health.marginPct}%)</span>
-                <span style="color:var(--muted)">~${health.effRubPerGram.toFixed(1)} ₽/г</span>
-              </div>
-
-              <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.1)">
-                <label class="lbl">Подвинь ползунок, если хочешь изменить цену клиенту:</label>
-                <input type="range" id="price-slider" min="${sliderMin}" max="${sliderMax}" step="10" value="${finalPrice}">
-              </div>
+            <div class="calc-total" style="align-items:center;gap:10px">
+              <span>Итого клиенту (₽):</span>
+              <input type="text" inputmode="decimal" id="final-price-inp" value="${currentFinalPrice}" style="width:135px;text-align:right;font-size:20px;font-weight:900;color:var(--cyan);padding:6px 10px;border-color:var(--cyan)">
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-top:6px">
+              <span id="net-profit-lbl" style="color:${health.netProfit>=0?'var(--green)':'var(--red)'}">Чистая прибыль: <b>${health.netProfit>=0?'+':''}${fmtI(health.netProfit)} ₽</b> (маржа ${health.marginPct}%)</span>
+              <span id="eff-gram-lbl" style="color:var(--muted)">~${health.effRubPerGram.toFixed(1)} ₽/г</span>
             </div>
 
-            <div class="advisor-box ${health.status}" id="advisor-box">
-              <div style="font-weight:800;margin-bottom:3px">${health.title}</div>
-              <div>${health.advice}</div>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.1)">
+              <label class="lbl">Или подвинь ползунок цены (прибыль пересчитывается сразу):</label>
+              <input type="range" id="price-slider" min="${sliderMin}" max="${sliderMax}" step="10" value="${currentFinalPrice}">
             </div>
+          </div>
 
-            <div class="btn-row">
-              <button class="btn c" id="btn-copy-kp" style="flex:1">📋 Скопировать расчёт клиенту</button>
-              <button class="btn g" id="btn-log-3d" style="flex:1">💰 Записать в доход (на карту)</button>
-            </div>
-          `;
+          <div class="advisor-box ${health.status}" id="advisor-box">
+            <div style="font-weight:800;margin-bottom:3px">${health.title}</div>
+            <div>${health.advice}</div>
+          </div>
 
-          const slider = res.querySelector('#price-slider');
-          slider.oninput = (e) => {
-            currentFinalPrice = Number(e.target.value);
-            res.querySelector('#final-price-lbl').textContent = `${fmtI(currentFinalPrice)} ₽`;
-            const h2 = evaluatePriceHealth(currentFinalPrice, quote, weightG, qty, postProcFee, cadFee);
-            const adv = res.querySelector('#advisor-box');
-            adv.className = `advisor-box ${h2.status}`;
-            adv.innerHTML = `<div style="font-weight:800;margin-bottom:3px">${h2.title}</div><div>${h2.advice}</div>`;
-          };
+          <div class="btn-row">
+            <button class="btn c" id="btn-copy-kp" style="flex:1">📋 Скопировать КП клиенту</button>
+            <button class="btn g" id="btn-log-3d" style="flex:1">💰 Записать в доход</button>
+          </div>
+        `;
 
-          res.querySelector('#btn-copy-kp').onclick = async () => {
-            const desc = cc.querySelector('#c-desc').value.trim() || 'Деталь на 3D-принтере';
-            const timeTxt = hours > 0 || minutes > 0 ? `${hours}ч ${minutes}мин` : 'по регламенту';
-            const kpText =
+        const slider = res.querySelector('#price-slider');
+        const priceInp = res.querySelector('#final-price-inp');
+        const profitLbl = res.querySelector('#net-profit-lbl');
+        const gramLbl = res.querySelector('#eff-gram-lbl');
+        const adv = res.querySelector('#advisor-box');
+
+        const syncCustomPrice = (newPrice, fromSlider = false) => {
+          currentFinalPrice = Math.max(0, newPrice);
+          if(fromSlider) {
+            priceInp.value = currentFinalPrice;
+          } else {
+            if(currentFinalPrice > Number(slider.max)) slider.max = Math.round(currentFinalPrice * 1.3);
+            slider.value = currentFinalPrice;
+          }
+          const h2 = evaluatePriceHealth(currentFinalPrice, quote, weightG, qty, postProcFee, cadFee);
+          profitLbl.style.color = h2.netProfit >= 0 ? 'var(--green)' : 'var(--red)';
+          profitLbl.innerHTML = `Чистая прибыль: <b>${h2.netProfit>=0?'+':''}${fmtI(h2.netProfit)} ₽</b> (маржа ${h2.marginPct}%)`;
+          gramLbl.textContent = `~${h2.effRubPerGram.toFixed(1)} ₽/г`;
+          adv.className = `advisor-box ${h2.status}`;
+          adv.innerHTML = `<div style="font-weight:800;margin-bottom:3px">${h2.title}</div><div>${h2.advice}</div>`;
+        };
+
+        slider.oninput = (e) => syncCustomPrice(Number(e.target.value), true);
+        priceInp.oninput = (e) => syncCustomPrice(parseMoney(e.target.value), false);
+
+        res.querySelector('#btn-copy-kp').onclick = async () => {
+          const desc = cc.querySelector('#c-desc').value.trim() || 'Деталь на 3D-принтере';
+          const timeTxt = hours > 0 || minutes > 0 ? `${hours}ч ${minutes}мин` : 'по регламенту';
+          const kpText =
 `🖨 Расчёт стоимости 3D-печати:
 • Деталь: ${desc} (${qty} шт.)
 • Материал: ${activeFil.name} (${quote.tier.name.split('·')[1].trim()})
 • Общий вес: ${weightG * qty} г | Время печати: ${timeTxt}
 ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}${cadFee>0?`• 3D-моделирование: ${fmtI(cadFee)} ₽\n`:''}──────────────
 💰 Итого к оплате: ${fmtI(currentFinalPrice)} ₽`;
-            try {
-              await navigator.clipboard.writeText(kpText);
-              showInlineMsg(res, '✓ Текст расчёта скопирован в буфер обмена!');
-            } catch (_) {
-              showInlineMsg(res, kpText, 'var(--cyan)');
-            }
-          };
-
-          res.querySelector('#btn-log-3d').onclick = async () => {
-            const desc = cc.querySelector('#c-desc').value.trim() || 'Заказ 3D-печати';
-            await this.db.add(S.TX, {
-              amount: currentFinalPrice,
-              type: 'income',
-              category: '3D-печать',
-              comment: `${desc} · ${activeFil.name} · ${weightG*qty}г (${qty}шт)`,
-              date: new Date().toISOString(),
-              account: 'card'
-            });
-            await this.db.adjustAccountBalance('income', currentFinalPrice, 'card', '', false);
-            showInlineMsg(res, `✓ +${fmtI(currentFinalPrice)} ₽ зачислено на карту!`);
-            res.querySelector('#btn-log-3d').disabled = true;
-            this._updateHeaderPills();
-          };
+          try {
+            await navigator.clipboard.writeText(kpText);
+            showInlineMsg(res, '✓ Текст расчёта скопирован в буфер обмена!');
+          } catch (_) {
+            showInlineMsg(res, kpText, 'var(--cyan)');
+          }
         };
 
-        renderQuoteUI(currentFinalPrice);
+        res.querySelector('#btn-log-3d').onclick = async () => {
+          const desc = cc.querySelector('#c-desc').value.trim() || 'Заказ 3D-печати';
+          await this.db.add(S.TX, {
+            amount: currentFinalPrice,
+            type: 'income',
+            category: '3D-печать',
+            comment: `${desc} · ${activeFil.name} · ${weightG*qty}г (${qty}шт)`,
+            date: new Date().toISOString()
+          });
+          await this.db.adjustAccountBalance('income', currentFinalPrice);
+          showInlineMsg(res, `✓ +${fmtI(currentFinalPrice)} ₽ зачислено в баланс!`);
+          res.querySelector('#btn-log-3d').disabled = true;
+          this._updateHeaderPills();
+        };
       };
     }
 
-    // ─── SUB-TAB 2: MY FILAMENTS / SPOOLS (OPEN & EASY TO EDIT) ───
+    // ─── SUB-TAB 2: MY FILAMENTS / SPOOLS ───
     if(this.printSubTab === 'spools'){
       const spCard = this._card();
       spCard.innerHTML = `
@@ -2448,7 +2253,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
           <button class="btn c sm" id="sp-add-new">+ Добавить пластик</button>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.45">
-          Здесь хранятся все твои катушки. Нажми <b>«✏️ Изменить»</b>, чтобы поменять цену или название любого пластика, или <b>«+ Добавить пластик»</b> для новой катушки.
+          Нажми <b>«✏️ Изменить»</b>, чтобы поменять цену или название любого пластика, или <b>«+ Добавить пластик»</b> для новой катушки.
         </div>
         <div id="spools-list"></div>
       `;
@@ -2499,7 +2304,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       });
     }
 
-    // ─── SUB-TAB 3: PRINTER TARIFFS & RATES (OPEN & CLEAR) ───
+    // ─── SUB-TAB 3: PRINTER TARIFFS & RATES ───
     if(this.printSubTab === 'rates'){
       const paramCard = this._card();
       paramCard.innerHTML = `
@@ -2568,7 +2373,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
           del.onclick=()=>confirmDel(del,async()=>{
             del._ok=true;
             await this.db.del(S.TX,t.id);
-            await this.db.adjustAccountBalance('income', t.amount, t.account||'card', '', true);
+            await this.db.adjustAccountBalance('income', t.amount, 'card', '', true);
             this._render(true);
           });
           hc.appendChild(row);
@@ -3023,8 +2828,12 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     };
   }
 
-  /* ═══════ GARAGE ═══════ */
+  /* ═══════ GARAGE (CUSTOMIZABLE PRO EDITION) ═══════ */
   async _garage(c){
+    const cars = await this.db.all(S.CARS);
+    if(this.activeCarId === null && cars.length === 1){
+      this.activeCarId = cars[0].id;
+    }
     if(this.activeCarId === null) await this._renderCarsList(c);
     else await this._renderCarDetail(c);
   }
@@ -3033,7 +2842,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     const cars = await this.db.all(S.CARS);
     const hd = this._card();
     hd.innerHTML = `<div class="card-title">
-        <span>Ваши автомобили</span>
+        <span>🚗 Ваши автомобили</span>
         <button class="hdr-btn" id="add-car-btn">+ Добавить авто</button>
     </div>`;
 
@@ -3045,8 +2854,8 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
         el.className = 'car-card';
         el.innerHTML = `
           <div>
-            <div class="car-card-name">🚗 ${car.name}</div>
-            <div class="car-card-odo">Пробег: ${fmtI(car.odo)} км</div>
+            <div class="car-card-name">🚗 ${car.name}${car.plate ? ` <span class="badge" style="margin-left:6px">${car.plate}</span>` : ''}</div>
+            <div class="car-card-odo">Пробег: <b>${fmtI(car.odo)} км</b>${car.osagoDate ? ` · ОСАГО до ${dStr(car.osagoDate)}` : ''}</div>
           </div>
           <div style="color:var(--cyan);font-size:20px;">›</div>
         `;
@@ -3058,9 +2867,9 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     const addForm = document.createElement('div');
     addForm.style.cssText = 'display:none;margin-top:15px;padding-top:15px;border-top:1px solid rgba(0,240,255,0.1)';
     addForm.innerHTML = `
-      <div class="ig"><label class="lbl">Название (Марка, Модель)</label><input type="text" id="new-car-name" placeholder="Например, Peugeot 206"></div>
+      <div class="ig"><label class="lbl">Название (Марка, Модель)</label><input type="text" id="new-car-name" placeholder="Например: Лада Гранта / Peugeot 206"></div>
       <div class="ig"><label class="lbl">Текущий пробег (км)</label><input type="text" inputmode="numeric" id="new-car-odo" placeholder="248000"></div>
-      <button class="btn c full" id="save-new-car">Сохранить</button>
+      <button class="btn c full" id="save-new-car">Сохранить автомобиль</button>
     `;
     hd.appendChild(addForm);
     c.appendChild(hd);
@@ -3077,6 +2886,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       for (const it of GENERIC_SVC_ITEMS) {
         await this.db.add(S.SVC, {...it, lastServiceOdo: odo, conditionStatus:'ok', enabled:true, car_id: carId});
       }
+      this.activeCarId = carId;
       this._render(true);
     };
   }
@@ -3084,11 +2894,13 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
   async _renderCarDetail(c) {
     const car = await this.db.get(S.CARS, this.activeCarId);
     if(!car) { this.activeCarId = null; this._render(true); return; }
+    this.garageSubTab = this.garageSubTab || 'maint';
 
     const odo = car.odo;
-    const hist = (await this.db.all(S.ODO)).filter(o => o.car_id === car.id);
+    const hist = (await this.db.all(S.ODO)).filter(o => !o.car_id || o.car_id === car.id);
     const items = (await this.db.all(S.SVC)).filter(it => (!it.car_id || it.car_id === car.id) && it.enabled !== false).sort((a,b)=>a.id-b.id);
-    const partsNotes = car.partsNotes || '';
+    const carTasks = (await this.db.all(S.CTASK)).filter(t => !t.car_id || t.car_id === car.id);
+    const allTxs = await this.db.all(S.TX);
 
     let avgDay = 25;
     if(hist.length >= 2){
@@ -3098,39 +2910,55 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       if(span>0 && delta>0) avgDay = delta/span;
     }
 
-    const oc = this._card();
+    // Check OSAGO warning
+    let osagoBadge = '';
+    if(car.osagoDate){
+      const dLeft = Math.ceil((new Date(car.osagoDate) - new Date()) / 86400000);
+      const oCol = dLeft < 14 ? 'var(--red)' : dLeft < 30 ? 'var(--orange)' : 'var(--green)';
+      osagoBadge = `<span style="font-size:10px;color:${oCol};font-weight:700">🛡️ ОСАГО: ${dLeft > 0 ? dLeft + ' дн.' : 'ИСТЕКЛО!'}</span>`;
+    }
+
+    // TOP ODOMETER & GARAGE SUB-NAVIGATION CARD
+    const oc = this._card(' glow');
     oc.innerHTML=`
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
         <button class="hdr-btn" id="back-btn" style="border-color:rgba(255,255,255,0.2);color:var(--muted)">‹ Все авто</button>
-        <button class="hdr-btn" id="del-car-btn" style="border-color:rgba(255,77,94,.3);color:var(--red);">Удалить авто</button>
+        ${osagoBadge}
+        <button class="hdr-btn" id="edit-car-title-btn">✏️ Профиль авто</button>
       </div>
-      <div class="card-title">${car.name}</div>
+      <div class="card-title">
+        <span>🚗 ${car.name}${car.plate ? ' · ' + car.plate : ''}</span>
+        <span style="font-size:9.5px;color:var(--muted);text-transform:none">~${Math.round(avgDay*7)} км/нед</span>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div class="big">${fmtI(odo)} <span style="font-size:16px;color:rgba(0,240,255,.4)">км</span></div>
-        <button class="btn c sm" id="odo-btn">Обновить пробег</button>
+        <div class="big">${fmtI(odo)} <span style="font-size:16px;color:rgba(0,240,255,.45)">км</span></div>
+        <button class="btn c sm" id="odo-btn">📍 Обновить пробег</button>
       </div>
-      <div class="sub">~${Math.round(avgDay*7)} км/нед · ~${Math.round(avgDay)} км/день</div>
-      <div id="odo-ed"></div>`;
+      <div id="odo-ed"></div>
+
+      <div class="seg-bar" style="margin-top:12px;margin-bottom:0">
+        <div class="seg-btn ${this.garageSubTab==='maint'?'active':''}" data-gst="maint">🔧 Регламент (${items.length})</div>
+        <div class="seg-btn ${this.garageSubTab==='tasks'?'active':''}" data-gst="tasks">📋 План работ (${carTasks.filter(x=>!x.done).length})</div>
+        <div class="seg-btn ${this.garageSubTab==='fuel'?'active':''}" data-gst="fuel">⛽ Топливо</div>
+        <div class="seg-btn ${this.garageSubTab==='info'?'active':''}" data-gst="info">🪪 Паспорт / Запчасти</div>
+      </div>
+    `;
     c.appendChild(oc);
 
     oc.querySelector('#back-btn').onclick = () => { this.activeCarId = null; this._render(true); };
-    oc.querySelector('#del-car-btn').onclick = () => {
-      customConfirm('Удалить автомобиль?', `Вы уверены, что хотите удалить <b>${car.name}</b>?`, async () => {
-        await this.db.del(S.CARS, car.id);
-        const sv = await this.db.all(S.SVC); for(const i of sv){if(i.car_id===car.id) await this.db.del(S.SVC, i.id);}
-        const od = await this.db.all(S.ODO); for(const i of od){if(i.car_id===car.id) await this.db.del(S.ODO, i.id);}
-        const lg = await this.db.all(S.GARAGE); for(const i of lg){if(i.car_id===car.id) await this.db.del(S.GARAGE, i.id);}
-        this.activeCarId = null;
-        this._render(true);
-      });
-    };
+    oc.querySelector('#edit-car-title-btn').onclick = () => { this.garageSubTab = 'info'; this._render(true); };
+    oc.querySelectorAll('[data-gst]').forEach(btn => {
+      btn.onclick = () => { this.garageSubTab = btn.dataset.gst; this._render(true); };
+    });
 
     oc.querySelector('#odo-btn').onclick=()=>{
       const ed=oc.querySelector('#odo-ed');
       if(ed.innerHTML){ed.innerHTML='';return;}
-      ed.innerHTML=`<div class="g2" style="margin-top:12px"><div class="ig"><label class="lbl">Новый пробег (км)</label><input type="text" inputmode="numeric" id="oi" value="${odo}"></div><div class="ig"><label class="lbl">Дата</label><input type="date" id="od" value="${today()}"></div></div><button class="btn c full" id="os">Сохранить пробег</button>`;
+      ed.innerHTML=`<div class="g2" style="margin-top:12px"><div class="ig"><label class="lbl">Новый пробег (км)</label><input type="text" inputmode="numeric" id="oi" placeholder="${odo}" value="${odo}"></div><div class="ig"><label class="lbl">Дата</label><input type="date" id="od" value="${today()}"></div></div><button class="btn c full" id="os">Сохранить пробег</button>`;
+      const oi = ed.querySelector('#oi');
+      oi.focus(); oi.select();
       ed.querySelector('#os').onclick=async()=>{
-        const v=parseMoney(ed.querySelector('#oi').value);
+        const v=parseMoney(oi.value);
         const dt=ed.querySelector('#od').value||today();
         if(isNaN(v)||v<=0) return;
         await this.db.set(S.CARS, { ...car, odo: v });
@@ -3140,130 +2968,479 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       };
     };
 
-    const wc = this._card();
-    wc.innerHTML = '<div class="card-title">Регламент и износ узлов</div>';
-    items.forEach(it => {
-      const div = document.createElement('div'); div.className = 'wear-row';
-      const critClass = (it.crit || it.criticality) === 'critical' ? 'crit' : (it.crit || it.criticality) === 'warning' ? 'warn' : 'info';
-      const critLbl = { critical:'КРИТ', warning:'ВНМ', info:'ОК' }[it.crit || it.criticality] || 'ОК';
-      const condOnly = isCondOnly(it);
-      if (condOnly) {
-        const cs = it.conditionStatus || 'ok';
-        const pctMap = { ok:0, watch:35, replace:70, critical:100 };
-        div.innerHTML = `
-          <div class="wear-lbl">
-            <span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span>
-            <select class="cond-sel" style="background:#070910;border:1px solid rgba(255,255,255,.15);border-radius:7px;color:${cCol(cs)};font-size:10.5px;padding:4px 24px 4px 8px;width:auto">
-              <option value="ok" ${cs === 'ok' ? 'selected' : ''}>Норма</option>
-              <option value="watch" ${cs === 'watch' ? 'selected' : ''}>Наблюдение</option>
-              <option value="replace" ${cs === 'replace' ? 'selected' : ''}>Заменить</option>
-              <option value="critical" ${cs === 'critical' ? 'selected' : ''}>Критично!</option>
+    // Modal to Add or Edit a Service Node (Узел ТО)
+    const openServiceNodeModal = (nodeToEdit = null) => {
+      const m = document.getElementById('global-modal');
+      const mc = document.getElementById('global-modal-content');
+      const isEdit = Boolean(nodeToEdit);
+      const isCond = nodeToEdit ? isCondOnly(nodeToEdit) : false;
+
+      mc.innerHTML = `
+        <div class="card-title">
+          <span>${isEdit ? '✏️ Настройка узла ТО' : '➕ Добавить узел в регламент'}</span>
+          <button class="del-btn" id="sn-x">✕</button>
+        </div>
+        <div class="ig">
+          <label class="lbl">Название узла / расходника</label>
+          <input id="sn-lbl" placeholder="Например: Масло ГУР / Ремень генератора" value="${nodeToEdit?.label||''}">
+        </div>
+        <div class="g2">
+          <div class="ig">
+            <label class="lbl">Тип контроля</label>
+            <select id="sn-type">
+              <option value="km" ${!isCond?'selected':''}>По пробегу (интервал в км)</option>
+              <option value="cond" ${isCond?'selected':''}>По состоянию (осмотр)</option>
             </select>
           </div>
-          <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs] || 0}%;background:${cCol(cs)}"></div></div>
-        `;
-        div.querySelector('.cond-sel').onchange = async e => {
-          await this.db.set(S.SVC, { ...it, conditionStatus: e.target.value });
+          <div class="ig">
+            <label class="lbl">Важность узла</label>
+            <select id="sn-crit">
+              <option value="critical" ${(nodeToEdit?.crit||'warning')==='critical'?'selected':''}>🔴 Критично (ДВС/Тормоза)</option>
+              <option value="warning" ${(nodeToEdit?.crit||'warning')==='warning'?'selected':''}>🟠 Внимание (Ходовая/Фильтры)</option>
+              <option value="info" ${(nodeToEdit?.crit||'warning')==='info'?'selected':''}>🔵 Обычное (Комфорт)</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2" id="sn-km-wrap" style="display:${isCond?'none':'grid'}">
+          <div class="ig">
+            <label class="lbl">Интервал замены (км)</label>
+            <input type="text" inputmode="numeric" id="sn-km" placeholder="10000" value="${nodeToEdit?.km||''}">
+          </div>
+          <div class="ig">
+            <label class="lbl">На каком пробеге менялось (км)</label>
+            <input type="text" inputmode="numeric" id="sn-last" placeholder="${odo}" value="${nodeToEdit?.lastServiceOdo||''}">
+          </div>
+        </div>
+        <div class="ig">
+          <label class="lbl">Заметка / Артикул / Допуск (необязательно)</label>
+          <input id="sn-notes" placeholder="Например: Lukoil Genesis 5W-30 · фильтр Mann W712" value="${nodeToEdit?.notes||''}">
+        </div>
+        <div class="btn-row">
+          <button class="btn c full" id="sn-save">${isEdit ? '💾 Сохранить узел' : '➕ Добавить в регламент'}</button>
+          ${isEdit ? `<button class="btn r full" id="sn-del" style="margin-top:4px">🗑 Удалить этот узел из списка</button>` : ''}
+        </div>
+      `;
+      m.classList.add('show');
+      mc.querySelector('#sn-x').onclick = closeModal;
+
+      const typeSel = mc.querySelector('#sn-type');
+      const kmWrap  = mc.querySelector('#sn-km-wrap');
+      typeSel.onchange = () => {
+        kmWrap.style.display = typeSel.value === 'cond' ? 'none' : 'grid';
+      };
+
+      mc.querySelector('#sn-save').onclick = async () => {
+        const label = mc.querySelector('#sn-lbl').value.trim();
+        if(!label) return;
+        const condOnly = typeSel.value === 'cond';
+        const crit = mc.querySelector('#sn-crit').value;
+        const km = condOnly ? 0 : (parseMoney(mc.querySelector('#sn-km').value) || 10000);
+        const lastServiceOdo = condOnly ? 0 : (parseMoney(mc.querySelector('#sn-last').value) || 0);
+        const notes = mc.querySelector('#sn-notes').value.trim();
+
+        if(isEdit){
+          await this.db.set(S.SVC, {
+            ...nodeToEdit,
+            label, condOnly, crit, km, lastServiceOdo, notes
+          });
+        } else {
+          await this.db.add(S.SVC, {
+            key: 'custom_' + Date.now(),
+            label, condOnly, crit, km, lastServiceOdo, notes,
+            conditionStatus: 'ok', enabled: true, car_id: car.id
+          });
+        }
+        closeModal();
+        this._render(true);
+      };
+
+      if(isEdit){
+        mc.querySelector('#sn-del').onclick = async () => {
+          await this.db.del(S.SVC, nodeToEdit.id);
+          closeModal();
           this._render(true);
         };
-      } else {
-        const done = Math.max(0, odo - (it.lastServiceOdo || 0));
-        const pct = it.km > 0 ? Math.min(100, (done / it.km) * 100) : 0;
-        const rem = Math.max(0, it.km - done);
-        const col = wCol(pct);
-        const eta = avgDay > 0 && rem > 0 ? dStr(new Date(Date.now() + (rem / avgDay) * 86400000)) : '—';
-        div.innerHTML = `
-          <div class="wear-lbl"><span><span class="pill ${critClass}">${critLbl}</span>${it.label}</span><span style="color:${col};font-weight:700">${pct.toFixed(0)}%</span></div>
-          <div class="wear-bar"><div class="wear-fill" style="width:${pct}%;background:${col}"></div></div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">интервал ${fmtI(it.km)} км · ост. ${fmtI(rem)} км (~${eta})${it.lastServiceOdo ? ' · менялось на ' + fmtI(it.lastServiceOdo) + ' км' : ''}</div>
-        `;
       }
-      wc.appendChild(div);
-    });
-    c.appendChild(wc);
-
-    const sc = this._card();
-    const itemOpts = items.filter(it => !isCondOnly(it)).map(it => `<option value="${it.id}">${it.label}</option>`).join('');
-    sc.innerHTML = `
-      <div class="card-title">Записать ТО / Замену детали</div>
-      <div class="ig"><label class="lbl">Узел / Работа</label><select id="svc-it">${itemOpts}<option value="other">Другое…</option></select></div>
-      <div class="g2">
-        <div class="ig"><label class="lbl">Пробег (км)</label><input type="text" inputmode="numeric" id="svc-o" value="${odo}"></div>
-        <div class="ig"><label class="lbl">Стоимость (₽)</label><input type="text" inputmode="decimal" id="svc-c" placeholder="0"></div>
-      </div>
-      <div class="g2">
-        <div class="ig"><label class="lbl">Дата</label><input type="date" id="svc-d" value="${today()}"></div>
-        <div class="ig"><label class="lbl">Комментарий / Бренд</label><input type="text" id="svc-n" placeholder="Артикул или бренд"></div>
-      </div>
-      <button class="btn c full" id="svc-add">Записать в сервисную книжку</button>
-    `;
-    c.appendChild(sc);
-
-    sc.querySelector('#svc-add').onclick = async () => {
-      const itemId = sc.querySelector('#svc-it').value;
-      const svcOdo = parseMoney(sc.querySelector('#svc-o').value);
-      const cost = parseMoney(sc.querySelector('#svc-c').value);
-      const comment = sc.querySelector('#svc-n').value.trim();
-      const dt = sc.querySelector('#svc-d').value || today();
-      if (!svcOdo) return;
-
-      const selItem = itemId !== 'other' ? items.find(it => it.id === parseInt(itemId)) : null;
-      const label = selItem ? selItem.label : 'Другое ТО';
-
-      await this.db.add(S.GARAGE, { car_id: car.id, type: selItem?.key || 'other', label, odometer: svcOdo, cost, comment, date: new Date(dt + 'T12:00:00').toISOString() });
-      if (selItem) await this.db.set(S.SVC, { ...selItem, lastServiceOdo: svcOdo, conditionStatus: 'ok' });
-      if (svcOdo > car.odo) await this.db.set(S.CARS, { ...car, odo: svcOdo });
-
-      if (cost > 0) {
-        await this.db.add(S.TX, { amount: cost, type: 'expense', category: 'Авто', comment: `${car.name}: ${label}` + (comment ? ' · ' + comment : ''), date: new Date(dt + 'T12:00:00').toISOString(), account: 'card' });
-        await this.db.adjustAccountBalance('expense', cost, 'card', '', false);
-      }
-      this._render(true);
     };
 
-    const logs = (await this.db.all(S.GARAGE)).filter(lg => !lg.car_id || lg.car_id === car.id).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
-    const jc = this._card();
-    jc.innerHTML = '<div class="card-title">История обслуживания</div>';
-    if (!logs.length) {
-      jc.insertAdjacentHTML('beforeend', '<div style="color:var(--muted);text-align:center;padding:16px">Записей пока нет</div>');
-    } else {
-      logs.forEach(log => {
-        const row = document.createElement('div'); row.className = 'log-row';
-        const del = document.createElement('button'); del.className = 'del-btn'; del.textContent='×';
-        row.innerHTML = `
-          <div style="min-width:0;flex:1"><span class="badge">${log.label}</span><div class="log-meta">${dStr(log.date)} · ${fmtI(log.odometer)} км${log.comment ? ' · ' + log.comment : ''}</div></div>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${log.cost ? `<span style="color:var(--orange);font-size:12px;font-weight:700">−${fmt(log.cost)} ₽</span>` : ''}</div>
-        `;
-        row.querySelector('div:last-child').appendChild(del);
-        del.onclick = () => confirmDel(del, async () => {
-          await this.db.del(S.GARAGE, log.id);
-          if (log.cost > 0) {
-            await this.db.adjustAccountBalance('expense', log.cost, 'card', '', true);
-          }
-          this._render(true);
+    // ─── GARAGE SUB-TAB 1: MAINTENANCE & WEAR ───
+    if(this.garageSubTab === 'maint'){
+      const wc = this._card();
+      wc.innerHTML = `
+        <div class="card-title">
+          <span>🔧 Регламент и состояние узлов</span>
+          <button class="btn c sm" id="add-svc-node">+ Добавить узел</button>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
+          Нажми <b>«✏️»</b> на любом узле, чтобы изменить интервал, пробег последней замены или добавить артикул.
+        </div>
+      `;
+      wc.querySelector('#add-svc-node').onclick = () => openServiceNodeModal(null);
+
+      items.forEach(it => {
+        const div = document.createElement('div'); div.className = 'wear-row';
+        const critClass = (it.crit || it.criticality) === 'critical' ? 'crit' : (it.crit || it.criticality) === 'warning' ? 'warn' : 'info';
+        const critLbl = { critical:'КРИТ', warning:'ВНМ', info:'ОК' }[it.crit || it.criticality] || 'ОК';
+        const condOnly = isCondOnly(it);
+
+        if (condOnly) {
+          const cs = it.conditionStatus || 'ok';
+          const pctMap = { ok:0, watch:35, replace:70, critical:100 };
+          div.innerHTML = `
+            <div class="wear-lbl">
+              <span style="flex:1;min-width:0"><span class="pill ${critClass}">${critLbl}</span><b>${it.label}</b></span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <select class="cond-sel" style="background:#070910;border:1px solid rgba(255,255,255,.15);border-radius:7px;color:${cCol(cs)};font-size:10.5px;padding:4px 22px 4px 7px;width:auto">
+                  <option value="ok" ${cs === 'ok' ? 'selected' : ''}>Норма</option>
+                  <option value="watch" ${cs === 'watch' ? 'selected' : ''}>Наблюдать</option>
+                  <option value="replace" ${cs === 'replace' ? 'selected' : ''}>Заменить</option>
+                  <option value="critical" ${cs === 'critical' ? 'selected' : ''}>Критично!</option>
+                </select>
+                <button class="btn v sm" data-ednode="${it.id}" style="padding:4px 7px">✏️</button>
+              </div>
+            </div>
+            <div class="wear-bar"><div class="wear-fill" style="width:${pctMap[cs] || 0}%;background:${cCol(cs)}"></div></div>
+            ${it.notes ? `<div style="font-size:10px;color:#7d97ab;margin-top:3px">📌 ${it.notes}</div>` : ''}
+          `;
+          div.querySelector('.cond-sel').onchange = async e => {
+            await this.db.set(S.SVC, { ...it, conditionStatus: e.target.value });
+            this._render(true);
+          };
+        } else {
+          const done = it.lastServiceOdo > 0 ? Math.max(0, odo - it.lastServiceOdo) : 0;
+          const pct = (it.km > 0 && it.lastServiceOdo > 0) ? Math.min(100, (done / it.km) * 100) : 0;
+          const rem = it.lastServiceOdo > 0 ? Math.max(0, it.km - done) : it.km;
+          const col = it.lastServiceOdo > 0 ? wCol(pct) : 'var(--muted)';
+          const eta = (avgDay > 0 && rem > 0 && it.lastServiceOdo > 0) ? dStr(new Date(Date.now() + (rem / avgDay) * 86400000)) : '—';
+          div.innerHTML = `
+            <div class="wear-lbl">
+              <span style="flex:1;min-width:0"><span class="pill ${critClass}">${critLbl}</span><b>${it.label}</b></span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <span style="color:${col};font-weight:800;font-size:11px">${it.lastServiceOdo > 0 ? pct.toFixed(0) + '%' : 'не задан'}</span>
+                <button class="btn g sm" data-qdone="${it.id}" title="Отметить замену на текущем пробеге" style="padding:3px 7px;font-size:9.5px">✓ Заменил</button>
+                <button class="btn v sm" data-ednode="${it.id}" style="padding:3px 7px">✏️</button>
+              </div>
+            </div>
+            <div class="wear-bar"><div class="wear-fill" style="width:${pct}%;background:${col}"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">
+              Интервал: ${fmtI(it.km)} км · ${it.lastServiceOdo > 0 ? `пройдено <b>${fmtI(done)} км</b> · ост. <b>${fmtI(rem)} км</b> (~${eta}) · менялось на ${fmtI(it.lastServiceOdo)} км` : 'нажми ✏️ или «✓ Заменил», чтобы указать пробег замены'}
+            </div>
+            ${it.notes ? `<div style="font-size:10px;color:#7d97ab;margin-top:2px">📌 ${it.notes}</div>` : ''}
+          `;
+          div.querySelector(`[data-qdone="${it.id}"]`).onclick = () => {
+            // Quick modal to confirm replacement at current odo + optional cost
+            const m = document.getElementById('global-modal');
+            const mc = document.getElementById('global-modal-content');
+            mc.innerHTML = `
+              <div class="card-title"><span>✓ Замена: ${it.label}</span><button class="del-btn" id="qd-x">✕</button></div>
+              <div class="g2">
+                <div class="ig"><label class="lbl">Пробег замены (км)</label><input type="text" inputmode="numeric" id="qd-odo" value="${odo}"></div>
+                <div class="ig"><label class="lbl">Стоимость (₽, если нужно списать)</label><input type="text" inputmode="decimal" id="qd-cost" placeholder="Необязательно"></div>
+              </div>
+              <div class="ig"><label class="lbl">Комментарий / Бренд детали</label><input id="qd-comm" placeholder="Например: фильтр Mann + работа" value="${it.notes||''}"></div>
+              <button class="btn g full" id="qd-save">Записать замену в сервисную книжку</button>
+            `;
+            m.classList.add('show');
+            mc.querySelector('#qd-x').onclick = closeModal;
+            mc.querySelector('#qd-save').onclick = async () => {
+              const sOdo = parseMoney(mc.querySelector('#qd-odo').value) || odo;
+              const sCost = parseMoney(mc.querySelector('#qd-cost').value);
+              const sComm = mc.querySelector('#qd-comm').value.trim();
+              await this.db.add(S.GARAGE, { car_id: car.id, type: it.key, label: it.label, odometer: sOdo, cost: sCost, comment: sComm, date: new Date().toISOString() });
+              await this.db.set(S.SVC, { ...it, lastServiceOdo: sOdo, conditionStatus: 'ok' });
+              if(sOdo > car.odo) await this.db.set(S.CARS, { ...car, odo: sOdo });
+              if(sCost > 0){
+                await this.db.add(S.TX, { amount: sCost, type: 'expense', category: 'Авто', comment: `${car.name}: ${it.label}${sComm ? ' · ' + sComm : ''}`, date: new Date().toISOString() });
+                await this.db.adjustAccountBalance('expense', sCost);
+              }
+              closeModal();
+              this._render(true);
+            };
+          };
+        }
+
+        div.querySelector(`[data-ednode="${it.id}"]`).onclick = () => openServiceNodeModal(it);
+        wc.appendChild(div);
+      });
+      c.appendChild(wc);
+
+      // Record Maintenance Form (without annoying pre-filled 0!)
+      const sc = this._card();
+      const itemOpts = items.map(it => `<option value="${it.id}">${it.label}</option>`).join('');
+      sc.innerHTML = `
+        <div class="card-title">📖 Записать ТО или ремонт в сервисную книжку</div>
+        <div class="ig"><label class="lbl">Узел / Работа</label><select id="svc-it">${itemOpts}<option value="other">Другое ТО / Ремонт…</option></select></div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Пробег (км)</label><input type="text" inputmode="numeric" id="svc-o" value="${odo}"></div>
+          <div class="ig"><label class="lbl">Стоимость (₽)</label><input type="text" inputmode="decimal" id="svc-c" placeholder="Необязательно"></div>
+        </div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Дата</label><input type="date" id="svc-d" value="${today()}"></div>
+          <div class="ig"><label class="lbl">Деталь / Бренд / Мастерская</label><input type="text" id="svc-n" placeholder="Артикул или комментарий"></div>
+        </div>
+        <button class="btn c full" id="svc-add">Записать в сервисную книжку</button>
+      `;
+      c.appendChild(sc);
+
+      sc.querySelector('#svc-add').onclick = async () => {
+        const itemId = sc.querySelector('#svc-it').value;
+        const svcOdo = parseMoney(sc.querySelector('#svc-o').value) || odo;
+        const cost = parseMoney(sc.querySelector('#svc-c').value);
+        const comment = sc.querySelector('#svc-n').value.trim();
+        const dt = sc.querySelector('#svc-d').value || today();
+
+        const selItem = itemId !== 'other' ? items.find(it => it.id === parseInt(itemId)) : null;
+        const label = selItem ? selItem.label : (comment || 'Другое ТО');
+
+        await this.db.add(S.GARAGE, { car_id: car.id, type: selItem?.key || 'other', label, odometer: svcOdo, cost, comment, date: new Date(dt + 'T12:00:00').toISOString() });
+        if (selItem) await this.db.set(S.SVC, { ...selItem, lastServiceOdo: svcOdo, conditionStatus: 'ok' });
+        if (svcOdo > car.odo) await this.db.set(S.CARS, { ...car, odo: svcOdo });
+
+        if (cost > 0) {
+          await this.db.add(S.TX, { amount: cost, type: 'expense', category: 'Авто', comment: `${car.name}: ${label}` + (comment ? ' · ' + comment : ''), date: new Date(dt + 'T12:00:00').toISOString() });
+          await this.db.adjustAccountBalance('expense', cost);
+        }
+        this._render(true);
+      };
+
+      const logs = (await this.db.all(S.GARAGE)).filter(lg => !lg.car_id || lg.car_id === car.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const jc = this._card();
+      jc.innerHTML = `<div class="card-title"><span>История обслуживания (${logs.length})</span></div>`;
+      if (!logs.length) {
+        jc.insertAdjacentHTML('beforeend', '<div style="color:var(--muted);text-align:center;padding:16px">Записей пока нет</div>');
+      } else {
+        logs.forEach(log => {
+          const row = document.createElement('div'); row.className = 'log-row';
+          const del = document.createElement('button'); del.className = 'del-btn'; del.textContent='×';
+          row.innerHTML = `
+            <div style="min-width:0;flex:1"><span class="badge">${log.label}</span><div class="log-meta">${dStr(log.date)} · ${fmtI(log.odometer)} км${log.comment ? ' · ' + log.comment : ''}</div></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${log.cost ? `<span style="color:var(--orange);font-size:12px;font-weight:700">−${fmt(log.cost)} ₽</span>` : ''}</div>
+          `;
+          row.querySelector('div:last-child').appendChild(del);
+          del.onclick = () => confirmDel(del, async () => {
+            await this.db.del(S.GARAGE, log.id);
+            if (log.cost > 0) {
+              await this.db.adjustAccountBalance('expense', log.cost, 'card', '', true);
+            }
+            this._render(true);
+          });
+          jc.appendChild(row);
         });
-        jc.appendChild(row);
+      }
+      c.appendChild(jc);
+    }
+
+    // ─── GARAGE SUB-TAB 2: PLANNED REPAIRS & PARTS WISHLIST ───
+    if(this.garageSubTab === 'tasks'){
+      const pending = carTasks.filter(t => !t.done);
+      const completed = carTasks.filter(t => t.done);
+      const totalPlannedCost = pending.reduce((s, t) => s + (Number(t.price) || 0), 0);
+
+      const tc = this._card();
+      tc.innerHTML = `
+        <div class="card-title">
+          <span>📋 План работ и список покупок на авто</span>
+          <span style="color:var(--orange)">Бюджет: ${fmtI(totalPlannedCost)} ₽</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+          Записывай сюда запчасти, которые нужно купить, или предстоящий ремонт, чтобы ничего не забыть:
+        </div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Что купить / сделать</label><input id="ct-title" placeholder="Напр: Стойки стабилизатора"></div>
+          <div class="ig"><label class="lbl">Примерная цена (₽)</label><input type="text" inputmode="decimal" id="ct-price" placeholder="Необязательно"></div>
+        </div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Артикул / Заметка</label><input id="ct-part" placeholder="Артикул для заказа на Autodoc"></div>
+          <div class="ig"><label class="lbl">Приоритет</label>
+            <select id="ct-prio">
+              <option value="high">🔴 Срочно</option>
+              <option value="med" selected>🟠 В планах</option>
+              <option value="low">🔵 На будущее / Тюнинг</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn c full" id="ct-add">+ Добавить в список покупок авто</button>
+        <div id="ct-list" style="margin-top:14px"></div>
+      `;
+      c.appendChild(tc);
+
+      tc.querySelector('#ct-add').onclick = async () => {
+        const title = tc.querySelector('#ct-title').value.trim();
+        if(!title) return;
+        const price = parseMoney(tc.querySelector('#ct-price').value);
+        const partNo = tc.querySelector('#ct-part').value.trim();
+        const prio = tc.querySelector('#ct-prio').value;
+        await this.db.add(S.CTASK, { car_id: car.id, title, price, partNo, prio, done: false, createdAt: new Date().toISOString() });
+        this._render(true);
+      };
+
+      const listEl = tc.querySelector('#ct-list');
+      if(!pending.length && !completed.length){
+        listEl.innerHTML = `<div style="color:var(--muted);text-align:center;padding:14px;font-size:12px">Список запланированных покупок и работ пока пуст</div>`;
+      } else {
+        const prioOrder = { high:1, med:2, low:3 };
+        [...pending].sort((a,b)=>(prioOrder[a.prio]||2)-(prioOrder[b.prio]||2)).forEach(t => {
+          const pBadge = t.prio==='high' ? '<span class="pill crit">СРОЧНО</span>' : t.prio==='low' ? '<span class="pill info">ПЛАН</span>' : '<span class="pill warn">ВАЖНО</span>';
+          const row = document.createElement('div');
+          row.className = 'log-row';
+          row.innerHTML = `
+            <div style="min-width:0;flex:1">
+              <div style="font-size:12.5px;font-weight:700">${pBadge}${t.title}</div>
+              <div class="log-meta">${t.partNo ? 'Артикул: <b>' + t.partNo + '</b> · ' : ''}${t.price > 0 ? `~${fmtI(t.price)} ₽` : 'без цены'}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn g sm" data-ctdone="${t.id}" title="Выполнено / Куплено">✓ Купил</button>
+              <button class="del-btn" data-ctdel="${t.id}">×</button>
+            </div>
+          `;
+          row.querySelector(`[data-ctdone="${t.id}"]`).onclick = async () => {
+            if(t.price > 0){
+              customConfirm('Списать сумму из баланса?', `Записать покупку «<b>${t.title}</b>» (${fmtI(t.price)} ₽) в расходы категории «Авто»?`, async () => {
+                await this.db.add(S.TX, { amount: t.price, type: 'expense', category: 'Авто', comment: `${t.title}${t.partNo ? ' (' + t.partNo + ')' : ''}`, date: new Date().toISOString() });
+                await this.db.adjustAccountBalance('expense', t.price);
+                await this.db.set(S.CTASK, { ...t, done: true });
+                this._render(true);
+              });
+            } else {
+              await this.db.set(S.CTASK, { ...t, done: true });
+              this._render(true);
+            }
+          };
+          const delBtn = row.querySelector(`[data-ctdel="${t.id}"]`);
+          delBtn.onclick = () => confirmDel(delBtn, async () => {
+            await this.db.del(S.CTASK, t.id);
+            this._render(true);
+          });
+          listEl.appendChild(row);
+        });
+
+        if(completed.length){
+          const det = document.createElement('details');
+          det.innerHTML = `<summary>✅ Уже куплено / выполнено (${completed.length})</summary>`;
+          completed.forEach(t => {
+            const r = document.createElement('div');
+            r.className = 'log-row';
+            r.innerHTML = `<span style="text-decoration:line-through;color:var(--muted);font-size:11px">${t.title}${t.price?` (${fmtI(t.price)} ₽)`:''}</span><button class="del-btn" data-ctdel2="${t.id}">×</button>`;
+            r.querySelector(`[data-ctdel2="${t.id}"]`).onclick = async () => {
+              await this.db.del(S.CTASK, t.id);
+              this._render(true);
+            };
+            det.appendChild(r);
+          });
+          listEl.appendChild(det);
+        }
+      }
+    }
+
+    // ─── GARAGE SUB-TAB 3: FUEL & AUTO EXPENSES ANALYTICS + CALCULATOR ───
+    if(this.garageSubTab === 'fuel'){
+      const now = new Date();
+      const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const fuelTxs = allTxs.filter(t => t.type==='expense' && (t.category==='Бензин' || /бенз|азс|rnazk|лукойл|роснефть/i.test(t.comment||'')));
+      const autoTxs = allTxs.filter(t => t.type==='expense' && t.category==='Авто');
+
+      const fuelMonth = fuelTxs.filter(t=>new Date(t.date)>=mStart).reduce((s,t)=>s+t.amount,0);
+      const autoMonth = autoTxs.filter(t=>new Date(t.date)>=mStart).reduce((s,t)=>s+t.amount,0);
+      const fuelTotal = fuelTxs.reduce((s,t)=>s+t.amount,0);
+      const autoTotal = autoTxs.reduce((s,t)=>s+t.amount,0);
+
+      const fc = this._card();
+      fc.innerHTML = `
+        <div class="card-title">⛽ Расходы на автомобиль и топливо</div>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="stat"><div class="v" style="color:var(--orange)">${fmtI(fuelMonth)} ₽</div><div class="l">Бензин за этот месяц</div></div>
+          <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(autoMonth)} ₽</div><div class="l">Запчасти/Мойка за месяц</div></div>
+          <div class="stat"><div class="v" style="color:var(--orange)">${fmtI(fuelTotal)} ₽</div><div class="l">Бензин за всё время</div></div>
+          <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(autoTotal)} ₽</div><div class="l">Запчасти/Авто за всё время</div></div>
+        </div>
+
+        <div class="card-title" style="margin-top:14px">🧮 Калькулятор расхода топлива и поездки</div>
+        <div class="g3">
+          <div class="ig"><label class="lbl">Расход (л/100км)</label><input type="text" inputmode="decimal" id="fc-rate" placeholder="8.5" value="${car.fuelRate||8.5}"></div>
+          <div class="ig"><label class="lbl">Цена 1 л (₽)</label><input type="text" inputmode="decimal" id="fc-price" placeholder="58.5" value="${car.fuelPrice||58.5}"></div>
+          <div class="ig"><label class="lbl">Дистанция (км)</label><input type="text" inputmode="decimal" id="fc-dist" placeholder="100" value="100"></div>
+        </div>
+        <div id="fc-out" class="calc-result" style="margin-top:6px"></div>
+      `;
+      c.appendChild(fc);
+
+      const updateFuelCalc = async () => {
+        const rate = parseMoney(fc.querySelector('#fc-rate').value) || 8.5;
+        const price = parseMoney(fc.querySelector('#fc-price').value) || 58.5;
+        const dist = parseMoney(fc.querySelector('#fc-dist').value) || 100;
+        const litersNeeded = (dist / 100) * rate;
+        const tripCost = litersNeeded * price;
+        const costPerKm = (rate / 100) * price;
+        fc.querySelector('#fc-out').innerHTML = `
+          <div class="b-row"><span class="b-key">Стоимость 1 км пробега по топливу:</span><span class="b-val" style="color:var(--cyan)">${fmt(costPerKm)} ₽/км</span></div>
+          <div class="b-row"><span class="b-key">Потребуется топлива на ${fmtI(dist)} км:</span><span class="b-val">${litersNeeded.toFixed(1)} л</span></div>
+          <div class="b-row"><span class="b-key">Стоимость поездки (${fmtI(dist)} км):</span><span class="b-val" style="color:var(--green);font-size:15px">${fmtI(tripCost)} ₽</span></div>
+        `;
+      };
+      updateFuelCalc();
+      ['#fc-rate','#fc-price','#fc-dist'].forEach(sel => {
+        fc.querySelector(sel).oninput = updateFuelCalc;
       });
     }
-    c.appendChild(jc);
 
-    const ac = this._card();
-    ac.innerHTML = `
-      <div class="card-title">Артикулы запчастей и заметки</div>
-      <textarea id="parts-n" placeholder="Масляный фильтр: ...&#10;Свечи: ...&#10;Прокладка: ...">${partsNotes}</textarea>
-      <button class="btn c full" id="parts-s">Сохранить заметки</button>
-    `;
-    c.appendChild(ac);
-    ac.querySelector('#parts-s').onclick = async () => {
-      await this.db.set(S.CARS, { ...car, partsNotes: ac.querySelector('#parts-n').value });
-      showInlineMsg(ac, '✓ Заметки сохранены', 'var(--green)');
-    };
+    // ─── GARAGE SUB-TAB 4: CAR PASSPORT (VIN, OSAGO, TIRES, FLUIDS, NOTES) ───
+    if(this.garageSubTab === 'info'){
+      const ic = this._card();
+      ic.innerHTML = `
+        <div class="card-title">
+          <span>🪪 Паспорт автомобиля и тех. шпаргалка</span>
+          <button class="btn r sm" id="del-car-btn">Удалить авто</button>
+        </div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Марка и модель</label><input id="cp-name" value="${car.name||''}"></div>
+          <div class="ig"><label class="lbl">Госномер</label><input id="cp-plate" placeholder="А000АА 68" value="${car.plate||''}"></div>
+          <div class="ig"><label class="lbl">VIN-номер (для подбора запчастей)</label><input id="cp-vin" placeholder="XTA..." value="${car.vin||''}"></div>
+          <div class="ig"><label class="lbl">Страховка ОСАГО действует до</label><input type="date" id="cp-osago" value="${car.osagoDate||''}"></div>
+          <div class="ig"><label class="lbl">Размер шин / Давление</label><input id="cp-tires" placeholder="185/60 R14 · 2.2 атм" value="${car.tires||''}"></div>
+          <div class="ig"><label class="lbl">Залитое масло и объём</label><input id="cp-oil" placeholder="5W-30 · 3.2 л" value="${car.oilSpec||''}"></div>
+        </div>
+        <div class="ig">
+          <label class="lbl">Артикулы запчастей и заметки</label>
+          <textarea id="cp-notes" placeholder="Масляный фильтр: ...&#10;Свечи зажигания: ...&#10;Колодки передние: ..." style="min-height:110px">${car.partsNotes||''}</textarea>
+        </div>
+        <button class="btn c full" id="cp-save">💾 Сохранить паспорт и заметки авто</button>
+      `;
+      c.appendChild(ic);
+
+      ic.querySelector('#cp-save').onclick = async () => {
+        const updatedCar = {
+          ...car,
+          name: ic.querySelector('#cp-name').value.trim() || car.name,
+          plate: ic.querySelector('#cp-plate').value.trim(),
+          vin: ic.querySelector('#cp-vin').value.trim(),
+          osagoDate: ic.querySelector('#cp-osago').value,
+          tires: ic.querySelector('#cp-tires').value.trim(),
+          oilSpec: ic.querySelector('#cp-oil').value.trim(),
+          partsNotes: ic.querySelector('#cp-notes').value
+        };
+        await this.db.set(S.CARS, updatedCar);
+        showInlineMsg(ic, '✓ Паспорт автомобиля и артикулы сохранены!', 'var(--green)');
+        setTimeout(() => this._render(true), 600);
+      };
+
+      ic.querySelector('#del-car-btn').onclick = () => {
+        customConfirm('Удалить автомобиль?', `Вы уверены, что хотите удалить <b>${car.name}</b>?`, async () => {
+          await this.db.del(S.CARS, car.id);
+          const sv = await this.db.all(S.SVC); for(const i of sv){if(i.car_id===car.id) await this.db.del(S.SVC, i.id);}
+          const od = await this.db.all(S.ODO); for(const i of od){if(i.car_id===car.id) await this.db.del(S.ODO, i.id);}
+          const lg = await this.db.all(S.GARAGE); for(const i of lg){if(i.car_id===car.id) await this.db.del(S.GARAGE, i.id);}
+          this.activeCarId = null;
+          this._render(true);
+        });
+      };
+    }
   }
 
-  /* ═══════ HUB ═══════ */
+  /* ═══════ HUB (WITH CUSTOM USER RECIPES MANAGER!) ═══════ */
   async _hub(c){
     const txs=await this.db.all(S.TX);
     const goals=(await this.db.all(S.GOALS)).filter(g=>g.active);
+    const recipes=await this.db.all(S.REC);
     const now=new Date();
     const payday=calcNextPayday(txs);
 
@@ -3275,7 +3452,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     let any=false;
     if(daysSince>=2){
       any=true;
-      remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход записан ${daysSince} дн. назад. Нажми <b>«⚖️ Сверка»</b> сверху, чтобы синхронизировать остатки со Сбером!</div>`);
+      remCard.insertAdjacentHTML('beforeend',`<div class="reminder">📝 Последний расход записан ${daysSince} дн. назад. Нажми <b>«⚖️ Сверка»</b> сверху, чтобы быстро выровнять баланс!</div>`);
     }
     goals.forEach(goal=>{
       const saved=txs.filter(t=>t.type==='expense'&&t.category==='Цель'&&t.comment===goal.name).reduce((s,t)=>s+t.amount,0);
@@ -3283,7 +3460,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       const dL=Math.ceil((dl-now)/86400000);
       if(dL>0&&dL<14&&saved<goal.targetAmount){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🎯 "${goal.name}" — ${dL} дн. до дедлайна! Накоплено ${fmtI(saved)} из ${fmtI(goal.targetAmount)} ₽</div>`);}
     });
-    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:6px 0">✅ Все счета и показатели актуальны!</div>');
+    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:6px 0">✅ Все показатели актуальны!</div>');
     c.appendChild(remCard);
 
     const sc=this._card();
@@ -3304,35 +3481,136 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       <div class="tip">${PRINT_TIPS[(sb+3)%PRINT_TIPS.length]}</div>`;
     c.appendChild(prCard);
 
+    // Modal for Adding / Editing a Custom Recipe
+    const openRecipeModal = (recToEdit = null) => {
+      const m = document.getElementById('global-modal');
+      const mc = document.getElementById('global-modal-content');
+      const isEdit = Boolean(recToEdit);
+      mc.innerHTML = `
+        <div class="card-title">
+          <span>${isEdit ? '✏️ Редактировать рецепт' : '🍳 Добавить свой рецепт'}</span>
+          <button class="del-btn" id="rm-x">✕</button>
+        </div>
+        <div class="ig">
+          <label class="lbl">Название блюда</label>
+          <input id="rm-name" placeholder="Например: Шаурма домашняя / Овсяноблин" value="${recToEdit?.name||''}">
+        </div>
+        <div class="g3">
+          <div class="ig">
+            <label class="lbl">Категория</label>
+            <select id="rm-cat">
+              ${['Завтрак','Обед','Ужин','Перекус','Выпечка','Другое'].map(k=>`<option value="${k}" ${recToEdit?.cat===k?'selected':''}>${k}</option>`).join('')}
+            </select>
+          </div>
+          <div class="ig">
+            <label class="lbl">Время</label>
+            <input id="rm-time" placeholder="20 мин" value="${recToEdit?.time||''}">
+          </div>
+          <div class="ig">
+            <label class="lbl">Ккал / Выход</label>
+            <input id="rm-cal" placeholder="~450 ккал" value="${recToEdit?.cal||''}">
+          </div>
+        </div>
+        <div class="ig">
+          <label class="lbl">Ингредиенты (каждый с новой строки)</label>
+          <textarea id="rm-ingr" placeholder="Куриное филе — 300г&#10;Лаваш — 2 шт&#10;Сыр — 100г" style="min-height:80px">${(recToEdit?.ingr||[]).join('\n')}</textarea>
+        </div>
+        <div class="ig">
+          <label class="lbl">Шаги приготовления (каждый шаг с новой строки)</label>
+          <textarea id="rm-steps" placeholder="Нарезать курицу и обжарить&#10;Завернуть в лаваш с соусом&#10;Поджарить на сухой сковороде" style="min-height:90px">${(recToEdit?.steps||[]).join('\n')}</textarea>
+        </div>
+        <button class="btn c full" id="rm-save">${isEdit ? '💾 Сохранить рецепт' : '➕ Добавить в книгу рецептов'}</button>
+      `;
+      m.classList.add('show');
+      mc.querySelector('#rm-x').onclick = closeModal;
+      mc.querySelector('#rm-save').onclick = async () => {
+        const name = mc.querySelector('#rm-name').value.trim();
+        if(!name) return;
+        const cat = mc.querySelector('#rm-cat').value;
+        const time = mc.querySelector('#rm-time').value.trim() || '15 мин';
+        const cal = mc.querySelector('#rm-cal').value.trim() || 'По вкусу';
+        const ingr = mc.querySelector('#rm-ingr').value.split('\n').map(x=>x.trim()).filter(Boolean);
+        const steps = mc.querySelector('#rm-steps').value.split('\n').map(x=>x.trim()).filter(Boolean);
+        const payload = {
+          name, cat, time, cal,
+          ingr: ingr.length ? ingr : ['По вкусу'],
+          steps: steps.length ? steps : ['Приготовить и подавать']
+        };
+        if(isEdit) await this.db.set(S.REC, { ...recToEdit, ...payload });
+        else await this.db.add(S.REC, payload);
+        closeModal();
+        this._render(true);
+      };
+    };
+
     const recCard=this._card();
-    recCard.innerHTML=`<div class="card-title">🍳 Домашние рецепты</div>
+    recCard.innerHTML=`
+      <div class="card-title">
+        <span>🍳 Моя книга рецептов (${recipes.length})</span>
+        <button class="btn c sm" id="add-rec-btn">+ Свой рецепт</button>
+      </div>
       <div class="search-row">
-        <select id="rec-cat"><option value="">Все</option><option value="Завтрак">Завтрак</option><option value="Обед">Обед</option><option value="Ужин">Ужин</option></select>
-        <input type="text" id="rec-q" placeholder="Поиск рецепта...">
+        <select id="rec-cat">
+          <option value="">Все категории</option>
+          <option value="Завтрак">Завтрак</option>
+          <option value="Обед">Обед</option>
+          <option value="Ужин">Ужин</option>
+          <option value="Перекус">Перекус</option>
+          <option value="Выпечка">Выпечка</option>
+          <option value="Другое">Другое</option>
+        </select>
+        <input type="text" id="rec-q" placeholder="Поиск по названию или продукту...">
       </div>
       <div id="rec-list"></div>`;
     c.appendChild(recCard);
 
+    recCard.querySelector('#add-rec-btn').onclick = () => openRecipeModal(null);
+
     const renderRec=()=>{
       const cat=recCard.querySelector('#rec-cat').value;
       const q=recCard.querySelector('#rec-q').value.toLowerCase();
-      let fil=RECIPES;
+      let fil=[...recipes];
       if(cat) fil=fil.filter(r=>r.cat===cat);
-      if(q) fil=fil.filter(r=>r.name.toLowerCase().includes(q));
+      if(q) fil=fil.filter(r=>r.name.toLowerCase().includes(q) || (r.ingr||[]).some(i=>i.toLowerCase().includes(q)));
       const list=recCard.querySelector('#rec-list'); list.innerHTML='';
+      if(!fil.length){
+        list.innerHTML = `<div style="color:var(--muted);text-align:center;padding:14px;font-size:12px">Рецепты не найдены. Нажми «+ Свой рецепт», чтобы добавить!</div>`;
+        return;
+      }
       fil.forEach((rec,idx)=>{
         const rd=document.createElement('div'); rd.className='recipe';
         rd.innerHTML=`<div class="recipe-hd">
-            <div><div class="recipe-name">${rec.name} <span class="badge" style="margin-left:4px">${rec.cat}</span></div><div class="recipe-meta">⏱ ${rec.time} · 🔥 ${rec.cal}</div></div>
-            <span style="color:var(--violet);font-size:20px;line-height:1">›</span>
+            <div style="min-width:0;flex:1">
+              <div class="recipe-name">${rec.name} <span class="badge" style="margin-left:4px">${rec.cat}</span></div>
+              <div class="recipe-meta">⏱ ${rec.time||'—'} · 🔥 ${rec.cal||'—'}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn c sm" data-edrec="${rec.id}" style="padding:4px 8px">✏️</button>
+              <button class="del-btn" data-delrec="${rec.id}">×</button>
+            </div>
           </div>
           <div class="recipe-body" id="rb-${idx}">
-            <div class="rsec">Ингредиенты</div><ul>${rec.ingr.map(i=>`<li>${i}</li>`).join('')}</ul>
+            <div class="rsec">Ингредиенты</div><ul>${(rec.ingr||[]).map(i=>`<li>${i}</li>`).join('')}</ul>
             <div class="rsec">Приготовление</div>
-            <ol>${rec.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+            <ol>${(rec.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
           </div>`;
         const body=rd.querySelector(`#rb-${idx}`);
-        rd.onclick=()=>body.classList.toggle('open');
+        rd.onclick=(e)=>{
+          if(e.target.closest('button')) return;
+          body.classList.toggle('open');
+        };
+        rd.querySelector(`[data-edrec="${rec.id}"]`).onclick = (e) => {
+          e.stopPropagation();
+          openRecipeModal(rec);
+        };
+        const delBtn = rd.querySelector(`[data-delrec="${rec.id}"]`);
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          confirmDel(delBtn, async () => {
+            await this.db.del(S.REC, rec.id);
+            this._render(true);
+          });
+        };
         list.appendChild(rd);
       });
     };
@@ -3341,10 +3619,10 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     recCard.querySelector('#rec-q').oninput=renderRec;
   }
 
-  /* ═══════ EXPORT / IMPORT (FULL SUPPORT FOR v5/v6/v7) ═══════ */
+  /* ═══════ EXPORT / IMPORT (UNIFIED v8 WITH RECIPES & GARAGE TASKS) ═══════ */
   async _export(){
     const data={
-      version:7,
+      version:8,
       exportedAt:new Date().toISOString(),
       transactions:await this.db.all(S.TX),
       garage_logs:await this.db.all(S.GARAGE),
@@ -3354,7 +3632,9 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       settings:await this.db.all(S.CFG),
       cars:await this.db.all(S.CARS),
       filaments:await this.db.all(S.FIL),
-      quick_templates:await this.db.all(S.TPL)
+      quick_templates:await this.db.all(S.TPL),
+      recipes:await this.db.all(S.REC),
+      car_tasks:await this.db.all(S.CTASK)
     };
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -3372,28 +3652,21 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       return;
     }
 
-    customConfirm('Восстановить резервную копию?', `Загрузить копию от ${data.exportedAt ? dStr(data.exportedAt) : '?'}? Все текущие данные будут обновлены.`, async () => {
+    customConfirm('Восстановить резервную копию?', `Загрузить копию от ${data.exportedAt ? dStr(data.exportedAt) : '?'}? Все данные будут обновлены.`, async () => {
       const map={
         transactions:S.TX, garage_logs:S.GARAGE, odo_history:S.ODO,
         service_items:S.SVC, goals:S.GOALS, settings:S.CFG,
-        cars:S.CARS, filaments:S.FIL, quick_templates:S.TPL
+        cars:S.CARS, filaments:S.FIL, quick_templates:S.TPL,
+        recipes:S.REC, car_tasks:S.CTASK
       };
       for(const [key,sn] of Object.entries(map)){
         if(!data[key]) continue;
         const ex=await this.db.all(sn);
         for(const r of ex) await this.db.del(sn,r.id||r.key);
-        for(const r of data[key]) await this.db.set(sn,r);
-      }
-      // Ensure cardBalance and savingsBalance are set if importing older v6 backup
-      const cfgList = data.settings || [];
-      const hasCard = cfgList.some(x=>x.key==='cardBalance');
-      const hasSav  = cfgList.some(x=>x.key==='savingsBalance');
-      if(!hasCard || !hasSav){
-        const total = await this.db.cfg('balance');
-        const crd = total >= 162.58 ? 162.58 : total;
-        const sav = Math.max(0, +(total - crd).toFixed(2));
-        await this.db.setCfg('cardBalance', crd);
-        await this.db.setCfg('savingsBalance', sav);
+        for(const r of data[key]){
+          if(key==='transactions' && r.type==='transfer') continue;
+          await this.db.set(sn,r);
+        }
       }
       this._render(false);
     });
