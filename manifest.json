@@ -1,11 +1,11 @@
 {
-  "name": "Sentinel OS: Carbon Ultra",
+  "name": "Sentinel OS: Carbon AMOLED",
   "short_name": "Sentinel OS",
-  "description": "Персональный хаб: финансы, сверка со Сбером, 3D-печать Pro, гараж, цели",
+  "description": "Персональный хаб: финансы (вклад + карта Сбера), сверка, 3D-печать Pro, гараж, цели",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#05060a",
-  "theme_color": "#05060a",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
