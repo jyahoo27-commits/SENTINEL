@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Sentinel OS">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
-<title>Sentinel OS: Carbon AMOLED v9</title>
+<title>Sentinel OS: Carbon AMOLED v10</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 :root{
@@ -110,11 +110,25 @@ body{
 .ai-insight.bad{border-left-color:var(--red);background:rgba(255,77,94,.06)}
 .ai-insight.ok{border-left-color:var(--green);background:rgba(0,255,149,.06)}
 .sms-token{
-  display:inline-block;padding:5px 9px;margin:3px;border-radius:9px;
-  background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.25);
-  color:var(--text);font-size:11.5px;font-weight:700;cursor:pointer;user-select:none;
+  display:inline-flex;align-items:center;gap:4px;padding:5px 9px;margin:3px;border-radius:9px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);
+  color:var(--text);font-size:11.5px;font-weight:700;cursor:pointer;user-select:none;transition:all .15s;
 }
-.sms-token.sel{background:var(--cyan);color:#000;border-color:var(--cyan);box-shadow:0 0 10px rgba(0,240,255,.4)}
+.sms-token.role-kw{background:rgba(0,240,255,.2);color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 10px rgba(0,240,255,.3)}
+.sms-token.role-sum{background:rgba(0,255,149,.22);color:var(--green);border-color:var(--green);box-shadow:0 0 10px rgba(0,255,149,.3)}
+.sms-token.role-ign{background:rgba(255,77,94,.18);color:var(--red);border-color:var(--red);text-decoration:line-through;opacity:.75}
+.dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:8px 0}
+.dow-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px 3px;text-align:center}
+.dow-cell.peak{border-color:var(--red);background:rgba(255,77,94,.1)}
+.dow-cell.low{border-color:var(--green);background:rgba(0,255,149,.07)}
+.radar-row{margin-bottom:8px}
+.radar-hd{display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px;font-weight:700}
+.ai-q-chip{
+  padding:7px 11px;border-radius:11px;background:rgba(155,77,255,.12);
+  border:1px solid rgba(155,77,255,.35);color:#dfd0ff;font-size:11px;
+  font-weight:700;cursor:pointer;display:inline-block;margin:3px;user-select:none;
+}
+.ai-q-chip:active{background:rgba(155,77,255,.28)}
 .nav-fab:active{transform:scale(.92)}
 
 #app-content{padding:12px 12px 28px;max-width:600px;margin:0 auto}
@@ -448,7 +462,7 @@ const DEFAULTS = {
   monthlyBudgetCap:20000,
   mandatoryPayments:0,
   printHourRate:100, printSetupFee:200, printMinPrice:250,
-  printElecPerHour:15, printAmortPerHour:35, printMarkup:2.2,
+  printElecPerHour:15, printAmortPerHour:35, printMarkup:2.2, printUrgentPct:30,
   advanceAmount:29000, salaryAmount:29000, carPartsNotes:'',
 };
 
@@ -711,11 +725,29 @@ function parseMoney(value) {
   return isNaN(num) ? 0 : num;
 }
 
-// Upgraded Smart Sberbank SMS / Push / Statement Parser
+// Universal Multi-Bank SMS / Push / Statement Parser with User-Trained Token Rules
+function escapeRegExp(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function parseSberText(raw, userRules = []) {
   if (!raw || typeof raw !== 'string') return null;
   let text = raw.trim();
   if (!text) return null;
+
+  const low = text.toLowerCase();
+
+  // 1. Check user-defined custom SMS rules first!
+  let matchedCustomRule = null;
+  if (Array.isArray(userRules) && userRules.length > 0) {
+    for (const r of userRules) {
+      const kws = (r.keywords && r.keywords.length) ? r.keywords : (r.keyword ? [r.keyword] : []);
+      if (kws.length > 0 && kws.every(k => low.includes(String(k).toLowerCase()))) {
+        matchedCustomRule = r;
+        break;
+      }
+    }
+  }
 
   // Extract date if present (e.g. 17.10.2026 or 17.10.26)
   let dateISO = today();
@@ -726,40 +758,55 @@ function parseSberText(raw, userRules = []) {
     dateISO = `${yyyy}-${mm}-${dd}`;
   }
 
-  // Clean noise that confuses sum extraction: card masks (****8609, MIR-8609, •• 8609), dates, times (13:43), balance tail, 6-digit auth codes
+  // Clean noise that confuses sum extraction: card masks, dates, times, balance/ostatok/dostupno/cashback tail, 6-digit auth codes
   let cleanForSum = text
-    .replace(/(?:остаток|баланс|доступно)[:\s]*[\d\s]+[.,]?\d*\s*(?:₽|р\.?|руб\.?|RUB)?/gi, ' ')
-    .replace(/(?:накопительный\s+сч[её]т|сч[её]т|карта|mir|мир|visa|mc|сберкарта)[\s*•\-№]*\d{4}/gi, ' ')
+    .replace(/(?:остаток|баланс|доступно|лимит|кэшбэк|кешбэк|бонус\w*)[:\s]*[\d\s]+[.,]?\d*\s*(?:₽|р\.?|руб\.?|rur|rub)?/gi, ' ')
+    .replace(/(?:накопительный\s+сч[её]т|сч[её]т|карта|karta|mir|мир|visa|mc|сберкарта)[\s*•\-№]*\d{4}/gi, ' ')
     .replace(/[*•]+\s*\d{4}\b/g, ' ')
     .replace(/\b\d{2}\.\d{2}\.(?:20\d{2}|\d{2})\b/g, ' ')
     .replace(/\b\d{2}:\d{2}(?::\d{2})?\b/g, ' ')
     .replace(/\b\d{6}\b/g, ' ');
 
-  let amount = 0;
-  const sumRub = cleanForSum.match(/([+-]?\s*\d[\d\s]*[.,]\d{2}|\d[\d\s]*)\s*(?:₽|р\.?|руб\.?|RUB)/i)
-              || cleanForSum.match(/(?:покупка|списание|оплата|перевод|сумма|зачисление|внесение)[:\s]*([+-]?\s*\d[\d\s]*[.,]?\d*)/i)
-              || cleanForSum.match(/([+-]?\d[\d\s]*[.,]\d{2})\b/)
-              || cleanForSum.match(/\b(\d+(?:[.,]\d+)?)\b/);
-  if (sumRub) {
-    amount = Math.abs(parseMoney(sumRub[1]));
+  // Remove any explicitly ignored tokens from matched rule
+  if (matchedCustomRule && Array.isArray(matchedCustomRule.ignoreTokens)) {
+    matchedCustomRule.ignoreTokens.forEach(ig => {
+      if (ig) {
+        cleanForSum = cleanForSum.replace(new RegExp(escapeRegExp(ig), 'gi'), ' ');
+      }
+    });
   }
 
-  const low = text.toLowerCase();
+  let amount = 0;
+  // If user trained a specific sumPrefix or sumSuffix in the rule, try that pattern FIRST!
+  if (matchedCustomRule && (matchedCustomRule.sumPrefix || matchedCustomRule.sumSuffix)) {
+    const pre = matchedCustomRule.sumPrefix ? escapeRegExp(matchedCustomRule.sumPrefix) + '[\\s:=-]*' : '';
+    const suf = matchedCustomRule.sumSuffix ? '[\\s]*' + escapeRegExp(matchedCustomRule.sumSuffix) : '';
+    try {
+      const rx = new RegExp(pre + '([+-]?\\s*\\d[\\d\\s]*[.,]?\\d*)' + suf, 'i');
+      const m = cleanForSum.match(rx) || text.match(rx);
+      if (m && m[1]) amount = Math.abs(parseMoney(m[1]));
+    } catch (_) {}
+  }
+
+  if (!amount) {
+    const sumRub = cleanForSum.match(/([+-]?\s*\d[\d\s]*[.,]\d{2}|\d[\d\s]*)\s*(?:₽|р\.?|руб\.?|RUB|RUR)/i)
+                || cleanForSum.match(/(?:покупка|списание|оплата|перевод|сумма|зачисление|внесение|выплатили\s+проценты|spisanie|pokupka|oplata)[:\s-]*([+-]?\s*\d[\d\s]*[.,]?\d*)/i)
+                || cleanForSum.match(/([+-]?\d[\d\s]*[.,]\d{2})\b/)
+                || cleanForSum.match(/\b(\d+(?:[.,]\d+)?)\b/);
+    if (sumRub) {
+      amount = Math.abs(parseMoney(sumRub[1]));
+    }
+  }
+
   let type = 'expense';
   let category = 'Другое';
   let isMandatory = false;
   let transferDir = 'savings_to_card';
   let comment = '';
 
-  // 1. Check user-defined custom SMS rules first!
-  let matchedCustomRule = null;
-  if (Array.isArray(userRules) && userRules.length > 0) {
-    for (const r of userRules) {
-      if (r.keyword && low.includes(r.keyword.toLowerCase())) {
-        matchedCustomRule = r;
-        break;
-      }
-    }
+  // Also detect explicit + / - sign if user didn't override
+  if (/\+\s*\d/.test(text) && !/озон|ozon/i.test(low)) {
+    type = 'income';
   }
   if (matchedCustomRule) {
     type = matchedCustomRule.type || 'expense';
@@ -834,7 +881,7 @@ function parseSberText(raw, userRules = []) {
     category = '3D-расходники';
   } else if (/sbol|перевод с карты|перевод по сбп|перевод сбп/i.test(low)) {
     category = 'Переводы';
-    comment = 'Перевод с карты (СберОнлайн)';
+    comment = 'Перевод по карте / СБП';
   }
 
   if (!comment) {
@@ -953,7 +1000,7 @@ function confirmDel(btn,cb){
 function calc3DProQuote(params) {
   const {
     weightG, timeHours, spoolPrice, spoolWeight, tierLevel,
-    qty, batchMode, postProcFee, cadFee, scanFee = 0, isUrgent,
+    qty, batchMode, postProcFee, cadFee, scanFee = 0, isUrgent, urgentPct = 30,
     hourRate, setupFee, minPrice, elecPerHour, amortPerHour, markupMult
   } = params;
 
@@ -985,7 +1032,7 @@ function calc3DProQuote(params) {
   const extrasTotal = (postProcFee || 0) + (cadFee || 0) + (scanFee || 0);
   let batchSubtotal = printWorkPrice + setupFee + extrasTotal;
   if (qty >= 5) batchSubtotal *= 0.92;
-  if (isUrgent) batchSubtotal *= 1.30;
+  if (isUrgent) batchSubtotal *= (1 + (Number(urgentPct) || 30) / 100);
 
   const minApplied = batchSubtotal < minPrice;
   const recPrice = Math.round(Math.max(batchSubtotal, minPrice) / 10) * 10;
@@ -1187,6 +1234,87 @@ function buildFinancialIntelligence(data) {
     text: `Твой средний чистый поток: <b>${netMonthlySurplus>=0?'+':''}${fmtI(netMonthlySurplus)} ₽/мес</b> (норма сбережений ${savingsRatePct}%). Запас прочности баланса: <b>${runwayMonths.toFixed(1)} мес.</b> Комфортный платёж по новому кредиту (ПДН до 30%): до <b>${fmtI(maxSafeLoanPayment)} ₽/мес</b>.`
   });
 
+  // 9. Deep Day-of-Week Heatmap (Mon=0 ... Sun=6)
+  const dowNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const dowTotals = [0,0,0,0,0,0,0];
+  const dowCounts = [0,0,0,0,0,0,0];
+  tx90.filter(t => t.type === 'expense').forEach(t => {
+    const jsDay = new Date(t.date).getDay(); // 0=Sun..6=Sat
+    const idx = jsDay === 0 ? 6 : jsDay - 1;
+    dowTotals[idx] += t.amount;
+    dowCounts[idx] += 1;
+  });
+  const maxDowSum = Math.max(...dowTotals, 1);
+  const minDowSum = Math.min(...dowTotals.filter(x => x > 0), maxDowSum);
+  const peakDowIdx = dowTotals.indexOf(maxDowSum);
+  const dowStats = dowNames.map((name, i) => ({
+    name,
+    total: Math.round(dowTotals[i]),
+    count: dowCounts[i],
+    avg: dowCounts[i] > 0 ? Math.round(dowTotals[i] / dowCounts[i]) : 0,
+    pctOfMax: Math.round((dowTotals[i] / maxDowSum) * 100),
+    isPeak: dowTotals[i] === maxDowSum && maxDowSum > 0,
+    isLow: dowTotals[i] === minDowSum && dowTotals[i] < maxDowSum
+  }));
+
+  // 10. Payday Euphoria Index (% of monthly discretionary spend within 4 days after 5th or 20th)
+  let postPaydaySpend = 0;
+  let totalDiscSpend90 = 0;
+  tx90.filter(t => t.type === 'expense' && !t.isMandatory).forEach(t => {
+    const dom = new Date(t.date).getDate();
+    totalDiscSpend90 += t.amount;
+    if ((dom >= 5 && dom <= 9) || (dom >= 20 && dom <= 24)) {
+      postPaydaySpend += t.amount;
+    }
+  });
+  const paydayEuphoriaPct = totalDiscSpend90 > 0 ? Math.round((postPaydaySpend / totalDiscSpend90) * 100) : 0;
+
+  // 11. Top Merchant / Place Leaks (last 90 days normalized to 1 month & 1 year)
+  const placeMap = {};
+  tx90.filter(t => t.type === 'expense').forEach(t => {
+    const rawKey = (t.comment && t.comment.trim().length >= 2) ? t.comment.trim() : t.category;
+    const key = rawKey.length > 26 ? rawKey.slice(0, 26) : rawKey;
+    if (!placeMap[key]) placeMap[key] = { name: key, cat: t.category, sum90: 0, count90: 0 };
+    placeMap[key].sum90 += t.amount;
+    placeMap[key].count90 += 1;
+  });
+  const topPlaces = Object.values(placeMap)
+    .sort((a, b) => b.sum90 - a.sum90)
+    .slice(0, 6)
+    .map(p => ({
+      name: p.name,
+      cat: p.cat,
+      monthAvg: Math.round(p.sum90 / 3),
+      yearProj: Math.round((p.sum90 / 3) * 12),
+      avgCheck: Math.round(p.sum90 / p.count90),
+      visitsPerMonth: +(p.count90 / 3).toFixed(1)
+    }));
+
+  // 12. 6-Axis Radar Scores (0-100 each)
+  const passiveInc90 = realTxs.filter(t => t.type === 'income' && new Date(t.date) >= d90 && (t.category === 'Проценты по вкладу' || t.category === '3D-печать' || /процент|вклад|3d/i.test(t.comment||''))).reduce((s, t) => s + t.amount, 0);
+  const radar = [
+    { label: 'Подушка безопасности (Runway)', score: Math.min(100, Math.round((runwayMonths / 6) * 100)), val: `${runwayMonths.toFixed(1)} мес.` },
+    { label: 'Норма сбережений (Профицит)', score: Math.max(0, Math.min(100, Math.round((savingsRatePct / 40) * 100))), val: `${savingsRatePct}%` },
+    { label: 'Дисциплина дневного лимита', score: Math.max(0, Math.min(100, Math.round((targetDailyBurn / Math.max(currentDailyBurn, 1)) * 85))), val: `${fmtI(currentDailyBurn)} ₽/д` },
+    { label: 'Кредитная свобода (100% − ПДН)', score: Math.max(0, Math.min(100, 100 - dtiPct * 2)), val: `ПДН ${dtiPct}%` },
+    { label: 'Контроль импульсивных чеков', score: Math.max(10, Math.min(100, 100 - Math.max(0, paydayEuphoriaPct - 30) * 1.5)), val: `${paydayEuphoriaPct}% в дни ЗП` },
+    { label: 'Доп. и пассивный доход (Вклад/3D)', score: Math.min(100, Math.round(((passiveInc90 / 3) / 5000) * 100)), val: `+${fmtI(passiveInc90 / 3)} ₽/мес` }
+  ];
+
+  // 13. Category Smart Quotas for Current Month
+  const mCatSpent = {};
+  realTxs.filter(t => t.type === 'expense' && new Date(t.date) >= mStart && t.category !== 'Цель').forEach(t => {
+    mCatSpent[t.category] = (mCatSpent[t.category] || 0) + t.amount;
+  });
+  const allActiveCats = [...new Set([...Object.keys(cat30), ...Object.keys(mCatSpent)])];
+  const categoryQuotas = allActiveCats.map(cat => {
+    const histMonthAvg = Math.round(((cat30[cat] || 0) + (catPrev60[cat] || 0)) / 3);
+    const recCap = Math.max(1000, Math.round((histMonthAvg * 0.9) / 100) * 100);
+    const curSpent = Math.round(mCatSpent[cat] || 0);
+    const pct = recCap > 0 ? Math.min(100, Math.round((curSpent / recCap) * 100)) : 0;
+    return { cat, curSpent, recCap, histMonthAvg, pct, remain: Math.max(0, recCap - curSpent) };
+  }).sort((a, b) => b.curSpent - a.curSpent).slice(0, 6);
+
   return {
     score,
     avgMonthlyInc,
@@ -1205,6 +1333,13 @@ function buildFinancialIntelligence(data) {
     smallFreqCount: smallFreqTxs.length,
     smallFreqSum,
     insights,
+    dowStats,
+    peakDowName: dowNames[peakDowIdx] || 'Пт',
+    paydayEuphoriaPct,
+    topPlaces,
+    radar,
+    categoryQuotas,
+    passiveMonthlyAvg: Math.round(passiveInc90 / 3),
     forecast30: Math.round(balance + netMonthlySurplus),
     forecast90: Math.round(balance + netMonthlySurplus * 3),
     forecast180: Math.round(balance + netMonthlySurplus * 6)
@@ -1624,8 +1759,8 @@ class App {
     renderTab(initTab);
   }
 
-  /* ═══════ SENTINEL AI FINANCIAL ADVISOR MODAL & SIMULATOR ═══════ */
-  async _openAiAdvisorModal() {
+  /* ═══════ SENTINEL AI ULTRA — 4-MODULE FINANCIAL COMMAND CENTER ═══════ */
+  async _openAiAdvisorModal(initSubTab = 'radar') {
     const balance = await this.db.cfg('balance');
     const budgetCap = await this.db.cfg('monthlyBudgetCap');
     const txs = await this.db.all(S.TX);
@@ -1643,99 +1778,380 @@ class App {
 
     c.innerHTML = `
       <div class="card-title">
-        <span>🧠 AI-Советник Sentinel: Полный аудит</span>
+        <span>🧠 AI-Советник Sentinel Ultra (Центр анализа)</span>
         <button class="del-btn" id="ai-close">✕</button>
       </div>
 
-      <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(0,240,255,.18);border-radius:14px;margin-bottom:12px">
-        <div class="ai-score-ring" style="border-color:${sCol};color:${sCol}">
-          <span style="font-size:19px">${intel.score}</span>
-          <span style="font-size:8px;color:var(--muted)">ИЗ 100</span>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:800;color:${sCol}">
-            ${intel.score >= 75 ? 'Высокая финансовая устойчивость' : intel.score >= 50 ? 'Стабильный баланс (есть точки роста)' : 'Внимание: повышенная нагрузка'}
-          </div>
-          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4">
-            Подушка безопасности: <b>${intel.runwayMonths.toFixed(1)} мес.</b> · Норма сбережений: <b>${intel.savingsRatePct}%</b> · Средний профицит: <b>${intel.netMonthlySurplus>=0?'+':''}${fmtI(intel.netMonthlySurplus)} ₽/мес</b>
-          </div>
-        </div>
+      <div class="seg-bar" style="margin-bottom:10px">
+        <div class="seg-btn ${initSubTab==='radar'?'active':''}" data-ait="radar">📊 Радар (6 осей)</div>
+        <div class="seg-btn ${initSubTab==='xray'?'active':''}" data-ait="xray">🔬 Рентген трат</div>
+        <div class="seg-btn ${initSubTab==='lab'?'active':''}" data-ait="lab">🕹️ Что если?</div>
+        <div class="seg-btn ${initSubTab==='chat'?'active':''}" data-ait="chat">💬 AI-Разбор</div>
       </div>
 
-      <div class="g3" style="margin-bottom:12px">
-        <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(intel.forecast30)} ₽</div><div class="l">Прогноз 30 дн.</div></div>
-        <div class="stat"><div class="v" style="color:var(--green)">${fmtI(intel.forecast90)} ₽</div><div class="l">Прогноз 3 мес.</div></div>
-        <div class="stat"><div class="v" style="color:#d0b3ff">${fmtI(intel.forecast180)} ₽</div><div class="l">Прогноз полгода</div></div>
-      </div>
-
-      <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">
-        🔍 Персональные выводы и рекомендации:
-      </div>
-      <div>
-        ${intel.insights.map(ins => `
-          <div class="ai-insight ${ins.level}">
-            <div style="font-weight:800;margin-bottom:2px">${ins.title}</div>
-            <div style="color:#c2d4e4">${ins.text}</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <!-- INTERACTIVE AFFORDABILITY SIMULATOR -->
-      <div style="margin-top:12px;padding:12px;background:#060810;border:1px solid rgba(155,77,255,.3);border-radius:14px">
-        <div style="font-size:10.5px;font-weight:800;color:#d0b3ff;text-transform:uppercase;margin-bottom:8px">
-          🔮 Симулятор: «Могу ли я себе позволить покупку?»
-        </div>
-        <div class="g2">
-          <div class="ig" style="margin-bottom:6px">
-            <label class="lbl">Стоимость покупки (₽)</label>
-            <input type="text" inputmode="decimal" id="ai-sim-cost" placeholder="Напр: 45000">
-          </div>
-          <div class="ig" style="margin-bottom:6px">
-            <label class="lbl">Название (необязательно)</label>
-            <input type="text" id="ai-sim-name" placeholder="Диски / Принтер / Авто">
-          </div>
-        </div>
-        <div id="ai-sim-res" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px">
-          Введи сумму любой планируемой покупки — AI-Советник рассчитает риск для твоего баланса и подскажет, когда её лучше совершить.
-        </div>
-      </div>
-
-      <div class="btn-row" style="margin-top:12px">
-        <button class="btn v full" id="ai-go-loans">🏦 Перейти в Кредитный Симулятор (Авто / Рассрочки)</button>
-      </div>
+      <div id="ai-pane-body"></div>
     `;
     m.classList.add('show');
     c.querySelector('#ai-close').onclick = closeModal;
-    c.querySelector('#ai-go-loans').onclick = () => {
-      closeModal();
-      this.tab = 'loans';
-      this._syncNavUI();
-      this._render(false);
+
+    const pane = c.querySelector('#ai-pane-body');
+
+    const renderAiPane = (tab) => {
+      c.querySelectorAll('[data-ait]').forEach(b => b.classList.toggle('active', b.dataset.ait === tab));
+
+      // ─── MODULE 1: 6-AXIS HEALTH RADAR & DIAGNOSTICS ───
+      if (tab === 'radar') {
+        pane.innerHTML = `
+          <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(0,240,255,.18);border-radius:14px;margin-bottom:12px">
+            <div class="ai-score-ring" style="border-color:${sCol};color:${sCol}">
+              <span style="font-size:19px">${intel.score}</span>
+              <span style="font-size:8px;color:var(--muted)">ИЗ 100</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:800;color:${sCol}">
+                ${intel.score >= 75 ? 'Высокая финансовая устойчивость' : intel.score >= 50 ? 'Стабильный баланс (есть точки роста)' : 'Внимание: повышенная нагрузка'}
+              </div>
+              <div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4">
+                Запас прочности: <b>${intel.runwayMonths.toFixed(1)} мес.</b> · Сбережения: <b>${intel.savingsRatePct}%</b> · Чистый плюс: <b>${intel.netMonthlySurplus>=0?'+':''}${fmtI(intel.netMonthlySurplus)} ₽/мес</b>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:11px;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">
+              🧭 6-Осевой Радар Финансового Здоровья
+            </div>
+            ${intel.radar.map(r => {
+              const rc = r.score >= 75 ? 'var(--green)' : r.score >= 45 ? 'var(--cyan)' : 'var(--orange)';
+              return `
+                <div class="radar-row">
+                  <div class="radar-hd">
+                    <span style="color:#c2d4e4">${r.label}</span>
+                    <span style="color:${rc}">${r.val} (${r.score}/100)</span>
+                  </div>
+                  <div class="prog-track" style="height:6px;margin:3px 0"><div class="prog-fill" style="width:${r.score}%;background:${rc}"></div></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">
+            🔍 Главные аналитические выводы:
+          </div>
+          <div>
+            ${intel.insights.map(ins => `
+              <div class="ai-insight ${ins.level}">
+                <div style="font-weight:800;margin-bottom:2px">${ins.title}</div>
+                <div style="color:#c2d4e4">${ins.text}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // ─── MODULE 2: BEHAVIORAL X-RAY, WEEKDAY HEATMAP & LEAKS ───
+      if (tab === 'xray') {
+        pane.innerHTML = `
+          <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:11px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase">📅 Тепловая карта трат по дням недели</span>
+              <span style="font-size:10px;color:var(--red);font-weight:700">Пик: ${intel.peakDowName}</span>
+            </div>
+            <div class="dow-grid">
+              ${intel.dowStats.map(d => `
+                <div class="dow-cell ${d.isPeak?'peak':d.isLow?'low':''}">
+                  <div style="font-size:10px;font-weight:800;color:${d.isPeak?'var(--red)':d.isLow?'var(--green)':'var(--muted)'}">${d.name}</div>
+                  <div style="font-size:11px;font-weight:800;margin-top:3px">${Math.round(d.total/1000)}к</div>
+                  <div style="font-size:8.5px;color:var(--muted);margin-top:2px">${d.count} чек.</div>
+                </div>
+              `).join('')}
+            </div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4">
+              💡 <b>Поведенческий паттерн:</b> твой самый затратный день недели — <b style="color:var(--red)">${intel.peakDowName}</b>. Индекс «эйфории после ЗП/Аванса» (траты в первые 4 дня после выплат): <b style="color:${intel.paydayEuphoriaPct>45?'var(--orange)':'var(--green)'}">${intel.paydayEuphoriaPct}%</b> от месячных расходов.
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:11px;margin-bottom:10px">
+            <div style="font-size:10px;font-weight:800;color:var(--orange);text-transform:uppercase;margin-bottom:8px">
+              💧 Топ-6 скрытых «пожирателей бюджета» (Проекция на год)
+            </div>
+            ${intel.topPlaces.map(p => `
+              <div class="b-row" style="padding:7px 0">
+                <div style="min-width:0;flex:1">
+                  <div style="font-size:12px;font-weight:800;color:var(--text)">${p.name} <span class="badge">${p.cat}</span></div>
+                  <div style="font-size:10px;color:var(--muted)">~${p.visitsPerMonth} раз/мес · средний чек: <b>${fmtI(p.avgCheck)} ₽</b></div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:12px;font-weight:800;color:var(--orange)">${fmtI(p.monthAvg)} ₽/мес</div>
+                  <div style="font-size:9.5px;color:var(--red)">~${fmtI(p.yearProj)} ₽ в год</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // ─── MODULE 3: INTERACTIVE "WHAT-IF" CAPITAL TIME MACHINE + 12-MONTH CANVAS CHART ───
+      if (tab === 'lab') {
+        pane.innerHTML = `
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.45">
+            Двигай ползунки, чтобы смоделировать своё финансовое будущее на <b>12 и 24 месяца</b> вперёд с учётом капитализации вклада и возможных кредитов:
+          </div>
+
+          <div style="background:#060810;border:1px solid rgba(0,240,255,.2);border-radius:14px;padding:12px;margin-bottom:10px">
+            <div class="ig">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px">
+                <span>✂️ Сократить необязательные траты:</span>
+                <span id="wi-cut-lbl" style="color:var(--green)">на 15% (+${fmtI(intel.avgMonthlyExp * 0.15)} ₽/мес)</span>
+              </div>
+              <input type="range" id="wi-cut" min="0" max="50" step="5" value="15">
+            </div>
+
+            <div class="ig">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px">
+                <span>🖨️ Доп. доход (3D-печать / заказы):</span>
+                <span id="wi-side-lbl" style="color:var(--cyan)">+5 000 ₽/мес</span>
+              </div>
+              <input type="range" id="wi-side" min="0" max="50000" step="1000" value="5000">
+            </div>
+
+            <div class="ig">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px">
+                <span>🏦 Ставка накопительного счёта:</span>
+                <span id="wi-apy-lbl" style="color:#d0b3ff">16% годовых</span>
+              </div>
+              <input type="range" id="wi-apy" min="0" max="24" step="1" value="16">
+            </div>
+
+            <div class="ig" style="margin-bottom:0">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px">
+                <span>🚗 Новый кредит / рассрочка:</span>
+                <span id="wi-loan-lbl" style="color:var(--orange)">0 ₽/мес</span>
+              </div>
+              <input type="range" id="wi-loan" min="0" max="40000" step="1000" value="0">
+            </div>
+          </div>
+
+          <div class="g3" id="wi-kpis" style="margin-bottom:10px"></div>
+
+          <div class="canvas-wrap" style="padding:8px;border:1px solid rgba(0,240,255,.15)">
+            <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-bottom:4px">
+              <span>📈 Прогноз капитала на 12 месяцев</span>
+              <span><b style="color:var(--muted)">──</b> Базовый &nbsp; <b style="color:var(--green)">──</b> С твоими настройками</span>
+            </div>
+            <canvas id="wi-canvas" width="420" height="145"></canvas>
+          </div>
+          <div id="wi-summary" style="margin-top:8px;font-size:11px;line-height:1.5;padding:9px 11px;border-radius:11px;background:rgba(0,255,149,.07);border:1px solid rgba(0,255,149,.25);color:#c2ffe4"></div>
+        `;
+
+        const cutSl = pane.querySelector('#wi-cut');
+        const sideSl = pane.querySelector('#wi-side');
+        const apySl = pane.querySelector('#wi-apy');
+        const loanSl = pane.querySelector('#wi-loan');
+        const cv = pane.querySelector('#wi-canvas');
+
+        const updateWhatIf = () => {
+          const cutPct = Number(cutSl.value);
+          const sideInc = Number(sideSl.value);
+          const apy = Number(apySl.value);
+          const newLoan = Number(loanSl.value);
+
+          const savedFromCut = Math.round(intel.avgMonthlyExp * (cutPct / 100));
+          pane.querySelector('#wi-cut-lbl').textContent = `на ${cutPct}% (+${fmtI(savedFromCut)} ₽/мес)`;
+          pane.querySelector('#wi-side-lbl').textContent = `+${fmtI(sideInc)} ₽/мес`;
+          pane.querySelector('#wi-apy-lbl').textContent = `${apy}% годовых`;
+          pane.querySelector('#wi-loan-lbl').textContent = `${fmtI(newLoan)} ₽/мес`;
+
+          const basePts = [balance];
+          const optPts = [balance];
+          let bRun = balance;
+          let oRun = balance;
+          const mRate = (apy / 100) / 12;
+
+          for (let m = 1; m <= 24; m++) {
+            bRun = bRun + intel.netMonthlySurplus;
+            const interestThisMonth = oRun > 0 ? (oRun * mRate) : 0;
+            oRun = oRun + intel.netMonthlySurplus + savedFromCut + sideInc - newLoan + interestThisMonth;
+            if (m <= 12) {
+              basePts.push(Math.round(bRun));
+              optPts.push(Math.round(oRun));
+            }
+          }
+
+          const cap6m = optPts[6];
+          const cap12m = optPts[12];
+          const cap24m = Math.round(oRun);
+          const extraGain12m = cap12m - basePts[12];
+
+          pane.querySelector('#wi-kpis').innerHTML = `
+            <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(cap6m)} ₽</div><div class="l">Через 6 мес.</div></div>
+            <div class="stat"><div class="v" style="color:var(--green)">${fmtI(cap12m)} ₽</div><div class="l">Через 1 год</div></div>
+            <div class="stat"><div class="v" style="color:#d0b3ff">${fmtI(cap24m)} ₽</div><div class="l">Через 2 года</div></div>
+          `;
+
+          pane.querySelector('#wi-summary').innerHTML =
+            `🚀 <b>Результат моделирования:</b> за 1 год твой капитал составит <b>${fmtI(cap12m)} ₽</b> (${extraGain12m >= 0 ? 'на <b>+' + fmtI(extraGain12m) + ' ₽ больше</b>' : 'на <b>' + fmtI(extraGain12m) + ' ₽ меньше</b>'} обычного сценария). Ежемесячный чистый прирост с учётом процентов по счёту: <b>+${fmtI(Math.round((cap12m - balance) / 12))} ₽/мес</b>.`;
+
+          // Draw dual line chart
+          const ctx = cv.getContext('2d');
+          const W = cv.width, H = cv.height;
+          ctx.clearRect(0, 0, W, H);
+          const allVals = [...basePts, ...optPts];
+          const minV = Math.min(...allVals), maxV = Math.max(...allVals, minV + 1000);
+          const px = 14, py = 18;
+          const toX = i => px + (i / 12) * (W - px * 2);
+          const toY = v => H - py - ((v - minV) / (maxV - minV)) * (H - py * 2);
+
+          // Base line (dashed grey/cyan)
+          ctx.beginPath();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = '#688298';
+          ctx.lineWidth = 1.8;
+          basePts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Optimized line (solid neon green)
+          ctx.beginPath();
+          ctx.strokeStyle = '#00ff95';
+          ctx.lineWidth = 2.6;
+          optPts.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+          ctx.stroke();
+
+          ctx.fillStyle = '#00ff95';
+          ctx.font = 'bold 10px Segoe UI, sans-serif';
+          ctx.fillText('12 мес: ' + fmtI(cap12m) + ' ₽', W - 135, Math.max(12, toY(cap12m) - 6));
+        };
+
+        [cutSl, sideSl, apySl, loanSl].forEach(sl => { sl.oninput = updateWhatIf; });
+        requestAnimationFrame(updateWhatIf);
+      }
+
+      // ─── MODULE 4: SMART QUOTAS & INTERACTIVE AI CONSULTANT ───
+      if (tab === 'chat') {
+        pane.innerHTML = `
+          <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:11px;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:8px">
+              🎯 Умные квоты по категориям на этот месяц (Факт vs Норма AI)
+            </div>
+            ${intel.categoryQuotas.map(q => {
+              const qc = q.pct >= 100 ? 'var(--red)' : q.pct >= 80 ? 'var(--orange)' : 'var(--green)';
+              return `
+                <div class="radar-row">
+                  <div class="radar-hd">
+                    <span>${q.cat}</span>
+                    <span style="color:${qc}">${fmtI(q.curSpent)} / ${fmtI(q.recCap)} ₽ (${q.pct}%)</span>
+                  </div>
+                  <div class="prog-track" style="height:6px;margin:3px 0"><div class="prog-fill" style="width:${q.pct}%;background:${qc}"></div></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div style="background:#060810;border:1px solid rgba(155,77,255,.35);border-radius:14px;padding:12px">
+            <div style="font-size:10.5px;font-weight:800;color:#d0b3ff;text-transform:uppercase;margin-bottom:6px">
+              💬 Интерактивный разбор: выбери вопрос для AI-Советника
+            </div>
+            <div id="ai-qa-chips" style="margin-bottom:10px">
+              <span class="ai-q-chip" data-qa="car_loan">🚗 Какой автокредит мне по карману?</span>
+              <span class="ai-q-chip" data-qa="leaks">💧 Как сэкономить +10 000 ₽/мес без боли?</span>
+              <span class="ai-q-chip" data-qa="fast100k">🚀 Как быстрее накопить +100 000 ₽?</span>
+              <span class="ai-q-chip" data-qa="safe_day">🛡 Мой идеальный дневной лимит сейчас?</span>
+              <span class="ai-q-chip" data-qa="passive">🏦 Сколько даст вклад под % за год?</span>
+            </div>
+
+            <div class="g2" style="margin-bottom:8px">
+              <input type="text" inputmode="decimal" id="ai-sim-cost" placeholder="Или введи сумму покупки (₽)">
+              <input type="text" id="ai-sim-name" placeholder="Что планируешь купить?">
+            </div>
+
+            <div id="ai-chat-answer" style="padding:11px;border-radius:11px;background:rgba(255,255,255,.04);border-left:3px solid var(--violet);font-size:11.5px;line-height:1.55;color:#d8e6f2">
+              Нажми на любой вопрос выше или введи стоимость покупки — я проведу расчёт по твоей базе транзакций.
+            </div>
+          </div>
+        `;
+
+        const ansBox = pane.querySelector('#ai-chat-answer');
+        pane.querySelectorAll('[data-qa]').forEach(ch => {
+          ch.onclick = () => {
+            const q = ch.dataset.qa;
+            const safeDown = Math.max(0, Math.round((balance - intel.totalMonthlyOutflow * 1.5) / 1000) * 1000);
+            const maxPay = intel.maxSafeLoanPayment;
+            // Approximate loan principal affordable for 48 months at 19%
+            const r48 = 0.19 / 12;
+            const pow48 = Math.pow(1 + r48, 48);
+            const maxPrincipal48 = Math.round((maxPay / ((r48 * pow48) / (pow48 - 1))) / 10000) * 10000;
+
+            if (q === 'car_loan') {
+              ansBox.innerHTML = `
+                <b>🚗 Расчёт безопасного бюджета на покупку авто в кредит:</b><br>
+                • Твой средний доход: <b>${fmtI(intel.avgMonthlyInc)} ₽/мес</b>, средние расходы: <b>${fmtI(intel.avgMonthlyExp)} ₽/мес</b>.<br>
+                • Безопасный первый взнос из текущего баланса (оставив неприкосновенный резерв 1.5 мес.): <b>до ${fmtI(safeDown)} ₽</b>.<br>
+                • Комфортный ежемесячный платёж (ПДН 30%): <b>до ${fmtI(maxPay)} ₽/мес</b>.<br>
+                • При сроке 48 мес. это позволяет взять в кредит <b>~${fmtI(maxPrincipal48)} ₽</b>, то есть оптимальная стоимость авто под ключ — <b>${fmtI(safeDown + maxPrincipal48)} ₽</b> без ущерба для качества жизни!
+              `;
+            } else if (q === 'leaks') {
+              const p1 = intel.topPlaces[0], p2 = intel.topPlaces[1];
+              ansBox.innerHTML = `
+                <b>💧 План безболезненной экономии по твоим чекам:</b><br>
+                • Главные статьи оттока: <b>${p1 ? p1.name + ' (' + fmtI(p1.monthAvg) + ' ₽/мес)' : 'Еда'}</b> и <b>${p2 ? p2.name + ' (' + fmtI(p2.monthAvg) + ' ₽/мес)' : 'Кафе'}</b>.<br>
+                • На мелких чеках до 450 ₽ (${intel.smallFreqCount} шт/мес) уходит <b>${fmtI(intel.smallFreqSum)} ₽/мес</b>.<br>
+                • Если сократить спонтанные чеки в пиковый день недели (<b>${intel.peakDowName}</b>) и урезать топ-2 статьи всего на 25%, ты высвободишь <b>+${fmtI(Math.round(intel.avgMonthlyExp * 0.22))} ₽ каждый месяц</b> (+${fmtI(Math.round(intel.avgMonthlyExp * 0.22 * 12))} ₽ в год)!
+              `;
+            } else if (q === 'fast100k') {
+              const curMonths = intel.netMonthlySurplus > 0 ? (100000 / intel.netMonthlySurplus).toFixed(1) : '—';
+              const boostMonthly = Math.max(15000, intel.netMonthlySurplus + Math.round(intel.avgMonthlyExp * 0.2));
+              const boostMonths = (100000 / boostMonthly).toFixed(1);
+              ansBox.innerHTML = `
+                <b>🚀 План накопления +100 000 ₽:</b><br>
+                • При текущем среднем профиците (${fmtI(intel.netMonthlySurplus)} ₽/мес) ты накопишь 100 000 ₽ за <b>${curMonths} мес.</b> (итого на балансе будет <b>${fmtI(balance + 100000)} ₽</b>).<br>
+                • Если переводить с каждой ЗП и Аванса фиксированно по <b>${fmtI(Math.round(boostMonthly / 2))} ₽</b> сразу в день выплаты, цель закроется за <b>${boostMonths} мес.</b>!
+              `;
+            } else if (q === 'safe_day') {
+              ansBox.innerHTML = `
+                <b>🛡 Рекомендуемый дневной коридор трат:</b><br>
+                • Твой текущий средний темп повседневных трат: <b>${fmtI(intel.currentDailyBurn)} ₽/день</b> (плановый по лимиту: <b>${fmtI(intel.targetDailyBurn)} ₽/день</b>).<br>
+                • Чтобы в конце месяца гарантированно отложить <b>+${fmtI(Math.max(15000, intel.netMonthlySurplus))} ₽</b> в капитал, держи планку буднего дня до <b>${fmtI(Math.round(intel.targetDailyBurn * 0.85))} ₽</b>, оставляя запас на выходные.
+              `;
+            } else if (q === 'passive') {
+              const y16 = Math.round(balance * (Math.pow(1 + 0.16 / 12, 12) - 1));
+              const y18 = Math.round(balance * (Math.pow(1 + 0.18 / 12, 12) - 1));
+              ansBox.innerHTML = `
+                <b>🏦 Доходность твоего текущего капитала (${fmt(balance)} ₽):</b><br>
+                • Только на текущий остаток при ставке 16% годовых с ежемесячной капитализацией банк начислит <b>+${fmtI(y16)} ₽ за год</b> (~${fmtI(Math.round(y16/12))} ₽/мес пассивного дохода).<br>
+                • При ставке 18% годовых — <b>+${fmtI(y18)} ₽ за год</b> (~${fmtI(Math.round(y18/12))} ₽/мес), что полностью перекрывает твои расходы на связь и бензин!
+              `;
+            }
+          };
+        });
+
+        const simInp = pane.querySelector('#ai-sim-cost');
+        simInp.oninput = () => {
+          const cost = parseMoney(simInp.value);
+          const itemName = pane.querySelector('#ai-sim-name').value.trim() || 'Покупка';
+          if (!cost || cost <= 0) return;
+          const remBal = balance - cost;
+          const newRunway = intel.totalMonthlyOutflow > 0 ? (remBal / intel.totalMonthlyOutflow) : 0;
+          const daysToEarnBack = intel.netMonthlySurplus > 0 ? Math.ceil((cost / intel.netMonthlySurplus) * 30) : 999;
+
+          if (remBal < 15000) {
+            ansBox.innerHTML = `<span style="color:var(--red);font-weight:800">⛔ «${itemName}» (${fmtI(cost)} ₽): Высокий риск для баланса!</span><br>После оплаты за наличные останется всего <b>${fmt(remBal)} ₽</b>. Рекомендую либо накопить ещё <b>${fmtI(Math.max(0, cost - (balance - intel.totalMonthlyOutflow * 2)))} ₽</b>, либо рассчитать покупку во вкладке «🏦 Кредиты».`;
+          } else if (newRunway < 2.5) {
+            ansBox.innerHTML = `<span style="color:var(--orange);font-weight:800">⚠️ «${itemName}» (${fmtI(cost)} ₽): Покупка ощутима для подушки</span><br>Остаток составит <b>${fmt(remBal)} ₽</b> (запас на <b>${newRunway.toFixed(1)} мес.</b>). Потраченная сумма полностью восстановится из твоих доходов примерно за <b>${daysToEarnBack} дн.</b>`;
+          } else {
+            ansBox.innerHTML = `<span style="color:var(--green);font-weight:800">✅ «${itemName}» (${fmtI(cost)} ₽): Абсолютно безопасно!</span><br>У тебя останется <b>${fmt(remBal)} ₽</b> (надёжный запас на <b>${newRunway.toFixed(1)} мес.</b>). Из текущего профицита покупка окупится за <b>~${daysToEarnBack} дн.</b>`;
+          }
+        };
+      }
     };
 
-    const simInp = c.querySelector('#ai-sim-cost');
-    const simRes = c.querySelector('#ai-sim-res');
-    simInp.oninput = () => {
-      const cost = parseMoney(simInp.value);
-      if (!cost || cost <= 0) {
-        simRes.innerHTML = 'Введи сумму любой планируемой покупки для расчёта.';
-        return;
-      }
-      const remBal = balance - cost;
-      const newRunway = intel.totalMonthlyOutflow > 0 ? (remBal / intel.totalMonthlyOutflow) : 0;
-      const daysToEarnBack = intel.netMonthlySurplus > 0 ? Math.ceil((cost / intel.netMonthlySurplus) * 30) : 999;
-
-      if (remBal < 15000) {
-        simRes.innerHTML = `<span style="color:var(--red);font-weight:800">⛔ Высокий риск кассового разрыва!</span><br>После покупки у тебя останется всего <b>${fmt(remBal)} ₽</b> (менее 1 месяца расходов). Лучше накопить ещё <b>${fmtI(Math.max(0, cost - (balance - intel.totalMonthlyOutflow * 2)))} ₽</b> или рассмотреть рассрочку во вкладке «🏦 Кредиты».`;
-      } else if (newRunway < 2.5) {
-        simRes.innerHTML = `<span style="color:var(--orange);font-weight:800">⚠️ Покупка возможна, но сократит подушку безопасности</span><br>Остаток на счёте составит <b>${fmt(remBal)} ₽</b> (запас на <b>${newRunway.toFixed(1)} мес.</b>). При твоём текущем темпе сбережений ты восстановишь эту сумму за <b>~${daysToEarnBack} дн.</b>`;
-      } else {
-        simRes.innerHTML = `<span style="color:var(--green);font-weight:800">✅ Покупка абсолютно комфортна для бюджета!</span><br>После оплаты у тебя останется <b>${fmt(remBal)} ₽</b> (надёжный запас на <b>${newRunway.toFixed(1)} мес.</b> жизни). Приобретение восстановится из текущего профицита примерно за <b>${daysToEarnBack} дн.</b>`;
-      }
-    };
+    c.querySelectorAll('[data-ait]').forEach(b => {
+      b.onclick = () => renderAiPane(b.dataset.ait);
+    });
+    renderAiPane(initSubTab);
   }
 
-  /* ═══════ GLOBAL QUICK ACTION SHEET (+ FAB) ═══════ */
+  /* ═══════ GLOBAL QUICK ACTION SHEET (+ FAB) — NO CATEGORY NUMBERS & MULTI-BANK LABELS ═══════ */
   async _openQuickActionModal(prefill = null){
     const tpls = await this.db.all(S.TPL);
     const txs = await this.db.all(S.TX);
@@ -1754,13 +2170,13 @@ class App {
       </div>
 
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить СМС Сбера</button>
-        <button class="btn o sm" id="q-train-sms" title="Обучить распознаванию новых СМС">🤖 Обучить СМС</button>
+        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить СМС из Банка</button>
+        <button class="btn o sm" id="q-train-sms" title="Конструктор шаблонов СМС любых банков">🤖 Конструктор СМС</button>
         <button class="btn v sm" id="q-open-sync">⚖️ Сверка</button>
       </div>
 
       <div id="q-sber-area" style="display:none;margin-bottom:10px">
-        <textarea id="q-sber-txt" placeholder="Вставь СМС или уведомление Сбера (например: Выплатили проценты 854,84р или KRASNOE&BELOE 175,67)..." style="min-height:60px;font-size:12px"></textarea>
+        <textarea id="q-sber-txt" placeholder="Вставь СМС или пуш из любого банка (Сбер, Т-Банк, Альфа, Ozon и др.)..." style="min-height:60px;font-size:12px"></textarea>
       </div>
 
       <div class="chips-scroll" id="q-tpl-bar">
@@ -1774,7 +2190,7 @@ class App {
       </div>
 
       <div style="margin-bottom:8px">
-        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin-bottom:4px">🔥 ЧАСТЫЕ КАТЕГОРИИ (НАЖМИ ДЛЯ ВЫБОРА):</div>
+        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin-bottom:4px">🔥 БЫСТРЫЙ ВЫБОР КАТЕГОРИИ:</div>
         <div class="chips-scroll" id="q-freq-cats"></div>
       </div>
 
@@ -1847,14 +2263,23 @@ class App {
       c.querySelectorAll('[data-qt]').forEach(b=>b.classList.toggle('active', b.dataset.qt===curType));
       const info = curType === 'expense' ? expCatInfo : incCatInfo;
       const list = info.sorted;
-      catSel.innerHTML = list.map(x=>`<option value="${x}">${x}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
+      const topFreq = list.filter(x => (info.counts[x] || 0) > 0).slice(0, 5);
+      const restCats = list.filter(x => !topFreq.includes(x));
+
+      if (topFreq.length > 0 && restCats.length > 0) {
+        catSel.innerHTML =
+          `<optgroup label="🔥 Часто используемые">${topFreq.map(x=>`<option value="${x}">${x}</option>`).join('')}</optgroup>` +
+          `<optgroup label="📂 Остальные категории">${restCats.map(x=>`<option value="${x}">${x}</option>`).join('')}</optgroup>`;
+      } else {
+        catSel.innerHTML = list.map(x=>`<option value="${x}">${x}</option>`).join('');
+      }
+
       if(prefill?.category && list.includes(prefill.category)) catSel.value = prefill.category;
       mandRow.style.display = curType === 'expense' ? 'flex' : 'none';
 
-      // Render top 6 frequent category chips
-      freqBar.innerHTML = list.slice(0, 7).map(cat => `
-        <div class="q-chip ${catSel.value===cat?'active':''}" data-fcat="${cat}">
-          <span>${cat}</span>
+      freqBar.innerHTML = list.slice(0, 7).map((cat, idx) => `
+        <div class="q-chip ${idx < 3 && (info.counts[cat]||0) > 0 ? 'fav' : ''} ${catSel.value===cat?'active':''}" data-fcat="${cat}">
+          <span>${idx < 3 && (info.counts[cat]||0) > 0 ? '🔥 ' : ''}${cat}</span>
         </div>
       `).join('');
       freqBar.querySelectorAll('[data-fcat]').forEach(ch => {
@@ -2192,12 +2617,12 @@ class App {
       <div class="card-title">
         <span>✍️ Записать транзакцию</span>
         <div style="display:flex;gap:5px">
-          <button class="btn c sm" id="tx-paste-btn">📋 Из Сбера</button>
+          <button class="btn c sm" id="tx-paste-btn">📋 Из Банка / СМС</button>
           <button class="btn v sm" id="tx-edit-cats" title="Изменить или добавить категории">✏️ Категории</button>
         </div>
       </div>
       <div id="inline-sber-box" style="display:none;margin-bottom:10px">
-        <textarea id="inline-sber-txt" placeholder="Вставь сюда СМС из Сбера (например: Накопительный счет *7231 Выплатили проценты 854,84р или покупку)..." style="min-height:56px;font-size:12px"></textarea>
+        <textarea id="inline-sber-txt" placeholder="Вставь СМС или уведомление из любого банка (Сбер, Т-Банк, Альфа, Ozon и др.)..." style="min-height:56px;font-size:12px"></textarea>
       </div>
       <div class="seg-bar">
         <div class="seg-btn active" data-it="expense">➖ Расход</div>
@@ -2265,18 +2690,32 @@ class App {
       txCard.querySelectorAll('[data-it]').forEach(b=>b.classList.toggle('active', b.dataset.it===inlineType));
       const info = inlineType === 'expense' ? expCatInfo : incCatInfo;
       const list = info.sorted;
+      const topFreq = list.filter(x => (info.counts[x] || 0) > 0).slice(0, 5);
+      const restCats = list.filter(x => !topFreq.includes(x));
       if(inlineType==='expense'){
         mandWrap.style.display='block';
-        let html=list.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
-        if(allGoals.length){html+='<option disabled>── Цели ──</option>';allGoals.forEach(g=>{html+=`<option value="ЦЕЛЬ:${g.name}">🎯 ${g.name}</option>`;});}
+        let html = '';
+        if (topFreq.length > 0 && restCats.length > 0) {
+          html += `<optgroup label="🔥 Часто используемые">${topFreq.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}</option>`).join('')}</optgroup>`;
+          html += `<optgroup label="📂 Остальные категории">${restCats.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}</option>`).join('')}</optgroup>`;
+        } else {
+          html += list.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}</option>`).join('');
+        }
+        if(allGoals.length){html+='<optgroup label="🎯 Активные цели">';allGoals.forEach(g=>{html+=`<option value="ЦЕЛЬ:${g.name}">🎯 ${g.name}</option>`;});html+='</optgroup>';}
         catEl.innerHTML=html;
       } else {
         mandWrap.style.display='none';
         mandCb.checked=false;mandRow.classList.remove('on');
-        catEl.innerHTML=list.map(x=>`<option value="${x}">${x}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
+        if (topFreq.length > 0 && restCats.length > 0) {
+          catEl.innerHTML =
+            `<optgroup label="🔥 Часто используемые">${topFreq.map(x=>`<option value="${x}">${x}</option>`).join('')}</optgroup>` +
+            `<optgroup label="📂 Остальные категории">${restCats.map(x=>`<option value="${x}">${x}</option>`).join('')}</optgroup>`;
+        } else {
+          catEl.innerHTML = list.map(x=>`<option value="${x}">${x}</option>`).join('');
+        }
       }
-      inlineFreqBar.innerHTML = list.slice(0, 8).map(cat => `
-        <div class="q-chip ${catEl.value===cat?'active':''}" data-ifcat="${cat}">${cat}</div>
+      inlineFreqBar.innerHTML = list.slice(0, 8).map((cat, idx) => `
+        <div class="q-chip ${idx < 3 && (info.counts[cat]||0) > 0 ? 'fav' : ''} ${catEl.value===cat?'active':''}" data-ifcat="${cat}">${idx < 3 && (info.counts[cat]||0) > 0 ? '🔥 ' : ''}${cat}</div>
       `).join('');
       inlineFreqBar.querySelectorAll('[data-ifcat]').forEach(ch => {
         ch.onclick = () => {
@@ -2547,6 +2986,445 @@ class App {
   }
 
   /* ═══════ LOANS & INSTALLMENTS CENTER (UNIVERSAL CALCULATOR + AI STRESS-TEST + TRACKER) ═══════ */
+  _buildLoanSchedule(ln, extraMonthly = 0, mode = 'reduce_term') {
+    const remStart = Math.max(0, Number(ln.remainingDebt) || 0);
+    const annualRate = Math.max(0, Number(ln.rate) || 0);
+    const r = (annualRate / 100) / 12;
+    const payType = ln.payType || 'annuity';
+    const baseMonthly = Math.max(1, Number(ln.monthlyPayment) || Math.round(remStart / 12));
+    const origTermLeft = Math.max(1, Number(ln.termMonths) || (baseMonthly > 0 ? Math.ceil(remStart / Math.max(1, baseMonthly - remStart * r)) : 12));
+    const payDay = Math.min(28, Math.max(1, Number(ln.payDay) || 15));
+
+    const schedule = [];
+    let rem = remStart;
+    let m = 0;
+    let totalInterest = 0;
+    const now = new Date();
+    const fixedBodyDiff = remStart / Math.max(1, origTermLeft);
+
+    while (rem > 0.5 && m < 600) {
+      m++;
+      const intPart = rem * r;
+      let regPay = baseMonthly;
+      if (payType === 'diff') {
+        regPay = fixedBodyDiff + intPart;
+      } else if (mode === 'reduce_payment' && m > 1) {
+        const remMonths = Math.max(1, origTermLeft - m + 1);
+        if (r <= 0) regPay = rem / remMonths;
+        else {
+          const pow = Math.pow(1 + r, remMonths);
+          regPay = rem * ((r * pow) / (pow - 1));
+        }
+      }
+      if (regPay <= intPart && r > 0) {
+        regPay = intPart + Math.max(100, rem / Math.max(1, origTermLeft));
+      }
+
+      const extraThisMonth = (mode === 'reduce_payment' && m > 1) ? 0 : Math.max(0, Number(extraMonthly) || 0);
+      let payThisMonth = regPay + extraThisMonth;
+      let bodyPart = payThisMonth - intPart;
+      if (bodyPart >= rem) {
+        bodyPart = rem;
+        payThisMonth = bodyPart + intPart;
+      }
+      rem = Math.max(0, rem - bodyPart);
+      totalInterest += intPart;
+
+      const payDate = new Date(now.getFullYear(), now.getMonth() + m, payDay);
+      const dateIso = `${payDate.getFullYear()}-${String(payDate.getMonth() + 1).padStart(2, '0')}-${String(payDate.getDate()).padStart(2, '0')}`;
+
+      schedule.push({
+        m,
+        dateIso,
+        dateLabel: dStr(dateIso),
+        pay: payThisMonth,
+        body: bodyPart,
+        int: intPart,
+        rem
+      });
+    }
+
+    return {
+      schedule,
+      months: schedule.length,
+      totalInterest,
+      totalPaid: remStart + totalInterest,
+      nextMonthPay: schedule[0] ? schedule[0].pay : 0,
+      secondMonthPay: schedule[1] ? schedule[1].pay : (schedule[0] ? schedule[0].pay : 0)
+    };
+  }
+
+  _downloadLoanIcs(ln, mode = 'add') {
+    const plan = this._buildLoanSchedule(ln, 0, 'reduce_term');
+    if (!plan.schedule.length) return;
+    const nowUtc = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Sentinel OS//Carbon AMOLED Loan Schedule//RU',
+      'CALSCALE:GREGORIAN',
+      mode === 'cancel' ? 'METHOD:CANCEL' : 'METHOD:PUBLISH'
+    ];
+
+    const maxMonths = Math.max(plan.schedule.length, Number(ln.termMonths) || 60);
+    if (mode === 'cancel') {
+      const now = new Date();
+      const payDay = Math.min(28, Math.max(1, Number(ln.payDay) || 15));
+      for (let m = 1; m <= maxMonths; m++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + m, payDay);
+        const dStrIcs = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+        lines.push(
+          'BEGIN:VEVENT',
+          `UID:sentinel-loan-${ln.id}-m${m}@sentinel.local`,
+          `DTSTAMP:${nowUtc}`,
+          `DTSTART;VALUE=DATE:${dStrIcs}`,
+          `SUMMARY:❌ [ОТМЕНЕНО] Платёж: ${ln.name}`,
+          'STATUS:CANCELLED',
+          'SEQUENCE:2',
+          'END:VEVENT'
+        );
+      }
+    } else {
+      plan.schedule.forEach(row => {
+        const dStrIcs = row.dateIso.replace(/-/g, '');
+        const desc = `Платёж №${row.m} по кредиту «${ln.name}». Сумма: ${fmtI(row.pay)} ₽ (основной долг: ${fmtI(row.body)} ₽, проценты: ${fmtI(row.int)} ₽). Остаток после платежа: ${fmtI(row.rem)} ₽.`;
+        lines.push(
+          'BEGIN:VEVENT',
+          `UID:sentinel-loan-${ln.id}-m${row.m}@sentinel.local`,
+          `DTSTAMP:${nowUtc}`,
+          `DTSTART;VALUE=DATE:${dStrIcs}`,
+          `SUMMARY:💳 Платёж по кредиту: ${ln.name} (${fmtI(row.pay)} ₽)`,
+          `DESCRIPTION:${desc}`,
+          'STATUS:CONFIRMED',
+          'SEQUENCE:1',
+          'BEGIN:VALARM',
+          'TRIGGER:-PT9H',
+          'ACTION:DISPLAY',
+          `DESCRIPTION:Напоминание: сегодня платёж по кредиту «${ln.name}» — ${fmtI(row.pay)} ₽`,
+          'END:VALARM',
+          'END:VEVENT'
+        );
+      });
+    }
+
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cleanName = (ln.name || 'loan').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_');
+    a.download = mode === 'cancel' ? `remove-loan-${cleanName}.ics` : `schedule-loan-${cleanName}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async _openLoanDetailModal(lnId) {
+    const loans = await this.db.all(S.LOANS);
+    const ln = loans.find(x => x.id === Number(lnId));
+    if (!ln) return;
+
+    const m = document.getElementById('global-modal');
+    const mc = document.getElementById('global-modal-content');
+
+    const basePlan = this._buildLoanSchedule(ln, 0, 'reduce_term');
+    const paidSoFar = Math.max(0, (ln.totalAmount || ln.remainingDebt) - ln.remainingDebt);
+    const paidPct = ln.totalAmount > 0 ? Math.min(100, (paidSoFar / ln.totalAmount) * 100) : 0;
+    const hist = Array.isArray(ln.paymentsHistory) ? ln.paymentsHistory : [];
+
+    mc.innerHTML = `
+      <div class="card-title">
+        <span>🏦 Управление кредитом: ${ln.name}</span>
+        <button class="del-btn" id="ld-close">✕</button>
+      </div>
+
+      <div class="g3" style="margin-bottom:8px">
+        <div class="stat"><div class="v" style="color:var(--orange)">${fmtI(ln.remainingDebt)} ₽</div><div class="l">Остаток долга</div></div>
+        <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(ln.monthlyPayment)} ₽</div><div class="l">Платёж по графику</div></div>
+        <div class="stat"><div class="v" style="color:var(--green)">${basePlan.months} мес.</div><div class="l">Осталось платить</div></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+        <span>Выплачено: <b>${fmtI(paidSoFar)} ₽</b> (${paidPct.toFixed(0)}%)</span>
+        <span style="color:var(--muted)">Ставка: <b>${ln.rate || 0}%</b> · Остаток %: <b style="color:var(--orange)">${fmtI(basePlan.totalInterest)} ₽</b></span>
+      </div>
+      <div class="prog-track" style="margin-bottom:12px"><div class="prog-fill" style="width:${paidPct}%"></div></div>
+
+      <!-- FLEXIBLE PAYMENT & EARLY PAYOFF SIMULATOR -->
+      <div style="padding:12px;border-radius:14px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.22);margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">
+          💳 Внести платёж (обычный или больше нормы с пересчётом)
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4">
+          Введи любую сумму, которую вносишь в этом месяце. Если вносишь больше <b>${fmtI(ln.monthlyPayment)} ₽</b> — выбери, как банк должен пересчитать график:
+        </div>
+
+        <div class="g2" style="margin-bottom:6px">
+          <div class="ig" style="margin-bottom:0">
+            <label class="lbl">Сумма платежа в этом месяце (₽)</label>
+            <input type="text" inputmode="decimal" id="ld-pay-amt" value="${Math.min(ln.remainingDebt, ln.monthlyPayment)}" style="font-size:16px;font-weight:900;color:var(--green)">
+          </div>
+          <div class="ig" style="margin-bottom:0">
+            <label class="lbl">День платежа в месяце (1–28)</label>
+            <input type="number" min="1" max="28" id="ld-pay-day" value="${ln.payDay || 15}">
+          </div>
+        </div>
+
+        <div class="mini-pills" style="margin-bottom:8px">
+          <span class="mini-pill" data-ldp="${Math.round(ln.monthlyPayment)}">По графику (${fmtI(ln.monthlyPayment)})</span>
+          <span class="mini-pill" data-ldp="${Math.round(ln.monthlyPayment + 3000)}">+3 000 ₽</span>
+          <span class="mini-pill" data-ldp="${Math.round(ln.monthlyPayment + 5000)}">+5 000 ₽</span>
+          <span class="mini-pill" data-ldp="${Math.round(ln.monthlyPayment + 10000)}">+10 000 ₽</span>
+          <span class="mini-pill" data-ldp="${Math.round(ln.monthlyPayment + 25000)}">+25 000 ₽</span>
+          <span class="mini-pill" data-ldp="full">Закрыть весь долг</span>
+        </div>
+
+        <label class="lbl">Что делать при переплате сверх ежемесячной нормы?</label>
+        <div class="seg-bar" style="margin-bottom:8px">
+          <div class="seg-btn active" data-ldmode="reduce_term">⏱ Сократить срок кредита</div>
+          <div class="seg-btn" data-ldmode="reduce_payment">📉 Уменьшить платёж</div>
+        </div>
+
+        <div id="ld-live-impact" class="calc-result" style="margin-top:6px;margin-bottom:8px;padding:9px 11px"></div>
+
+        <button class="btn g full" id="ld-confirm-pay" style="padding:11px;font-size:12.5px">✅ Внести этот платёж и пересчитать график</button>
+      </div>
+
+      <!-- SAMSUNG / ANDROID / IOS CALENDAR (.ICS) SYNC -->
+      <div style="padding:11px 12px;border-radius:14px;background:rgba(155,77,255,.07);border:1px solid rgba(155,77,255,.26);margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#d6b4ff;text-transform:uppercase;margin-bottom:4px">
+          📅 Календарь телефона (Samsung Calendar / Android / iOS)
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px">
+          Скачай файл <b>.ics</b> — телефон автоматически откроет <b>Календарь Samsung</b> и добавит все ${basePlan.months} дат платежей с напоминанием за 9 часов. Кнопка «Удалить» создаёт файл отмены и убирает эти записи из календаря:
+        </div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn c sm" id="ld-ics-add" style="flex:1">📅 Добавить график в Календарь</button>
+          <button class="btn r sm" id="ld-ics-del" style="flex:1">🗑 Удалить из Календаря</button>
+        </div>
+      </div>
+
+      <!-- DYNAMIC SCHEDULE TABLE -->
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase">📅 График платежей (с учётом введённой суммы)</span>
+          <span id="ld-sched-summary" style="font-size:10px;color:var(--muted)"></span>
+        </div>
+        <div id="ld-sched-list" class="hist-list" style="max-height:230px"></div>
+      </div>
+
+      <!-- PAYMENT HISTORY -->
+      <details ${hist.length ? 'open' : ''}>
+        <summary>📜 История внесённых платежей (${hist.length})</summary>
+        <div id="ld-hist-list" class="hist-list" style="max-height:160px;margin-top:6px">
+          ${!hist.length ? `<div style="color:var(--muted);font-size:11px;padding:8px 0">По этому кредиту ещё не вносились платежи</div>` : hist.slice().reverse().map((h, idx) => `
+            <div class="b-row" style="font-size:10.5px;padding:6px 0">
+              <div>
+                <b>${dStr(h.date)}</b>: <span style="color:var(--green);font-weight:800">${fmtI(h.amount)} ₽</span>
+                <div style="font-size:9.5px;color:var(--muted)">В счёт долга: ${fmtI(h.bodyPaid || h.amount)} ₽ · %: ${fmtI(h.intPaid || 0)} ₽</div>
+              </div>
+              <span style="color:var(--cyan);font-size:10px">Ост: ${fmtI(h.remAfter ?? 0)} ₽</span>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    `;
+
+    m.classList.add('show');
+    mc.querySelector('#ld-close').onclick = closeModal;
+
+    let overpayMode = 'reduce_term';
+    const amtInp = mc.querySelector('#ld-pay-amt');
+    const dayInp = mc.querySelector('#ld-pay-day');
+    const impactEl = mc.querySelector('#ld-live-impact');
+    const schedListEl = mc.querySelector('#ld-sched-list');
+    const schedSumEl = mc.querySelector('#ld-sched-summary');
+
+    const updateLivePreview = () => {
+      const r = ((Number(ln.rate) || 0) / 100) / 12;
+      const monthInt = ln.remainingDebt * r;
+      let payNow = parseMoney(amtInp.value);
+      if (payNow <= 0) payNow = 0;
+      const maxFullPay = +(ln.remainingDebt + monthInt).toFixed(2);
+      if (payNow > maxFullPay) payNow = maxFullPay;
+
+      const bodyNow = Math.max(0, payNow - monthInt);
+      const newRemAfterThisMonth = Math.max(0, +(ln.remainingDebt - bodyNow).toFixed(2));
+      const extraAboveNorm = Math.max(0, payNow - ln.monthlyPayment);
+
+      // Simulate remaining schedule AFTER this month's payment
+      const remMonthsAfterFirst = Math.max(1, basePlan.months - 1);
+      let newMonthlyPaymentAfter = ln.monthlyPayment;
+      if (overpayMode === 'reduce_payment' && newRemAfterThisMonth > 0 && extraAboveNorm > 0) {
+        if (r <= 0) newMonthlyPaymentAfter = newRemAfterThisMonth / remMonthsAfterFirst;
+        else {
+          const pow = Math.pow(1 + r, remMonthsAfterFirst);
+          newMonthlyPaymentAfter = newRemAfterThisMonth * ((r * pow) / (pow - 1));
+        }
+      }
+
+      const simLoanAfter = {
+        ...ln,
+        remainingDebt: newRemAfterThisMonth,
+        monthlyPayment: overpayMode === 'reduce_payment' ? newMonthlyPaymentAfter : ln.monthlyPayment,
+        termMonths: remMonthsAfterFirst,
+        payDay: Number(dayInp.value) || ln.payDay || 15
+      };
+      const afterPlan = newRemAfterThisMonth > 0.5 ? this._buildLoanSchedule(simLoanAfter, 0, 'reduce_term') : { schedule: [], months: 0, totalInterest: 0 };
+
+      const totalMonthsWithThis = (payNow > 0 ? 1 : 0) + afterPlan.months;
+      const totalIntWithThis = monthInt + afterPlan.totalInterest;
+      const savedMonths = Math.max(0, basePlan.months - totalMonthsWithThis);
+      const savedInt = Math.max(0, basePlan.totalInterest - totalIntWithThis);
+      const payDrop = Math.max(0, ln.monthlyPayment - newMonthlyPaymentAfter);
+
+      impactEl.innerHTML = `
+        <div class="b-row"><span class="b-key">Из ${fmtI(payNow)} ₽ пойдёт на проценты банку:</span><span class="b-val" style="color:var(--orange)">${fmtI(monthInt)} ₽</span></div>
+        <div class="b-row"><span class="b-key">Пойдёт на уменьшение основного долга:</span><span class="b-val" style="color:var(--green)">−${fmtI(bodyNow)} ₽</span></div>
+        <div class="b-row"><span class="b-key">Новый остаток долга после платежа:</span><span class="b-val" style="color:var(--cyan)">${fmtI(newRemAfterThisMonth)} ₽</span></div>
+        ${extraAboveNorm > 10 ? `
+          <div style="margin-top:6px;padding:7px 9px;border-radius:8px;background:rgba(0,255,149,.09);border:1px solid rgba(0,255,149,.3);font-size:11px;color:var(--green)">
+            ⚡ <b>Ты вносишь на +${fmtI(extraAboveNorm)} ₽ больше нормы!</b><br>
+            ${overpayMode === 'reduce_term'
+              ? `• Срок сократится с ${basePlan.months} до <b>${totalMonthsWithThis} мес.</b> (быстрее на <b>${savedMonths} мес.</b>)<br>• Экономия на процентах: <b>+${fmtI(savedInt)} ₽</b>`
+              : `• Следующий ежемесячный платёж снизится с ${fmtI(ln.monthlyPayment)} до <b>${fmtI(newMonthlyPaymentAfter)} ₽/мес</b> (меньше на <b>−${fmtI(payDrop)} ₽/мес</b>)<br>• Экономия на процентах: <b>+${fmtI(savedInt)} ₽</b>`
+            }
+          </div>
+        ` : ''}
+      `;
+
+      // Build combined schedule rows (Month 1 = current payment, Month 2..N = afterPlan)
+      const now = new Date();
+      const pDay = Math.min(28, Math.max(1, Number(dayInp.value) || ln.payDay || 15));
+      const firstDate = new Date(now.getFullYear(), now.getMonth() + 1, pDay);
+      const firstIso = `${firstDate.getFullYear()}-${String(firstDate.getMonth() + 1).padStart(2, '0')}-${String(firstDate.getDate()).padStart(2, '0')}`;
+
+      const combinedRows = [
+        { m: 1, dateLabel: dStr(firstIso), pay: payNow, body: bodyNow, int: monthInt, rem: newRemAfterThisMonth, isCurrent: true },
+        ...afterPlan.schedule.map(r2 => {
+          const d2 = new Date(now.getFullYear(), now.getMonth() + 1 + r2.m, pDay);
+          const iso2 = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
+          return {
+            m: r2.m + 1,
+            dateLabel: dStr(iso2),
+            pay: r2.pay,
+            body: r2.body,
+            int: r2.int,
+            rem: r2.rem,
+            isCurrent: false
+          };
+        })
+      ];
+
+      schedSumEl.textContent = `Всего ${combinedRows.length} мес. · Переплата %: ${fmtI(totalIntWithThis)} ₽`;
+      schedListEl.innerHTML = combinedRows.map(row => `
+        <div class="b-row" style="font-size:10.5px;padding:6px 4px;${row.isCurrent ? 'background:rgba(0,255,149,.07);border-radius:8px;' : ''}">
+          <div>
+            <b>№${row.m} (${row.dateLabel})</b> ${row.isCurrent ? '<span class="pill ok">Текущий взнос</span>' : ''}
+            <div style="font-size:9.5px;color:var(--muted)">Долг: ${fmtI(row.body)} ₽ · Проценты: ${fmtI(row.int)} ₽</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:${row.isCurrent ? 'var(--green)' : 'var(--text)'}">${fmtI(row.pay)} ₽</div>
+            <div style="font-size:9.5px;color:var(--cyan)">Ост: ${fmtI(row.rem)} ₽</div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    amtInp.oninput = updateLivePreview;
+    dayInp.oninput = updateLivePreview;
+
+    mc.querySelectorAll('[data-ldp]').forEach(pill => {
+      pill.onclick = () => {
+        if (pill.dataset.ldp === 'full') {
+          const r = ((Number(ln.rate) || 0) / 100) / 12;
+          amtInp.value = Math.ceil(ln.remainingDebt + ln.remainingDebt * r);
+        } else {
+          amtInp.value = pill.dataset.ldp;
+        }
+        updateLivePreview();
+      };
+    });
+
+    mc.querySelectorAll('[data-ldmode]').forEach(btn => {
+      btn.onclick = () => {
+        overpayMode = btn.dataset.ldmode;
+        mc.querySelectorAll('[data-ldmode]').forEach(b => b.classList.toggle('active', b.dataset.ldmode === overpayMode));
+        updateLivePreview();
+      };
+    });
+
+    updateLivePreview();
+
+    mc.querySelector('#ld-ics-add').onclick = () => {
+      ln.payDay = Math.min(28, Math.max(1, Number(dayInp.value) || ln.payDay || 15));
+      this._downloadLoanIcs(ln, 'add');
+      showInlineMsg(mc, '📅 Файл .ics скачан! Открой его, чтобы добавить все даты платежей в Календарь Samsung.', 'var(--green)');
+    };
+
+    mc.querySelector('#ld-ics-del').onclick = () => {
+      ln.payDay = Math.min(28, Math.max(1, Number(dayInp.value) || ln.payDay || 15));
+      this._downloadLoanIcs(ln, 'cancel');
+      showInlineMsg(mc, '🗑 Файл отмены .ics скачан! Открой его, чтобы удалить платежи из Календаря.', 'var(--orange)');
+    };
+
+    mc.querySelector('#ld-confirm-pay').onclick = async () => {
+      const r = ((Number(ln.rate) || 0) / 100) / 12;
+      const monthInt = ln.remainingDebt * r;
+      let payNow = parseMoney(amtInp.value);
+      if (!payNow || payNow <= 0) return;
+      const maxFullPay = +(ln.remainingDebt + monthInt).toFixed(2);
+      if (payNow > maxFullPay) payNow = maxFullPay;
+
+      const bodyNow = Math.max(0, payNow - monthInt);
+      const extraAboveNorm = Math.max(0, payNow - ln.monthlyPayment);
+      const newRem = Math.max(0, +(ln.remainingDebt - (bodyNow > 0 ? bodyNow : payNow)).toFixed(2));
+
+      if (overpayMode === 'reduce_payment' && newRem > 0 && extraAboveNorm > 0) {
+        const remMonthsAfter = Math.max(1, basePlan.months - 1);
+        if (r <= 0) ln.monthlyPayment = Math.round(newRem / remMonthsAfter);
+        else {
+          const pow = Math.pow(1 + r, remMonthsAfter);
+          ln.monthlyPayment = Math.round(newRem * ((r * pow) / (pow - 1)));
+        }
+      }
+
+      ln.remainingDebt = newRem;
+      ln.payDay = Math.min(28, Math.max(1, Number(dayInp.value) || ln.payDay || 15));
+      if (ln.remainingDebt <= 1) {
+        ln.remainingDebt = 0;
+        ln.closed = true;
+      }
+      if (!Array.isArray(ln.paymentsHistory)) ln.paymentsHistory = [];
+      ln.paymentsHistory.push({
+        date: new Date().toISOString(),
+        amount: payNow,
+        bodyPaid: bodyNow,
+        intPaid: monthInt,
+        remAfter: ln.remainingDebt,
+        mode: overpayMode
+      });
+
+      await this.db.set(S.LOANS, ln);
+      await this.db.add(S.TX, {
+        amount: payNow,
+        type: 'expense',
+        category: 'Кредиты и рассрочки',
+        comment: `${extraAboveNorm > 10 ? 'Платёж + досрочка' : 'Платёж по кредиту'}: ${ln.name}`,
+        date: new Date().toISOString(),
+        isMandatory: true
+      });
+      await this.db.adjustAccountBalance('expense', payNow);
+      await this._render(true);
+      if (ln.closed) {
+        closeModal();
+      } else {
+        this._openLoanDetailModal(ln.id);
+      }
+    };
+  }
+
   async _loans(c) {
     const balance = await this.db.cfg('balance');
     const budgetCap = await this.db.cfg('monthlyBudgetCap');
@@ -2761,7 +3639,6 @@ class App {
           lastMonthly = baseMonthly;
           totalInterest = (baseMonthly * termMonths) - principal;
         } else {
-          // Differentiated
           const bodyPart = principal / termMonths;
           let rem = principal;
           for (let m = 1; m <= termMonths; m++) {
@@ -2775,7 +3652,6 @@ class App {
           baseMonthly = firstMonthly;
         }
 
-        // Simulate actual schedule with extraMonthly (early payoff)
         let remDebt = principal;
         let actualMonths = 0;
         let actualInterest = 0;
@@ -2807,12 +3683,8 @@ class App {
         const savedInterest = Math.max(0, totalInterest - actualInterest);
         const overpayPct = principal > 0 ? Math.round((actualInterest / principal) * 100) : 0;
 
-        // AI Stress Test against user's real budget
-        const newTotalDebtLoad = totalMonthlyPay + baseMonthly + extraMonthly;
-        const newDtiPct = intel.avgMonthlyInc > 0 ? Math.round(((newTotalDebtLoad + (intel.totalMonthlyOutflow - intel.avgMonthlyExp)) / intel.avgMonthlyInc) * 100) : 0;
         const ptiPct = intel.avgMonthlyInc > 0 ? Math.round(((baseMonthly + extraMonthly) / intel.avgMonthlyInc) * 100) : 0;
         const freeAfterLoanMonth = intel.avgMonthlyInc - intel.totalMonthlyOutflow - (baseMonthly + extraMonthly);
-        const freeDailyWithLoan = Math.max(0, (intel.avgMonthlyInc - (baseMonthly + extraMonthly)) / 30);
 
         let aiStatus = 'good';
         let aiTitle = '✅ AI-Вердикт: Комфортная нагрузка на бюджет';
@@ -2848,7 +3720,7 @@ class App {
           </div>
 
           <div class="btn-row">
-            <button class="btn g full" id="ln-save-active">➕ Сохранить в мои активные кредиты / рассрочки</button>
+            <button class="btn g full" id="ln-save-active">➕ Сохранить в мои активные кредиты (с полным графиком и календарём)</button>
           </div>
 
           <details style="margin-top:10px">
@@ -2874,8 +3746,10 @@ class App {
             rate: annualRate,
             termMonths: actualMonths,
             monthlyPayment: Math.round(baseMonthly + extraMonthly),
-            payDay: 15,
+            payType,
+            payDay: new Date().getDate() <= 28 ? new Date().getDate() : 15,
             startDate: today(),
+            paymentsHistory: [],
             closed: false
           });
           this.loanSubTab = 'active';
@@ -2884,7 +3758,7 @@ class App {
       };
     }
 
-    // ─── SUB-TAB 2: ACTIVE LOANS & INSTALLMENTS TRACKER ───
+    // ─── SUB-TAB 2: ACTIVE LOANS & INSTALLMENTS TRACKER (WITH FULL SCHEDULE, FLEXIBLE OVERPAY & SAMSUNG CALENDAR .ICS) ───
     if (this.loanSubTab === 'active') {
       const topCard = this._card();
       topCard.innerHTML = `
@@ -2901,9 +3775,11 @@ class App {
             <div class="ig"><label class="lbl">Название</label><input id="ml-name" placeholder="Автокредит / Рассрочка Ozon"></div>
             <div class="ig"><label class="lbl">Остаток долга (₽)</label><input type="text" inputmode="decimal" id="ml-rem" placeholder="350000"></div>
             <div class="ig"><label class="lbl">Ежемесячный платёж (₽)</label><input type="text" inputmode="decimal" id="ml-pay" placeholder="14500"></div>
-            <div class="ig"><label class="lbl">Ставка (% годовых)</label><input type="text" inputmode="decimal" id="ml-rate" placeholder="18"></div>
+            <div class="ig"><label class="lbl">Ставка (% годовых, 0 = рассрочка)</label><input type="text" inputmode="decimal" id="ml-rate" placeholder="18"></div>
+            <div class="ig"><label class="lbl">День платежа (1–28 число)</label><input type="number" min="1" max="28" id="ml-day" value="15"></div>
+            <div class="ig"><label class="lbl">Срок (мес., если знаешь)</label><input type="number" id="ml-term" placeholder="Авторасчёт"></div>
           </div>
-          <button class="btn c full" id="ml-save">Сохранить кредит</button>
+          <button class="btn c full" id="ml-save">💾 Сохранить кредит с графиком платежей</button>
         </div>
       `;
       c.appendChild(topCard);
@@ -2917,43 +3793,69 @@ class App {
         const rem = parseMoney(topCard.querySelector('#ml-rem').value);
         const pay = parseMoney(topCard.querySelector('#ml-pay').value);
         const rate = parseMoney(topCard.querySelector('#ml-rate').value);
+        const payDay = Math.min(28, Math.max(1, parseInt(topCard.querySelector('#ml-day').value) || 15));
+        const termInpVal = parseInt(topCard.querySelector('#ml-term').value) || 0;
         if (!name || rem <= 0) return;
+        let calcPay = pay;
+        if (!calcPay && termInpVal > 0) {
+          const r = (rate / 100) / 12;
+          calcPay = r <= 0 ? Math.round(rem / termInpVal) : Math.round(rem * ((r * Math.pow(1 + r, termInpVal)) / (Math.pow(1 + r, termInpVal) - 1)));
+        }
         await this.db.add(S.LOANS, {
-          name, totalAmount: rem, remainingDebt: rem, rate,
-          monthlyPayment: pay || Math.round(rem / 12),
-          payDay: 15, startDate: today(), closed: false
+          name,
+          totalAmount: rem,
+          remainingDebt: rem,
+          rate,
+          termMonths: termInpVal || 0,
+          monthlyPayment: calcPay || Math.round(rem / 12),
+          payType: 'annuity',
+          payDay,
+          startDate: today(),
+          paymentsHistory: [],
+          closed: false
         });
         this._render(true);
       };
 
       if (!loans.length) {
         const emptyCard = this._card();
-        emptyCard.innerHTML = `<div style="color:var(--muted);text-align:center;padding:18px;font-size:12px">У тебя пока нет активных кредитов или рассрочек. Можешь рассчитать любой вариант во вкладке «🧮 Калькулятор и AI-Подбор»!</div>`;
+        emptyCard.innerHTML = `<div style="color:var(--muted);text-align:center;padding:18px;font-size:12px">У тебя пока нет активных кредитов или рассрочек. Можешь рассчитать любой вариант во вкладке «🧮 Калькулятор и AI-Подбор» и добавить его сюда!</div>`;
         c.appendChild(emptyCard);
       } else {
         loans.forEach(ln => {
+          const plan = this._buildLoanSchedule(ln, 0, 'reduce_term');
           const paid = Math.max(0, (ln.totalAmount || ln.remainingDebt) - ln.remainingDebt);
           const pct = ln.totalAmount > 0 ? Math.min(100, (paid / ln.totalAmount) * 100) : 0;
-          const mLeft = ln.monthlyPayment > 0 ? Math.ceil(ln.remainingDebt / ln.monthlyPayment) : 0;
+          const nextDateLbl = plan.schedule[0] ? plan.schedule[0].dateLabel : '—';
           const lc = this._card();
           lc.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div>
-                <div style="font-size:14px;font-weight:800;color:var(--cyan)">${ln.name} <span class="badge">${ln.rate || 0}% год.</span></div>
-                <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Платёж: <b>${fmtI(ln.monthlyPayment)} ₽/мес</b> · осталось ~${mLeft} мес.</div>
+              <div style="cursor:pointer;flex:1" data-openln-hdr="${ln.id}">
+                <div style="font-size:14px;font-weight:800;color:var(--cyan)">
+                  ${ln.name}
+                  <span class="badge">${ln.rate || 0}% год.</span>
+                  ${ln.closed ? '<span class="pill ok">ЗАКРЫТ</span>' : ''}
+                </div>
+                <div style="font-size:10.5px;color:var(--muted);margin-top:3px">
+                  Платёж: <b style="color:var(--text)">${fmtI(ln.monthlyPayment)} ₽/мес</b> · След. дата: <b style="color:var(--cyan)">${nextDateLbl}</b> · Осталось: <b>${plan.months} мес.</b>
+                </div>
+                <div style="font-size:10px;color:var(--muted);margin-top:2px">
+                  Остаток переплаты по %: <b style="color:var(--orange)">${fmtI(plan.totalInterest)} ₽</b> · Внесено платежей: <b>${(ln.paymentsHistory||[]).length}</b>
+                </div>
               </div>
               <button class="del-btn" data-delln="${ln.id}">×</button>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
               <span>Выплачено: <b>${fmtI(paid)} ₽</b> (${pct.toFixed(0)}%)</span>
-              <span style="color:var(--orange);font-weight:700">Остаток: ${fmt(ln.remainingDebt)} ₽</span>
+              <span style="color:var(--orange);font-weight:700">Остаток долга: ${fmt(ln.remainingDebt)} ₽</span>
             </div>
             <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+
             <div class="btn-row" style="margin-top:10px">
-              <button class="btn g sm" data-payln="${ln.id}" style="flex:1">✓ Внести платёж (${fmtI(ln.monthlyPayment)} ₽)</button>
-              <button class="btn c sm" data-extraln="${ln.id}" style="flex:1">⚡ Досрочно</button>
+              <button class="btn c sm" data-openln="${ln.id}" style="flex:1.2">📊 График, досрочка и платёж</button>
+              <button class="btn v sm" data-icsadd="${ln.id}" title="Добавить все даты платежей в Календарь телефона">📅 В Календарь</button>
+              <button class="btn r sm" data-icsdel="${ln.id}" title="Удалить график платежей из Календаря телефона">🗑 Из Календаря</button>
             </div>
-            <div id="ln-extra-box-${ln.id}" style="display:none;margin-top:8px"></div>
           `;
           c.appendChild(lc);
 
@@ -2962,45 +3864,15 @@ class App {
             this._render(true);
           });
 
-          lc.querySelector(`[data-payln="${ln.id}"]`).onclick = async () => {
-            const payAmt = Math.min(ln.remainingDebt, ln.monthlyPayment);
-            if (payAmt <= 0) return;
-            const monthInterest = (ln.remainingDebt * ((ln.rate || 0) / 100)) / 12;
-            const principalPart = Math.max(0, payAmt - monthInterest);
-            ln.remainingDebt = Math.max(0, +(ln.remainingDebt - (principalPart > 0 ? principalPart : payAmt)).toFixed(2));
-            if (ln.remainingDebt <= 1) ln.closed = true;
-            await this.db.set(S.LOANS, ln);
-            await this.db.add(S.TX, {
-              amount: payAmt, type: 'expense', category: 'Кредиты и рассрочки',
-              comment: `Платёж по кредиту: ${ln.name}`, date: new Date().toISOString(), isMandatory: true
-            });
-            await this.db.adjustAccountBalance('expense', payAmt);
-            this._render(true);
+          lc.querySelector(`[data-openln="${ln.id}"]`).onclick = () => this._openLoanDetailModal(ln.id);
+          lc.querySelector(`[data-openln-hdr="${ln.id}"]`).onclick = () => this._openLoanDetailModal(ln.id);
+          lc.querySelector(`[data-icsadd="${ln.id}"]`).onclick = () => {
+            this._downloadLoanIcs(ln, 'add');
+            showInlineMsg(lc, '📅 Файл графика (.ics) скачан! Открой его для добавления в Календарь Samsung.', 'var(--green)');
           };
-
-          lc.querySelector(`[data-extraln="${ln.id}"]`).onclick = () => {
-            const box = lc.querySelector(`#ln-extra-box-${ln.id}`);
-            if (box.style.display === 'block') { box.style.display = 'none'; return; }
-            box.style.display = 'block';
-            box.innerHTML = `
-              <div style="display:flex;gap:6px">
-                <input type="text" inputmode="decimal" id="lne-inp-${ln.id}" placeholder="Сумма досрочного погашения ₽" style="flex:1">
-                <button class="btn g sm" id="lne-ok-${ln.id}">Погасить</button>
-              </div>
-            `;
-            box.querySelector(`#lne-ok-${ln.id}`).onclick = async () => {
-              const amt = parseMoney(box.querySelector(`#lne-inp-${ln.id}`).value);
-              if (!amt || amt <= 0) return;
-              ln.remainingDebt = Math.max(0, +(ln.remainingDebt - amt).toFixed(2));
-              if (ln.remainingDebt <= 1) ln.closed = true;
-              await this.db.set(S.LOANS, ln);
-              await this.db.add(S.TX, {
-                amount: amt, type: 'expense', category: 'Кредиты и рассрочки',
-                comment: `Досрочное погашение: ${ln.name}`, date: new Date().toISOString(), isMandatory: false
-              });
-              await this.db.adjustAccountBalance('expense', amt);
-              this._render(true);
-            };
+          lc.querySelector(`[data-icsdel="${ln.id}"]`).onclick = () => {
+            this._downloadLoanIcs(ln, 'cancel');
+            showInlineMsg(lc, '🗑 Файл отмены (.ics) скачан! Открой его для удаления дат из Календаря.', 'var(--orange)');
           };
         });
       }
@@ -3015,6 +3887,7 @@ class App {
     const elec   = await this.db.cfg('printElecPerHour');
     const amort  = await this.db.cfg('printAmortPerHour');
     const markup = await this.db.cfg('printMarkup');
+    const urgPctCfg = (await this.db.cfg('printUrgentPct')) ?? 30;
     const filaments = await this.db.all(S.FIL);
     const all3dInc = (await this.db.all(S.TX)).filter(t=>t.category==='3D-печать'&&t.type==='income').sort((a,b)=>new Date(b.date)-new Date(a.date));
 
@@ -3202,10 +4075,16 @@ class App {
 
           <div class="g2" style="align-items:center;margin-bottom:6px">
             <div class="ig" style="margin-bottom:0"><label class="lbl">Название детали / Клиент</label><input type="text" id="c-desc" placeholder="Шестерня / Кронштейн"></div>
-            <label class="mandatory-row" id="urg-row" style="margin-top:14px;padding:9px 11px">
-              <div class="mandatory-toggle"><input type="checkbox" id="c-urgent"><span class="mandatory-knob"></span></div>
-              <div class="mandatory-lbl" style="font-size:10.5px">🔥 Срочно (+30%)</div>
-            </label>
+            <div class="mandatory-row" id="urg-row" style="margin-top:14px;padding:7px 10px;justify-content:space-between">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1">
+                <div class="mandatory-toggle"><input type="checkbox" id="c-urgent"><span class="mandatory-knob"></span></div>
+                <div class="mandatory-lbl" style="font-size:10.5px">🔥 Срочно (+%)</div>
+              </label>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input type="text" inputmode="decimal" id="c-urg-pct" value="${urgPctCfg}" title="Свой % за срочность" style="width:54px;padding:4px 6px;text-align:center;font-size:12px;font-weight:800;color:var(--orange)">
+                <span style="font-size:11px;font-weight:800;color:var(--orange)">%</span>
+              </div>
+            </div>
           </div>
 
           <button class="btn c full" id="c-calc" style="padding:13px;font-size:13px">🧮 Рассчитать стоимость заказа</button>
@@ -3272,6 +4151,8 @@ class App {
         const cadFee = parseMoney(cc.querySelector('#c-cad').value);
         const scanFee = parseMoney(cc.querySelector('#c-scan').value);
         const isUrgent = urgCb.checked;
+        const urgentPct = Math.max(0, parseMoney(cc.querySelector('#c-urg-pct').value));
+        this.db.setCfg('printUrgentPct', urgentPct);
 
         const res = cc.querySelector('#c-res');
         res.style.display = 'block';
@@ -3282,7 +4163,7 @@ class App {
 
         const quote = calc3DProQuote({
           weightG, timeHours, spoolPrice, spoolWeight, tierLevel:this._selTier,
-          qty, batchMode:this._batchMode, postProcFee, cadFee, scanFee, isUrgent,
+          qty, batchMode:this._batchMode, postProcFee, cadFee, scanFee, isUrgent, urgentPct,
           hourRate:hr, setupFee:sf, minPrice:mp, elecPerHour:elec, amortPerHour:amort, markupMult:markup
         });
 
@@ -3494,6 +4375,10 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
             <label class="lbl">Амортизация принтера (₽ в час)</label>
             <input type="text" inputmode="decimal" id="pr-am" value="${amort}">
           </div>
+          <div class="ig">
+            <label class="lbl">Наценка за срочность по умолчанию (%)</label>
+            <input type="text" inputmode="decimal" id="pr-urg" value="${urgPctCfg}">
+          </div>
         </div>
         <button class="btn c full" id="pr-save">💾 Сохранить тарифы мастерской</button>
       `;
@@ -3506,6 +4391,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
         await this.db.setCfg('printElecPerHour', parseMoney(paramCard.querySelector('#pr-el').value) || elec);
         await this.db.setCfg('printAmortPerHour', parseMoney(paramCard.querySelector('#pr-am').value) || amort);
         await this.db.setCfg('printMarkup', parseMoney(paramCard.querySelector('#pr-mk').value) || markup);
+        await this.db.setCfg('printUrgentPct', Math.max(0, parseMoney(paramCard.querySelector('#pr-urg').value)));
         showInlineMsg(paramCard, '✓ Тарифы мастерской успешно сохранены!', 'var(--green)');
       };
     }
@@ -4779,7 +5665,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     }
   }
 
-  /* ═══════ INTERACTIVE SMS PARSER TRAINER MODAL ═══════ */
+  /* ═══════ INTERACTIVE MULTI-BANK SMS PARSER CONSTRUCTOR MODAL ═══════ */
   async _openSmsTrainerModal(sampleSms = '') {
     const rules = await this.db.all(S.RULES);
     const expCats = await this.db.getCats('expense');
@@ -4789,33 +5675,68 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
 
     mc.innerHTML = `
       <div class="card-title">
-        <span>🤖 Обучение парсера СМС (Конструктор правил)</span>
+        <span>🤖 Конструктор шаблонов СМС любых банков</span>
         <button class="del-btn" id="st-close">✕</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45">
-        Вставь любое сообщение из банка, <b>нажми на ключевое слово</b> из текста (например, название магазина или отправителя) и укажи, к какой категории его всегда относить:
+        Настрой распознавание под <b>любой банк</b> (Сбер, Т-Банк, Альфа, Ozon, ВТБ и др.). Вставь пример СМС и укажи прямо на словах: <b>где ключевое слово</b>, <b>где сама сумма операции</b> и <b>какие числа игнорировать</b> (остаток, кэшбэк, номер карты):
       </div>
+
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ПРИМЕРЫ СМС РАЗНЫХ БАНКОВ (ДЛЯ ТЕСТА):</div>
+      <div class="chips-scroll" id="st-samples-bar" style="margin-bottom:8px">
+        <div class="q-chip" data-stsmp="Покупка, карта *4412. 1 450.50 RUB. Ozon.ru. Доступно 42 810.15 RUB. Кэшбэк +72р">💳 Т-Банк / Ozon</div>
+        <div class="q-chip" data-stsmp="Списание 890р PYATEROCHKA Баланс: 14 200р Карта *8609">🏦 Альфа / Сбер</div>
+        <div class="q-chip" data-stsmp="Карта *1902: оплата 650,00 р в DODO PIZZA. Остаток 18400,00 р">🍕 ВТБ / Мир</div>
+        <div class="q-chip" data-stsmp="Зачисление 15000р от ИВАН П. Баланс 152663.49р">➕ Перевод / Доход</div>
+      </div>
+
       <div class="ig">
-        <label class="lbl">1. Вставь пример текста СМС или уведомления</label>
-        <textarea id="st-sample" placeholder="Например: MIR-8609 14:20 Покупка 450р SHAVERMA_24 Баланс: 1200р" style="min-height:56px;font-size:12px">${sampleSms}</textarea>
+        <label class="lbl">1. Текст СМС или пуш-уведомления из банка</label>
+        <textarea id="st-sample" placeholder="Вставь сюда СМС из любого банка..." style="min-height:58px;font-size:12px">${sampleSms}</textarea>
       </div>
-      <div id="st-tokens-wrap" style="margin-bottom:10px;display:none">
-        <label class="lbl">Нажми на слово из СМС, чтобы сделать его ключевым:</label>
-        <div id="st-tokens"></div>
+
+      <div id="st-tokens-wrap" style="margin-bottom:10px;display:none;padding:10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08)">
+        <label class="lbl" style="margin-bottom:6px">2. Выбери режим разметки и нажимай на слова/числа в СМС ниже:</label>
+        <div class="seg-bar" style="margin-bottom:8px">
+          <div class="seg-btn active" data-strole="kw">🔑 Ключевое слово</div>
+          <div class="seg-btn" data-strole="sum">💰 Где в СМС СУММА</div>
+          <div class="seg-btn" data-strole="ign">🚫 Игнорировать число</div>
+        </div>
+        <div id="st-role-hint" style="font-size:10px;color:var(--cyan);margin-bottom:6px">
+          👉 Нажми на слово в СМС (например, название магазина или операции), по которому система узнает этот шаблон:
+        </div>
+        <div id="st-tokens" style="line-height:1.8"></div>
       </div>
+
       <div class="g2">
         <div class="ig">
-          <label class="lbl">2. Ключевое слово / фраза из СМС</label>
-          <input id="st-kw" placeholder="Напр: SHAVERMA_24" style="font-weight:800;color:var(--cyan)">
+          <label class="lbl">🔑 Ключевое слово (триггер)</label>
+          <input id="st-kw" placeholder="Напр: Ozon.ru или Покупка" style="font-weight:800;color:var(--cyan)">
         </div>
         <div class="ig">
-          <label class="lbl">Тип операции</label>
+          <label class="lbl">➕ / ➖ Знак операции</label>
           <select id="st-type">
-            <option value="expense">➖ Расход</option>
-            <option value="income">➕ Доход</option>
+            <option value="expense">➖ Расход (списание)</option>
+            <option value="income">➕ Доход (пополнение)</option>
           </select>
         </div>
       </div>
+
+      <div class="g3">
+        <div class="ig">
+          <label class="lbl">💰 Слово ПЕРЕД суммой</label>
+          <input id="st-sum-pre" placeholder="Напр: Покупка / Оплата" title="Помогает точно найти сумму, если в СМС несколько чисел">
+        </div>
+        <div class="ig">
+          <label class="lbl">💰 Валюта ПОСЛЕ суммы</label>
+          <input id="st-sum-suf" placeholder="Напр: RUB / р / ₽" title="Что идёт сразу после числа суммы">
+        </div>
+        <div class="ig">
+          <label class="lbl">🚫 Игнор-слова (через ,)</label>
+          <input id="st-ign" placeholder="Доступно, Кэшбэк, Остаток" title="Числа рядом с этими словами будут игнорироваться">
+        </div>
+      </div>
+
       <div class="g2">
         <div class="ig">
           <label class="lbl">3. Назначить категорию</label>
@@ -4823,18 +5744,23 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
         </div>
         <div class="ig">
           <label class="lbl">Авто-комментарий (красивое имя)</label>
-          <input id="st-comm" placeholder="Напр: Шаверма 24">
+          <input id="st-comm" placeholder="Напр: Покупка на Ozon">
         </div>
       </div>
+
       <label class="mandatory-row" id="st-mand-row" style="margin-top:2px;margin-bottom:10px">
         <div class="mandatory-toggle"><input type="checkbox" id="st-mand"><span class="mandatory-knob"></span></div>
         <div class="mandatory-lbl">Считать обязательным платежом</div>
       </label>
-      <button class="btn c full" id="st-save">💾 Сохранить правило распознавания</button>
+
+      <!-- LIVE TEST PREVIEW -->
+      <div id="st-live-preview" style="margin-bottom:10px;padding:10px 12px;border-radius:12px;background:rgba(0,240,255,.06);border:1px solid rgba(0,240,255,.22);font-size:11px"></div>
+
+      <button class="btn c full" id="st-save">💾 Сохранить шаблон в базу банковских СМС</button>
 
       <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px">
         <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">
-          📚 Мои правила распознавания СМС (${rules.length})
+          📚 Мои правила и шаблоны банков (${rules.length})
         </div>
         <div id="st-rules-list" class="hist-list" style="max-height:180px"></div>
       </div>
@@ -4845,39 +5771,179 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     const sampleInp = mc.querySelector('#st-sample');
     const tokensWrap = mc.querySelector('#st-tokens-wrap');
     const tokensEl = mc.querySelector('#st-tokens');
+    const roleHintEl = mc.querySelector('#st-role-hint');
     const kwInp = mc.querySelector('#st-kw');
+    const sumPreInp = mc.querySelector('#st-sum-pre');
+    const sumSufInp = mc.querySelector('#st-sum-suf');
+    const ignInp = mc.querySelector('#st-ign');
     const typeSel = mc.querySelector('#st-type');
     const catSel = mc.querySelector('#st-cat');
     const commInp = mc.querySelector('#st-comm');
     const mandCb = mc.querySelector('#st-mand');
     const mandRow = mc.querySelector('#st-mand-row');
+    const previewEl = mc.querySelector('#st-live-preview');
+
+    let curRole = 'kw'; // 'kw' | 'sum' | 'ign'
+    let tokenList = [];
+    let selectedKwIdx = -1;
+    let selectedSumIdx = -1;
+    const ignoredIndices = new Set();
 
     const updateCatOpts = () => {
       const list = typeSel.value === 'income' ? incCats : expCats;
       catSel.innerHTML = list.map(x => `<option value="${x}">${x}</option>`).join('');
       mandRow.style.display = typeSel.value === 'expense' ? 'flex' : 'none';
+      updateLiveCheck();
     };
-    updateCatOpts();
-    typeSel.onchange = updateCatOpts;
-    mandCb.onchange = () => mandRow.classList.toggle('on', mandCb.checked);
 
-    const tokenizeSample = () => {
+    const buildDraftRule = () => {
+      const ignArr = ignInp.value.split(',').map(x => x.trim()).filter(Boolean);
+      return {
+        keyword: kwInp.value.trim(),
+        type: typeSel.value,
+        category: catSel.value,
+        comment: commInp.value.trim() || kwInp.value.trim(),
+        isMandatory: typeSel.value === 'expense' && mandCb.checked,
+        sumPrefix: sumPreInp.value.trim(),
+        sumSuffix: sumSufInp.value.trim(),
+        ignoreTokens: ignArr
+      };
+    };
+
+    const updateLiveCheck = () => {
       const txt = sampleInp.value.trim();
-      if (!txt) { tokensWrap.style.display = 'none'; return; }
-      tokensWrap.style.display = 'block';
-      // Extract meaningful words (ignore pure timestamps/card masks)
-      const rawTokens = txt.split(/[\s,;:"'()\[\]]+/).map(t => t.replace(/^[.*•\-]+|[.,:;!]+$/g, '')).filter(t => t.length >= 2 && !/^\d+([.,]\d+)?(р|руб|₽)?$/i.test(t) && !/^\d{2}:\d{2}$/.test(t));
-      const uniq = [...new Set(rawTokens)];
-      tokensEl.innerHTML = uniq.map(tok => `<span class="sms-token" data-tok="${tok}">${tok}</span>`).join('');
+      const draft = buildDraftRule();
+      const activeRules = draft.keyword ? [draft, ...rules] : rules;
+      const parsed = txt ? parseSberText(txt, activeRules) : null;
+
+      if (!txt) {
+        previewEl.innerHTML = `<span style="color:var(--muted)">Вставь пример СМС выше, чтобы сразу увидеть, какую сумму и категорию извлечёт парсер.</span>`;
+        return;
+      }
+
+      const sumOk = parsed && parsed.amount > 0;
+      previewEl.innerHTML = `
+        <div style="font-weight:800;color:var(--cyan);margin-bottom:4px">🔍 Тест распознавания этого СМС в реальном времени:</div>
+        <div class="b-row" style="padding:3px 0"><span class="b-key">Извлечённая сумма:</span><span class="b-val" style="color:${sumOk ? 'var(--green)' : 'var(--red)'};font-size:14px">${sumOk ? fmt(parsed.amount) + ' ₽ ✅' : 'Не найдена (нажми «💰 Где в СМС СУММА» и выбери число)'}</span></div>
+        <div class="b-row" style="padding:3px 0"><span class="b-key">Тип и категория:</span><span class="b-val">${parsed.type === 'income' ? '➕ Доход' : '➖ Расход'} · <b>${parsed.category}</b></span></div>
+        <div class="b-row" style="padding:3px 0"><span class="b-key">Комментарий:</span><span class="b-val">${parsed.comment || '—'}</span></div>
+        ${(draft.sumPrefix || draft.sumSuffix) ? `<div style="font-size:10px;color:var(--yellow);margin-top:4px">🎯 Ориентир суммы: ${draft.sumPrefix ? `после «<b>${draft.sumPrefix}</b>» ` : ''}${draft.sumSuffix ? `перед «<b>${draft.sumSuffix}</b>»` : ''}</div>` : ''}
+      `;
+    };
+
+    mc.querySelectorAll('[data-strole]').forEach(btn => {
+      btn.onclick = () => {
+        curRole = btn.dataset.strole;
+        mc.querySelectorAll('[data-strole]').forEach(b => b.classList.toggle('active', b.dataset.strole === curRole));
+        if (curRole === 'kw') {
+          roleHintEl.innerHTML = '👉 <b style="color:var(--cyan)">Режим «Ключевое слово»:</b> нажми на слово в СМС (магазин, банк, тип операции):';
+        } else if (curRole === 'sum') {
+          roleHintEl.innerHTML = '👉 <b style="color:var(--yellow)">Режим «Где в СМС СУММА»:</b> нажми на число в СМС, которое является суммой операции (система сама запомнит слова вокруг него!):';
+        } else {
+          roleHintEl.innerHTML = '👉 <b style="color:var(--red)">Режим «Игнорировать»:</b> нажми на лишние числа (остаток баланса, кэшбэк, *карта) или слова перед ними, чтобы парсер их не путал с суммой:';
+        }
+      };
+    });
+
+    const renderTokenChips = () => {
+      tokensEl.innerHTML = tokenList.map((tok, idx) => {
+        let cls = 'sms-token';
+        let badge = '';
+        if (idx === selectedKwIdx) { cls += ' role-kw'; badge = '🔑 '; }
+        else if (idx === selectedSumIdx) { cls += ' role-sum'; badge = '💰 '; }
+        else if (ignoredIndices.has(idx)) { cls += ' role-ign'; badge = '🚫 '; }
+        return `<span class="${cls}" data-tidx="${idx}">${badge}${tok}</span>`;
+      }).join('');
+
       tokensEl.querySelectorAll('.sms-token').forEach(el => {
         el.onclick = () => {
-          tokensEl.querySelectorAll('.sms-token').forEach(x => x.classList.remove('sel'));
-          el.classList.add('sel');
-          kwInp.value = el.dataset.tok;
-          if (!commInp.value) commInp.value = el.dataset.tok;
+          const idx = Number(el.dataset.tidx);
+          const tok = tokenList[idx];
+          const cleanWord = tok.replace(/^[.*•+\-]+|[.,:;!]+$/g, '');
+
+          if (curRole === 'kw') {
+            selectedKwIdx = idx;
+            kwInp.value = cleanWord;
+            if (!commInp.value) commInp.value = cleanWord;
+          } else if (curRole === 'sum') {
+            selectedSumIdx = idx;
+            ignoredIndices.delete(idx);
+            // Check if token has attached unit like 890р or 650,00р
+            const unitMatch = tok.match(/^[\d.,]+([а-яА-Яa-zA-Z₽$€]+)$/);
+            if (unitMatch) {
+              sumSufInp.value = unitMatch[1];
+            } else if (idx + 1 < tokenList.length && /^[а-яА-Яa-zA-Z₽$€.\-]+$/.test(tokenList[idx + 1])) {
+              sumSufInp.value = tokenList[idx + 1].replace(/[.,:;!]+$/g, '');
+            }
+            // Find preceding non-numeric word as sumPrefix
+            for (let p = idx - 1; p >= Math.max(0, idx - 2); p--) {
+              const prevClean = tokenList[p].replace(/^[.*•+\-]+|[.,:;!]+$/g, '');
+              if (prevClean && !/^\d+$/.test(prevClean)) {
+                sumPreInp.value = prevClean;
+                break;
+              }
+            }
+            if (!kwInp.value && sumPreInp.value) {
+              kwInp.value = sumPreInp.value;
+            }
+          } else if (curRole === 'ign') {
+            if (ignoredIndices.has(idx)) {
+              ignoredIndices.delete(idx);
+            } else {
+              ignoredIndices.add(idx);
+              if (selectedSumIdx === idx) selectedSumIdx = -1;
+            }
+            const ignWords = [...ignoredIndices].map(i => tokenList[i].replace(/[.,:;!]+$/g, '')).filter(Boolean);
+            ignInp.value = ignWords.join(', ');
+          }
+
+          renderTokenChips();
+          updateLiveCheck();
         };
       });
     };
+
+    const tokenizeSample = () => {
+      const txt = sampleInp.value.trim();
+      if (!txt) {
+        tokensWrap.style.display = 'none';
+        updateLiveCheck();
+        return;
+      }
+      tokensWrap.style.display = 'block';
+      // Merge thousand-separated numbers like "1 450.50" into single clickable token "1450.50"
+      const normTxt = txt.replace(/(\d)\s+(\d{3})/g, '$1$2');
+      tokenList = normTxt.split(/\s+/).filter(Boolean);
+      selectedKwIdx = -1;
+      selectedSumIdx = -1;
+      ignoredIndices.clear();
+      renderTokenChips();
+      updateLiveCheck();
+    };
+
+    mc.querySelectorAll('#st-samples-bar .q-chip').forEach(ch => {
+      ch.onclick = () => {
+        sampleInp.value = ch.dataset.stsmp;
+        if (/зачисление|пополнение|перевод от/i.test(sampleInp.value)) {
+          typeSel.value = 'income';
+          updateCatOpts();
+        } else {
+          typeSel.value = 'expense';
+          updateCatOpts();
+        }
+        tokenizeSample();
+      };
+    });
+
+    updateCatOpts();
+    typeSel.onchange = updateCatOpts;
+    catSel.onchange = updateLiveCheck;
+    [kwInp, sumPreInp, sumSufInp, ignInp, commInp].forEach(inp => { inp.oninput = updateLiveCheck; });
+    mandCb.onchange = () => {
+      mandRow.classList.toggle('on', mandCb.checked);
+      updateLiveCheck();
+    };
+
     tokenizeSample();
     sampleInp.oninput = tokenizeSample;
 
@@ -4885,17 +5951,25 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       const allR = await this.db.all(S.RULES);
       const listEl = mc.querySelector('#st-rules-list');
       if (!allR.length) {
-        listEl.innerHTML = `<div style="color:var(--muted);font-size:11px;padding:8px 0">Пока нет пользовательских правил. Создай первое правило выше!</div>`;
+        listEl.innerHTML = `<div style="color:var(--muted);font-size:11px;padding:8px 0">Пока нет пользовательских шаблонов. Создай первый шаблон выше!</div>`;
         return;
       }
       listEl.innerHTML = '';
       allR.forEach(r => {
         const row = document.createElement('div');
         row.className = 'log-row';
+        const hasSumAnchor = r.sumPrefix || r.sumSuffix;
         row.innerHTML = `
           <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:800;color:var(--cyan)">«${r.keyword}» → <span class="badge">${r.category}</span></div>
-            <div class="log-meta">${r.type==='income'?'➕ Доход':'➖ Расход'}${r.comment ? ' · Комм: ' + r.comment : ''}${r.isMandatory ? ' · ★ Обяз.' : ''}</div>
+            <div style="font-size:12px;font-weight:800;color:var(--cyan)">
+              🔑 «${r.keyword}» → <span class="badge">${r.category}</span>
+            </div>
+            <div class="log-meta">
+              ${r.type==='income'?'➕ Доход':'➖ Расход'}
+              ${r.comment ? ' · Комм: ' + r.comment : ''}
+              ${hasSumAnchor ? ` · 💰 Сумма: ${r.sumPrefix ? 'после «'+r.sumPrefix+'»' : ''} ${r.sumSuffix ? 'перед «'+r.sumSuffix+'»' : ''}` : ''}
+              ${(r.ignoreTokens && r.ignoreTokens.length) ? ` · 🚫 Игнор: ${r.ignoreTokens.join(', ')}` : ''}
+            </div>
           </div>
           <button class="del-btn" data-delrule="${r.id}">×</button>
         `;
@@ -4910,18 +5984,18 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     renderRulesList();
 
     mc.querySelector('#st-save').onclick = async () => {
-      const keyword = kwInp.value.trim();
-      if (!keyword) { showInlineMsg(mc, '⚠ Выбери или впиши ключевое слово из СМС', 'var(--red)'); return; }
-      await this.db.add(S.RULES, {
-        keyword,
-        type: typeSel.value,
-        category: catSel.value,
-        comment: commInp.value.trim() || keyword,
-        isMandatory: typeSel.value === 'expense' && mandCb.checked
-      });
+      const draft = buildDraftRule();
+      if (!draft.keyword) {
+        showInlineMsg(mc, '⚠ Выбери или впиши ключевое слово из СМС', 'var(--red)');
+        return;
+      }
+      await this.db.add(S.RULES, draft);
       kwInp.value = '';
       commInp.value = '';
-      showInlineMsg(mc, `✓ Правило для «${keyword}» сохранено!`);
+      sumPreInp.value = '';
+      sumSufInp.value = '';
+      ignInp.value = '';
+      showInlineMsg(mc, `✓ Шаблон для «${draft.keyword}» сохранён!`, 'var(--green)');
       renderRulesList();
       this._render(true);
     };
@@ -5153,7 +6227,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
   /* ═══════ EXPORT / IMPORT (UNIFIED v9 WITH ALL STORES) ═══════ */
   async _export(){
     const data={
-      version:9,
+      version:10,
       exportedAt:new Date().toISOString(),
       transactions:await this.db.all(S.TX),
       garage_logs:await this.db.all(S.GARAGE),

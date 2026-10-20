@@ -1,4 +1,4 @@
-const CACHE = 'sentinel-ultra-v9';
+const CACHE = 'sentinel-ultra-v10';
 const FILES = ['./index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
