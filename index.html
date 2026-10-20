@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Sentinel OS">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
-<title>Sentinel OS: Carbon AMOLED v8</title>
+<title>Sentinel OS: Carbon AMOLED v9</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 :root{
@@ -79,22 +79,42 @@ body{
   box-shadow:0 -8px 30px rgba(0,0,0,.8);
 }
 .nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;padding:5px 2px;cursor:pointer;color:var(--muted);
-  font-size:9.5px;font-weight:700;letter-spacing:.2px;transition:color .18s;user-select:none;
-  border-radius:12px;
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:4px 1px;cursor:pointer;color:var(--muted);
+  font-size:8.5px;font-weight:700;letter-spacing:0;transition:color .18s;user-select:none;
+  border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.nav-item .nav-ico{font-size:17px;line-height:1;transition:transform .18s}
+.nav-item .nav-ico{font-size:16px;line-height:1;transition:transform .18s}
 .nav-item.active{color:var(--cyan);text-shadow:0 0 10px rgba(0,240,255,.4)}
 .nav-item.active .nav-ico{transform:translateY(-2px) scale(1.08)}
 .nav-fab{
-  width:46px;height:46px;border-radius:50%;
+  width:42px;height:42px;border-radius:50%;
   background:linear-gradient(135deg,var(--cyan),var(--violet));
-  color:#000;font-size:24px;font-weight:900;
+  color:#000;font-size:22px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 0 18px rgba(0,240,255,.45);
-  cursor:pointer;flex-shrink:0;margin:0 4px;border:none;
+  cursor:pointer;flex-shrink:0;margin:0 2px;border:none;
 }
+/* AI Advisor & Token Chips */
+.ai-score-ring{
+  width:58px;height:58px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-weight:900;flex-shrink:0;
+  border:3px solid var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.25);
+  background:rgba(0,240,255,.06);
+}
+.ai-insight{
+  background:rgba(255,255,255,.03);border-left:3px solid var(--cyan);
+  border-radius:0 11px 11px 0;padding:9px 11px;margin-bottom:7px;font-size:11px;line-height:1.45;
+}
+.ai-insight.warn{border-left-color:var(--orange);background:rgba(255,160,64,.06)}
+.ai-insight.bad{border-left-color:var(--red);background:rgba(255,77,94,.06)}
+.ai-insight.ok{border-left-color:var(--green);background:rgba(0,255,149,.06)}
+.sms-token{
+  display:inline-block;padding:5px 9px;margin:3px;border-radius:9px;
+  background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.25);
+  color:var(--text);font-size:11.5px;font-weight:700;cursor:pointer;user-select:none;
+}
+.sms-token.sel{background:var(--cyan);color:#000;border-color:var(--cyan);box-shadow:0 0 10px rgba(0,240,255,.4)}
 .nav-fab:active{transform:scale(.92)}
 
 #app-content{padding:12px 12px 28px;max-width:600px;margin:0 auto}
@@ -387,9 +407,10 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;width:100%;padding:0;b
 <!-- BOTTOM ERGONOMIC DOCK -->
 <nav id="bottom-nav">
   <div class="nav-item active" data-tab="finance"><span class="nav-ico">💳</span><span>Финансы</span></div>
+  <div class="nav-item" data-tab="loans"><span class="nav-ico">🏦</span><span>Кредиты</span></div>
   <div class="nav-item" data-tab="print"><span class="nav-ico">🖨️</span><span>3D Про</span></div>
-  <div class="nav-item" data-tab="stats"><span class="nav-ico">📊</span><span>Статистика</span></div>
   <button class="nav-fab" id="quick-fab" title="Быстрая запись">+</button>
+  <div class="nav-item" data-tab="stats"><span class="nav-ico">📊</span><span>Анализ</span></div>
   <div class="nav-item" data-tab="goals"><span class="nav-ico">🎯</span><span>Цели</span></div>
   <div class="nav-item" data-tab="garage"><span class="nav-ico">🚗</span><span>Гараж</span></div>
   <div class="nav-item" data-tab="hub"><span class="nav-ico">⚡</span><span>Хаб</span></div>
@@ -404,7 +425,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;width:100%;padding:0;b
 'use strict';
 
 const DB_NAME = 'SentinelCarbonV3';
-const DB_VER  = 8;
+const DB_VER  = 9;
 const S = {
   TX:'transactions',
   GARAGE:'garage_logs',
@@ -416,7 +437,10 @@ const S = {
   FIL:'filaments',
   TPL:'quick_templates',
   REC:'recipes',
-  CTASK:'car_tasks'
+  CTASK:'car_tasks',
+  CPARTS:'car_parts',
+  LOANS:'loans',
+  RULES:'sms_rules'
 };
 
 const DEFAULTS = {
@@ -564,8 +588,11 @@ class DB {
         mk(S.CARS,  {keyPath:'id',autoIncrement:true});
         mk(S.FIL,   {keyPath:'id',autoIncrement:true});
         mk(S.TPL,   {keyPath:'id',autoIncrement:true});
-        mk(S.REC,   {keyPath:'id',autoIncrement:true});
-        mk(S.CTASK, {keyPath:'id',autoIncrement:true});
+        mk(S.REC,    {keyPath:'id',autoIncrement:true});
+        mk(S.CTASK,  {keyPath:'id',autoIncrement:true});
+        mk(S.CPARTS, {keyPath:'id',autoIncrement:true});
+        mk(S.LOANS,  {keyPath:'id',autoIncrement:true});
+        mk(S.RULES,  {keyPath:'id',autoIncrement:true});
       };
       req.onsuccess = e => { this.db=e.target.result; this._seed().then(res).catch(rej); };
       req.onerror   = e => rej(e.target.error);
@@ -624,6 +651,34 @@ class DB {
     await this.setCfg('balance', bal);
     return { total: bal };
   }
+
+  async getCats(type = 'expense') {
+    const key = type === 'income' ? 'customCatsInc' : 'customCatsExp';
+    const base = type === 'income' ? CAT_INC : CAT_EXP;
+    const saved = await this.get(S.CFG, key);
+    if (saved && Array.isArray(saved.value) && saved.value.length > 0) {
+      return saved.value;
+    }
+    return [...base];
+  }
+
+  async saveCats(type, list) {
+    const key = type === 'income' ? 'customCatsInc' : 'customCatsExp';
+    await this.setCfg(key, list);
+  }
+
+  async getSortedCatsWithFreq(type = 'expense', txs = null) {
+    const cats = await this.getCats(type);
+    const allTxs = txs || await this.all(S.TX);
+    const counts = {};
+    allTxs.forEach(t => {
+      if (t.type === type && t.category) {
+        counts[t.category] = (counts[t.category] || 0) + 1;
+      }
+    });
+    const sorted = [...cats].sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+    return { sorted, counts, raw: cats };
+  }
 }
 
 const fmt   = n => Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -657,7 +712,7 @@ function parseMoney(value) {
 }
 
 // Upgraded Smart Sberbank SMS / Push / Statement Parser
-function parseSberText(raw) {
+function parseSberText(raw, userRules = []) {
   if (!raw || typeof raw !== 'string') return null;
   let text = raw.trim();
   if (!text) return null;
@@ -696,8 +751,22 @@ function parseSberText(raw) {
   let transferDir = 'savings_to_card';
   let comment = '';
 
-  // Detect savings interest payout ("Накопительный счет *7231 Выплатили проценты 854,84р. Баланс: 114 758,91р.")
-  if (/выплатили проценты|начисление процентов|проценты по сч|проценты по вкладу|капитализация/i.test(low)) {
+  // 1. Check user-defined custom SMS rules first!
+  let matchedCustomRule = null;
+  if (Array.isArray(userRules) && userRules.length > 0) {
+    for (const r of userRules) {
+      if (r.keyword && low.includes(r.keyword.toLowerCase())) {
+        matchedCustomRule = r;
+        break;
+      }
+    }
+  }
+  if (matchedCustomRule) {
+    type = matchedCustomRule.type || 'expense';
+    category = matchedCustomRule.category || 'Другое';
+    isMandatory = !!matchedCustomRule.isMandatory;
+    comment = matchedCustomRule.comment || matchedCustomRule.keyword;
+  } else if (/выплатили проценты|начисление процентов|проценты по сч|проценты по вкладу|капитализация/i.test(low)) {
     type = 'income';
     category = 'Проценты по вкладу';
     comment = 'Проценты по накопительному счёту';
@@ -884,44 +953,56 @@ function confirmDel(btn,cb){
 function calc3DProQuote(params) {
   const {
     weightG, timeHours, spoolPrice, spoolWeight, tierLevel,
-    qty, postProcFee, cadFee, isUrgent,
+    qty, batchMode, postProcFee, cadFee, scanFee = 0, isUrgent,
     hourRate, setupFee, minPrice, elecPerHour, amortPerHour, markupMult
   } = params;
 
   const tier = DIFF_TIERS[tierLevel] || DIFF_TIERS[2];
   const gramCost = (spoolPrice > 0 && spoolWeight > 0) ? (spoolPrice / spoolWeight) : 1.4;
 
-  const rawMaterialCost = weightG * gramCost * (1 + tier.failRisk);
-  const machineCost = timeHours * (elecPerHour + amortPerHour);
-  const nozzleWearCost = (weightG / 100) * tier.nozzleWear;
-  const singleCost = rawMaterialCost + machineCost + nozzleWearCost;
-  const totalCost = singleCost * qty;
+  // If batchMode === 'batch', weightG and timeHours are ALREADY the total for the whole build plate!
+  // If batchMode === 'single', weightG and timeHours are for 1 piece, so multiply by qty.
+  const multQty = (batchMode === 'batch') ? 1 : Math.max(1, qty);
+  const totalWeightG = weightG * multQty;
+  const totalTimeHours = timeHours * multQty;
+  const perPartWeightG = qty > 0 ? (totalWeightG / qty) : totalWeightG;
 
-  const materialClient = (weightG * gramCost * markupMult) * tier.mult;
-  const timeClient = (timeHours * hourRate) * tier.mult;
+  const rawMaterialCost = totalWeightG * gramCost * (1 + tier.failRisk);
+  const machineCost = totalTimeHours * (elecPerHour + amortPerHour);
+  const nozzleWearCost = (totalWeightG / 100) * tier.nozzleWear;
+  const totalCost = rawMaterialCost + machineCost + nozzleWearCost;
 
-  let singleWorkPrice = materialClient + timeClient;
-  if (weightG > 0 && weightG <= 35) {
+  const materialClient = (totalWeightG * gramCost * markupMult) * tier.mult;
+  const timeClient = (totalTimeHours * hourRate) * tier.mult;
+
+  let printWorkPrice = materialClient + timeClient;
+  // Small part boost if each individual part is tiny (<35g)
+  if (perPartWeightG > 0 && perPartWeightG <= 35) {
     const minSmallRate = tierLevel >= 3 ? 22 : 14;
-    singleWorkPrice = Math.max(singleWorkPrice, weightG * minSmallRate);
+    printWorkPrice = Math.max(printWorkPrice, totalWeightG * minSmallRate);
   }
 
-  let batchSubtotal = (singleWorkPrice * qty) + setupFee + postProcFee + cadFee;
+  const extrasTotal = (postProcFee || 0) + (cadFee || 0) + (scanFee || 0);
+  let batchSubtotal = printWorkPrice + setupFee + extrasTotal;
   if (qty >= 5) batchSubtotal *= 0.92;
   if (isUrgent) batchSubtotal *= 1.30;
 
   const minApplied = batchSubtotal < minPrice;
   const recPrice = Math.round(Math.max(batchSubtotal, minPrice) / 10) * 10;
 
-  const corridorMin = Math.max(minPrice, Math.round((totalCost * 2.1 + setupFee + postProcFee + cadFee) / 10) * 10);
+  const corridorMin = Math.max(minPrice, Math.round((totalCost * 2.1 + setupFee + extrasTotal) / 10) * 10);
   const corridorMax = Math.max(corridorMin + 150, Math.round((recPrice * 1.25) / 10) * 10);
 
   return {
     tier,
     gramCost,
-    rawMaterialCost: rawMaterialCost * qty,
-    machineCost: (machineCost + nozzleWearCost) * qty,
+    totalWeightG,
+    totalTimeHours,
+    perPartWeightG,
+    rawMaterialCost,
+    machineCost: machineCost + nozzleWearCost,
     totalCost,
+    extrasTotal,
     recPrice,
     corridorMin,
     corridorMax,
@@ -929,11 +1010,11 @@ function calc3DProQuote(params) {
   };
 }
 
-function evaluatePriceHealth(customPrice, quote, weightG, qty, postProcFee, cadFee) {
-  const totalWeight = weightG * qty;
+function evaluatePriceHealth(customPrice, quote, totalWeightG, extrasTotal) {
   const netProfit = customPrice - quote.totalCost;
   const marginPct = customPrice > 0 ? Math.round((netProfit / customPrice) * 100) : 0;
-  const effRubPerGram = totalWeight > 0 ? (customPrice - cadFee - postProcFee) / totalWeight : 0;
+  const printOnlyPrice = Math.max(0, customPrice - (extrasTotal || 0));
+  const effRubPerGram = totalWeightG > 0 ? (printOnlyPrice / totalWeightG) : 0;
 
   let status = 'good';
   let title = '✅ Оптимальная цена';
@@ -943,16 +1024,194 @@ function evaluatePriceHealth(customPrice, quote, weightG, qty, postProcFee, cadF
     status = 'low';
     title = '⚠️ Слишком низкая цена (Риск уйти в минус)';
     advice = `Внимание: чистая прибыль всего ${fmtI(netProfit)} ₽. Если деталь сорвёт со стола или потребуется перепечатка, заказ уйдёт в убыток. Рекомендуем минимум ${fmtI(quote.corridorMin)} ₽.`;
-  } else if (customPrice > quote.corridorMax * 1.25 && totalWeight > 50) {
+  } else if (customPrice > quote.corridorMax * 1.25 && totalWeightG > 50) {
     status = 'high';
     title = '🔥 Выше рынка (Премиум-наценка)';
-    advice = `Ставка ~${effRubPerGram.toFixed(1)} ₽/г для веса ${totalWeight}г выше средней. Если деталь сложная или срочная — цена оправдана, иначе оптимальный коридор: ${fmtI(quote.corridorMin)}–${fmtI(quote.corridorMax)} ₽.`;
+    advice = `Ставка ~${effRubPerGram.toFixed(1)} ₽/г для веса ${Math.round(totalWeightG)}г выше средней. Если деталь сложная или срочная — цена оправдана, иначе оптимальный коридор: ${fmtI(quote.corridorMin)}–${fmtI(quote.corridorMax)} ₽.`;
   }
 
   return { status, title, advice, netProfit, marginPct, effRubPerGram };
 }
 
-const TABS = ['finance','print','stats','goals','garage','hub'];
+
+// --- SENTINEL INTELLIGENCE ENGINE (DEEP FINANCIAL ANALYZER & ADVISOR) ---
+function buildFinancialIntelligence(data) {
+  const { balance, budgetCap, txs, goals, loans = [], svcItems = [], carOdo = 0 } = data;
+  const now = new Date();
+  const curY = now.getFullYear(), curM = now.getMonth();
+  const mStart = new Date(curY, curM, 1);
+  const daysInMonth = new Date(curY, curM + 1, 0).getDate();
+  const dayOfMonth = Math.max(1, now.getDate());
+  const daysLeftMonth = Math.max(1, daysInMonth - dayOfMonth + 1);
+
+  const realTxs = (txs || []).filter(t => t.type === 'expense' || t.type === 'income');
+
+  // 1. Current month metrics
+  const mInc = realTxs.filter(t => t.type === 'income' && new Date(t.date) >= mStart).reduce((s, t) => s + t.amount, 0);
+  const mExpAll = realTxs.filter(t => t.type === 'expense' && new Date(t.date) >= mStart && t.category !== 'Цель').reduce((s, t) => s + t.amount, 0);
+  const mMand = realTxs.filter(t => t.type === 'expense' && t.isMandatory && new Date(t.date) >= mStart).reduce((s, t) => s + t.amount, 0);
+  const mLifeExp = Math.max(0, mExpAll - mMand);
+
+  // 2. Historical 90-day averages
+  const d90 = new Date(now); d90.setDate(d90.getDate() - 90);
+  const tx90 = realTxs.filter(t => new Date(t.date) >= d90 && t.category !== 'Цель');
+  const inc90 = tx90.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const exp90 = tx90.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+  const avgMonthlyInc = inc90 > 0 ? (inc90 / 3) : 58000;
+  const avgMonthlyExp = exp90 > 0 ? (exp90 / 3) : 25000;
+  const activeLoansMonthly = loans.filter(l => !l.closed).reduce((s, l) => s + (Number(l.monthlyPayment) || 0), 0);
+
+  // 3. Burn rate & Runway
+  const currentDailyBurn = mLifeExp / dayOfMonth;
+  const targetDailyBurn = budgetCap / daysInMonth;
+  const projectedMonthLifeExp = currentDailyBurn * daysInMonth;
+  const totalMonthlyOutflow = avgMonthlyExp + activeLoansMonthly;
+  const runwayMonths = totalMonthlyOutflow > 0 ? (balance / totalMonthlyOutflow) : 12;
+
+  // 4. Savings rate & DTI (Debt-to-Income)
+  const netMonthlySurplus = avgMonthlyInc - totalMonthlyOutflow;
+  const savingsRatePct = avgMonthlyInc > 0 ? Math.round((netMonthlySurplus / avgMonthlyInc) * 100) : 0;
+  const dtiPct = avgMonthlyInc > 0 ? Math.round(((activeLoansMonthly + mMand) / avgMonthlyInc) * 100) : 0;
+
+  // 5. Category anomaly & leak detection (Last 30 days vs previous 60 days)
+  const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
+  const cat30 = {}, catCount30 = {}, catPrev60 = {};
+  tx90.filter(t => t.type === 'expense').forEach(t => {
+    const dt = new Date(t.date);
+    if (dt >= d30) {
+      cat30[t.category] = (cat30[t.category] || 0) + t.amount;
+      catCount30[t.category] = (catCount30[t.category] || 0) + 1;
+    } else {
+      catPrev60[t.category] = (catPrev60[t.category] || 0) + t.amount;
+    }
+  });
+
+  const anomalies = [];
+  Object.keys(cat30).forEach(cat => {
+    const curSum = cat30[cat];
+    const prevAvg = (catPrev60[cat] || 0) / 2;
+    if (prevAvg > 500 && curSum > prevAvg * 1.25) {
+      const diffPct = Math.round(((curSum - prevAvg) / prevAvg) * 100);
+      anomalies.push({ cat, curSum, prevAvg, diffPct, count: catCount30[cat] || 1 });
+    }
+  });
+  anomalies.sort((a, b) => (b.curSum - b.prevAvg) - (a.curSum - a.prevAvg));
+
+  // Small frequent purchases ("Эффект мелких чеков")
+  const smallFreqTxs = tx90.filter(t => t.type === 'expense' && new Date(t.date) >= d30 && t.amount <= 450);
+  const smallFreqSum = smallFreqTxs.reduce((s, t) => s + t.amount, 0);
+
+  // 6. Upcoming car maintenance alert
+  const urgentCarNodes = (svcItems || []).filter(it => {
+    if (it.condOnly || it.conditionOnly) return it.conditionStatus === 'replace' || it.conditionStatus === 'critical';
+    if (!it.km || !it.lastServiceOdo) return false;
+    const done = Math.max(0, carOdo - it.lastServiceOdo);
+    return (done / it.km) >= 0.85;
+  });
+
+  // 7. Compute Financial Health Score (0 - 100)
+  let score = 50;
+  // Runway contribution (up to +25)
+  if (runwayMonths >= 6) score += 25;
+  else if (runwayMonths >= 3) score += 18;
+  else if (runwayMonths >= 1.5) score += 10;
+  else score -= 10;
+
+  // Savings rate contribution (up to +20)
+  if (savingsRatePct >= 35) score += 20;
+  else if (savingsRatePct >= 20) score += 14;
+  else if (savingsRatePct >= 10) score += 6;
+  else if (savingsRatePct < 0) score -= 15;
+
+  // Daily burn discipline (up to +15)
+  if (currentDailyBurn <= targetDailyBurn * 0.95) score += 15;
+  else if (currentDailyBurn <= targetDailyBurn * 1.1) score += 8;
+  else score -= 8;
+
+  // DTI penalty
+  if (dtiPct > 45) score -= 15;
+  else if (dtiPct > 30) score -= 6;
+  else score += 5;
+
+  score = Math.max(5, Math.min(99, Math.round(score)));
+
+  // 8. Build actionable insights list
+  const insights = [];
+
+  if (projectedMonthLifeExp > budgetCap * 1.08) {
+    const over = Math.round(projectedMonthLifeExp - budgetCap);
+    const safeDaily = Math.max(0, Math.round((budgetCap - mLifeExp) / daysLeftMonth));
+    insights.push({
+      level: 'warn',
+      title: `⚡ Темп трат выше лимита (${fmtI(currentDailyBurn)} ₽/день вместо ${fmtI(targetDailyBurn)} ₽)`,
+      text: `Если тратить в том же темпе, к концу месяца набежит ~${fmtI(projectedMonthLifeExp)} ₽ (перерасход +${fmtI(over)} ₽). Чтобы уложиться в лимит ${fmtI(budgetCap)} ₽, держи планку не более <b>${fmtI(safeDaily)} ₽/день</b> в оставшиеся ${daysLeftMonth} дн.`
+    });
+  } else {
+    insights.push({
+      level: 'ok',
+      title: `✅ Отличная дисциплина бюджета (${fmtI(currentDailyBurn)} ₽/день)`,
+      text: `Твой текущий темп повседневных расходов прогнозирует ~${fmtI(projectedMonthLifeExp)} ₽ за месяц — ты уверенно идёшь внутри лимита ${fmtI(budgetCap)} ₽ и сохраняешь профицит.`
+    });
+  }
+
+  if (anomalies.length > 0) {
+    const topA = anomalies[0];
+    insights.push({
+      level: 'warn',
+      title: `📈 Скачок в категории «${topA.cat}» (+${topA.diffPct}% к среднему)`,
+      text: `За последние 30 дней на «${topA.cat}» ушло <b>${fmtI(topA.curSum)} ₽</b> (${topA.count} чеков) против обычных ~${fmtI(topA.prevAvg)} ₽/мес. Сокращение этой статьи на 25% сбережёт тебе <b>+${fmtI(topA.curSum * 0.25 * 12)} ₽ в год</b>.`
+    });
+  }
+
+  if (smallFreqTxs.length >= 12) {
+    insights.push({
+      level: 'info',
+      title: `☕ «Эффект мелких чеков»: ${smallFreqTxs.length} покупок до 450 ₽`,
+      text: `Незаметные мелкие траты за 30 дней сложились в <b>${fmtI(smallFreqSum)} ₽/мес</b> (~${fmtI(smallFreqSum * 12)} ₽/год). Оптимизация спонтанных заездов в магазин/кафе даст до +${fmtI(smallFreqSum * 0.35)} ₽ свободных денег ежемесячно.`
+    });
+  }
+
+  if (urgentCarNodes.length > 0) {
+    insights.push({
+      level: 'warn',
+      title: `🚗 Гараж: подходит срок ТО (${urgentCarNodes.slice(0,2).map(x=>x.label).join(', ')})`,
+      text: `Рекомендуем зарезервировать в бюджете этого месяца средства на обслуживание авто, чтобы замена расходников не ударила по дневному лимиту.`
+    });
+  }
+
+  const maxSafeLoanPayment = Math.max(0, Math.round(avgMonthlyInc * 0.30 - activeLoansMonthly));
+  insights.push({
+    level: netMonthlySurplus > 10000 ? 'ok' : 'info',
+    title: `🏦 Кредитный потенциал и подушка безопасности`,
+    text: `Твой средний чистый поток: <b>${netMonthlySurplus>=0?'+':''}${fmtI(netMonthlySurplus)} ₽/мес</b> (норма сбережений ${savingsRatePct}%). Запас прочности баланса: <b>${runwayMonths.toFixed(1)} мес.</b> Комфортный платёж по новому кредиту (ПДН до 30%): до <b>${fmtI(maxSafeLoanPayment)} ₽/мес</b>.`
+  });
+
+  return {
+    score,
+    avgMonthlyInc,
+    avgMonthlyExp,
+    totalMonthlyOutflow,
+    netMonthlySurplus,
+    savingsRatePct,
+    runwayMonths,
+    currentDailyBurn,
+    targetDailyBurn,
+    projectedMonthLifeExp,
+    dtiPct,
+    activeLoansMonthly,
+    maxSafeLoanPayment,
+    anomalies,
+    smallFreqCount: smallFreqTxs.length,
+    smallFreqSum,
+    insights,
+    forecast30: Math.round(balance + netMonthlySurplus),
+    forecast90: Math.round(balance + netMonthlySurplus * 3),
+    forecast180: Math.round(balance + netMonthlySurplus * 6)
+  };
+}
+
+const TABS = ['finance','loans','print','stats','goals','garage','hub'];
 
 class App {
   constructor(){
@@ -971,6 +1230,9 @@ class App {
     this.printSubTab = 'calc'; // 'calc' | 'spools' | 'rates' | 'history'
     this._selFilId = null;
     this._selTier = 2;
+    this._batchMode = 'batch'; // 'batch' (weight/time for whole plate) | 'single' (per 1 piece)
+    this._carAutoSelected = false;
+    this.loanSubTab = 'sim'; // 'sim' | 'active'
 
     this.db.ready.then(()=>this._init()).catch(e=>console.error('[Sentinel]',e));
   }
@@ -1159,9 +1421,328 @@ class App {
     };
   }
 
+  /* ═══════ CATEGORY & QUICK TEMPLATE MANAGER MODAL ═══════ */
+  async _openCategoryManagerModal(initTab = 'exp') {
+    const expCats = await this.db.getCats('expense');
+    const incCats = await this.db.getCats('income');
+    const tpls = await this.db.all(S.TPL);
+    const txs = await this.db.all(S.TX);
+    const m = document.getElementById('global-modal');
+    const c = document.getElementById('global-modal-content');
+
+    c.innerHTML = `
+      <div class="card-title">
+        <span>⚙️ Настройка категорий и быстрых плашек</span>
+        <button class="del-btn" id="cm-close">✕</button>
+      </div>
+      <div class="seg-bar">
+        <div class="seg-btn ${initTab==='exp'?'active':''}" data-cmt="exp">➖ Категории расходов</div>
+        <div class="seg-btn ${initTab==='inc'?'active':''}" data-cmt="inc">➕ Категории доходов</div>
+        <div class="seg-btn ${initTab==='tpl'?'active':''}" data-cmt="tpl">⚡ Быстрые плашки</div>
+      </div>
+      <div id="cm-body"></div>
+    `;
+    m.classList.add('show');
+    c.querySelector('#cm-close').onclick = closeModal;
+
+    const body = c.querySelector('#cm-body');
+    const renderTab = (tab) => {
+      c.querySelectorAll('[data-cmt]').forEach(b => b.classList.toggle('active', b.dataset.cmt === tab));
+      if (tab === 'exp' || tab === 'inc') {
+        const isExp = tab === 'exp';
+        const list = isExp ? expCats : incCats;
+        const typeStr = isExp ? 'expense' : 'income';
+        // Count usage
+        const counts = {};
+        txs.filter(t => t.type === typeStr).forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+
+        body.innerHTML = `
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+            Часто используемые категории автоматически поднимаются наверх при выборе. При переименовании категории все старые записи тоже обновятся!
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <input id="cm-new-cat" placeholder="Название новой категории..." style="flex:1">
+            <button class="btn c sm" id="cm-add-cat">+ Добавить</button>
+          </div>
+          <div class="hist-list" style="max-height:310px">
+            ${list.map((cat, idx) => `
+              <div class="log-row" style="padding:7px 2px">
+                <div style="flex:1;min-width:0">
+                  <span style="font-weight:700;font-size:12.5px">${cat}</span>
+                  <span style="font-size:10px;color:var(--muted);margin-left:6px">(${counts[cat] || 0} зап.)</span>
+                </div>
+                <div style="display:flex;gap:5px">
+                  <button class="btn c sm" data-ren="${idx}" style="padding:4px 8px">✏️ Имя</button>
+                  <button class="del-btn" data-delc="${idx}">×</button>
+                </div>
+              </div>
+              <div id="ren-box-${idx}" style="display:none;padding:6px 0"></div>
+            `).join('')}
+          </div>
+        `;
+
+        body.querySelector('#cm-add-cat').onclick = async () => {
+          const val = body.querySelector('#cm-new-cat').value.trim();
+          if (!val || list.includes(val)) return;
+          list.push(val);
+          await this.db.saveCats(typeStr, list);
+          renderTab(tab);
+          this._render(true);
+        };
+
+        body.querySelectorAll('[data-ren]').forEach(btn => {
+          btn.onclick = () => {
+            const idx = Number(btn.dataset.ren);
+            const oldName = list[idx];
+            const rBox = body.querySelector(`#ren-box-${idx}`);
+            if (rBox.style.display === 'block') { rBox.style.display = 'none'; return; }
+            rBox.style.display = 'block';
+            rBox.innerHTML = `
+              <div style="display:flex;gap:6px">
+                <input id="ren-inp-${idx}" value="${oldName}" style="flex:1;padding:6px 10px;font-size:12px">
+                <button class="btn g sm" id="ren-save-${idx}">ОК</button>
+              </div>
+            `;
+            rBox.querySelector(`#ren-save-${idx}`).onclick = async () => {
+              const newName = rBox.querySelector(`#ren-inp-${idx}`).value.trim();
+              if (!newName || newName === oldName) { rBox.style.display = 'none'; return; }
+              list[idx] = newName;
+              await this.db.saveCats(typeStr, list);
+              // Update existing transactions & templates with oldName
+              for (const t of txs) {
+                if (t.type === typeStr && t.category === oldName) {
+                  t.category = newName;
+                  await this.db.set(S.TX, t);
+                }
+              }
+              for (const tp of tpls) {
+                if (tp.category === oldName) {
+                  tp.category = newName;
+                  await this.db.set(S.TPL, tp);
+                }
+              }
+              renderTab(tab);
+              this._render(true);
+            };
+          };
+        });
+
+        body.querySelectorAll('[data-delc]').forEach(btn => {
+          btn.onclick = () => confirmDel(btn, async () => {
+            const idx = Number(btn.dataset.delc);
+            list.splice(idx, 1);
+            await this.db.saveCats(typeStr, list);
+            renderTab(tab);
+            this._render(true);
+          });
+        });
+      } else {
+        // Quick templates tab
+        body.innerHTML = `
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+            Настрой плашки быстрого выбора (на главном экране и в кнопке «+»):
+          </div>
+          <div class="g2" style="margin-bottom:8px">
+            <input id="tpl-n-lbl" placeholder="Напр: ☕ Кофе / 📦 Ozon">
+            <select id="tpl-n-cat">${expCats.map(x=>`<option value="${x}">${x}</option>`).join('')}</select>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <input type="text" inputmode="decimal" id="tpl-n-amt" placeholder="Сумма по умолч. (необязательно)" style="flex:1">
+            <button class="btn c sm" id="tpl-n-add">+ Плашка</button>
+          </div>
+          <div class="hist-list" style="max-height:280px">
+            ${tpls.map(t => `
+              <div class="log-row" style="padding:7px 2px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:700;font-size:12px">${t.label} <span class="badge">${t.category}</span></div>
+                  <div class="log-meta">${t.amount > 0 ? `Сумма: ${t.amount} ₽` : 'Сумма вводится вручную'}</div>
+                </div>
+                <div style="display:flex;gap:5px">
+                  <button class="btn c sm" data-edtpl="${t.id}" style="padding:4px 8px">✏️</button>
+                  <button class="del-btn" data-deltpl="${t.id}">×</button>
+                </div>
+              </div>
+              <div id="edtpl-box-${t.id}" style="display:none;padding:6px 0"></div>
+            `).join('')}
+          </div>
+        `;
+
+        body.querySelector('#tpl-n-add').onclick = async () => {
+          const label = body.querySelector('#tpl-n-lbl').value.trim();
+          if (!label) return;
+          const category = body.querySelector('#tpl-n-cat').value;
+          const amount = parseMoney(body.querySelector('#tpl-n-amt').value);
+          const id = await this.db.add(S.TPL, { label, category, amount, isMandatory: MANDATORY_CATS_HINT.has(category) });
+          tpls.push({ id, label, category, amount, isMandatory: MANDATORY_CATS_HINT.has(category) });
+          renderTab('tpl');
+          this._render(true);
+        };
+
+        body.querySelectorAll('[data-edtpl]').forEach(btn => {
+          btn.onclick = () => {
+            const id = Number(btn.dataset.edtpl);
+            const tp = tpls.find(x => x.id === id);
+            const box = body.querySelector(`#edtpl-box-${id}`);
+            if (!tp || !box) return;
+            if (box.style.display === 'block') { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            box.innerHTML = `
+              <div class="g3" style="margin-bottom:6px">
+                <input id="et-l-${id}" value="${tp.label}">
+                <select id="et-c-${id}">${expCats.map(x=>`<option value="${x}" ${x===tp.category?'selected':''}>${x}</option>`).join('')}</select>
+                <input type="text" inputmode="decimal" id="et-a-${id}" placeholder="Сумма" value="${tp.amount||''}">
+              </div>
+              <button class="btn g sm full" id="et-s-${id}">Сохранить плашку</button>
+            `;
+            box.querySelector(`#et-s-${id}`).onclick = async () => {
+              tp.label = box.querySelector(`#et-l-${id}`).value.trim() || tp.label;
+              tp.category = box.querySelector(`#et-c-${id}`).value;
+              tp.amount = parseMoney(box.querySelector(`#et-a-${id}`).value);
+              await this.db.set(S.TPL, tp);
+              renderTab('tpl');
+              this._render(true);
+            };
+          };
+        });
+
+        body.querySelectorAll('[data-deltpl]').forEach(btn => {
+          btn.onclick = () => confirmDel(btn, async () => {
+            const id = Number(btn.dataset.deltpl);
+            await this.db.del(S.TPL, id);
+            const idx = tpls.findIndex(x => x.id === id);
+            if (idx >= 0) tpls.splice(idx, 1);
+            renderTab('tpl');
+            this._render(true);
+          });
+        });
+      }
+    };
+
+    c.querySelectorAll('[data-cmt]').forEach(b => {
+      b.onclick = () => renderTab(b.dataset.cmt);
+    });
+    renderTab(initTab);
+  }
+
+  /* ═══════ SENTINEL AI FINANCIAL ADVISOR MODAL & SIMULATOR ═══════ */
+  async _openAiAdvisorModal() {
+    const balance = await this.db.cfg('balance');
+    const budgetCap = await this.db.cfg('monthlyBudgetCap');
+    const txs = await this.db.all(S.TX);
+    const goals = (await this.db.all(S.GOALS)).filter(g => g.active);
+    const loans = await this.db.all(S.LOANS);
+    const cars = await this.db.all(S.CARS);
+    const svcItems = await this.db.all(S.SVC);
+    const intel = buildFinancialIntelligence({
+      balance, budgetCap, txs, goals, loans, svcItems, carOdo: cars[0]?.odo || 0
+    });
+
+    const m = document.getElementById('global-modal');
+    const c = document.getElementById('global-modal-content');
+    const sCol = intel.score >= 75 ? 'var(--green)' : intel.score >= 50 ? 'var(--cyan)' : 'var(--orange)';
+
+    c.innerHTML = `
+      <div class="card-title">
+        <span>🧠 AI-Советник Sentinel: Полный аудит</span>
+        <button class="del-btn" id="ai-close">✕</button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:14px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(0,240,255,.18);border-radius:14px;margin-bottom:12px">
+        <div class="ai-score-ring" style="border-color:${sCol};color:${sCol}">
+          <span style="font-size:19px">${intel.score}</span>
+          <span style="font-size:8px;color:var(--muted)">ИЗ 100</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:800;color:${sCol}">
+            ${intel.score >= 75 ? 'Высокая финансовая устойчивость' : intel.score >= 50 ? 'Стабильный баланс (есть точки роста)' : 'Внимание: повышенная нагрузка'}
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4">
+            Подушка безопасности: <b>${intel.runwayMonths.toFixed(1)} мес.</b> · Норма сбережений: <b>${intel.savingsRatePct}%</b> · Средний профицит: <b>${intel.netMonthlySurplus>=0?'+':''}${fmtI(intel.netMonthlySurplus)} ₽/мес</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="g3" style="margin-bottom:12px">
+        <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(intel.forecast30)} ₽</div><div class="l">Прогноз 30 дн.</div></div>
+        <div class="stat"><div class="v" style="color:var(--green)">${fmtI(intel.forecast90)} ₽</div><div class="l">Прогноз 3 мес.</div></div>
+        <div class="stat"><div class="v" style="color:#d0b3ff">${fmtI(intel.forecast180)} ₽</div><div class="l">Прогноз полгода</div></div>
+      </div>
+
+      <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">
+        🔍 Персональные выводы и рекомендации:
+      </div>
+      <div>
+        ${intel.insights.map(ins => `
+          <div class="ai-insight ${ins.level}">
+            <div style="font-weight:800;margin-bottom:2px">${ins.title}</div>
+            <div style="color:#c2d4e4">${ins.text}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- INTERACTIVE AFFORDABILITY SIMULATOR -->
+      <div style="margin-top:12px;padding:12px;background:#060810;border:1px solid rgba(155,77,255,.3);border-radius:14px">
+        <div style="font-size:10.5px;font-weight:800;color:#d0b3ff;text-transform:uppercase;margin-bottom:8px">
+          🔮 Симулятор: «Могу ли я себе позволить покупку?»
+        </div>
+        <div class="g2">
+          <div class="ig" style="margin-bottom:6px">
+            <label class="lbl">Стоимость покупки (₽)</label>
+            <input type="text" inputmode="decimal" id="ai-sim-cost" placeholder="Напр: 45000">
+          </div>
+          <div class="ig" style="margin-bottom:6px">
+            <label class="lbl">Название (необязательно)</label>
+            <input type="text" id="ai-sim-name" placeholder="Диски / Принтер / Авто">
+          </div>
+        </div>
+        <div id="ai-sim-res" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px">
+          Введи сумму любой планируемой покупки — AI-Советник рассчитает риск для твоего баланса и подскажет, когда её лучше совершить.
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn v full" id="ai-go-loans">🏦 Перейти в Кредитный Симулятор (Авто / Рассрочки)</button>
+      </div>
+    `;
+    m.classList.add('show');
+    c.querySelector('#ai-close').onclick = closeModal;
+    c.querySelector('#ai-go-loans').onclick = () => {
+      closeModal();
+      this.tab = 'loans';
+      this._syncNavUI();
+      this._render(false);
+    };
+
+    const simInp = c.querySelector('#ai-sim-cost');
+    const simRes = c.querySelector('#ai-sim-res');
+    simInp.oninput = () => {
+      const cost = parseMoney(simInp.value);
+      if (!cost || cost <= 0) {
+        simRes.innerHTML = 'Введи сумму любой планируемой покупки для расчёта.';
+        return;
+      }
+      const remBal = balance - cost;
+      const newRunway = intel.totalMonthlyOutflow > 0 ? (remBal / intel.totalMonthlyOutflow) : 0;
+      const daysToEarnBack = intel.netMonthlySurplus > 0 ? Math.ceil((cost / intel.netMonthlySurplus) * 30) : 999;
+
+      if (remBal < 15000) {
+        simRes.innerHTML = `<span style="color:var(--red);font-weight:800">⛔ Высокий риск кассового разрыва!</span><br>После покупки у тебя останется всего <b>${fmt(remBal)} ₽</b> (менее 1 месяца расходов). Лучше накопить ещё <b>${fmtI(Math.max(0, cost - (balance - intel.totalMonthlyOutflow * 2)))} ₽</b> или рассмотреть рассрочку во вкладке «🏦 Кредиты».`;
+      } else if (newRunway < 2.5) {
+        simRes.innerHTML = `<span style="color:var(--orange);font-weight:800">⚠️ Покупка возможна, но сократит подушку безопасности</span><br>Остаток на счёте составит <b>${fmt(remBal)} ₽</b> (запас на <b>${newRunway.toFixed(1)} мес.</b>). При твоём текущем темпе сбережений ты восстановишь эту сумму за <b>~${daysToEarnBack} дн.</b>`;
+      } else {
+        simRes.innerHTML = `<span style="color:var(--green);font-weight:800">✅ Покупка абсолютно комфортна для бюджета!</span><br>После оплаты у тебя останется <b>${fmt(remBal)} ₽</b> (надёжный запас на <b>${newRunway.toFixed(1)} мес.</b> жизни). Приобретение восстановится из текущего профицита примерно за <b>${daysToEarnBack} дн.</b>`;
+      }
+    };
+  }
+
   /* ═══════ GLOBAL QUICK ACTION SHEET (+ FAB) ═══════ */
   async _openQuickActionModal(prefill = null){
     const tpls = await this.db.all(S.TPL);
+    const txs = await this.db.all(S.TX);
+    const smsRules = await this.db.all(S.RULES);
+    const expCatInfo = await this.db.getSortedCatsWithFreq('expense', txs);
+    const incCatInfo = await this.db.getSortedCatsWithFreq('income', txs);
+
     const m = document.getElementById('global-modal');
     const c = document.getElementById('global-modal-content');
     const initDate = prefill?.dateISO || today();
@@ -1173,8 +1754,9 @@ class App {
       </div>
 
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить сообщение Сбера</button>
-        <button class="btn v sm" id="q-open-sync" style="flex:1">⚖️ Сверка баланса</button>
+        <button class="btn c sm" id="q-paste-sber" style="flex:1">📋 Вставить СМС Сбера</button>
+        <button class="btn o sm" id="q-train-sms" title="Обучить распознаванию новых СМС">🤖 Обучить СМС</button>
+        <button class="btn v sm" id="q-open-sync">⚖️ Сверка</button>
       </div>
 
       <div id="q-sber-area" style="display:none;margin-bottom:10px">
@@ -1183,11 +1765,17 @@ class App {
 
       <div class="chips-scroll" id="q-tpl-bar">
         ${tpls.map(t=>`<div class="q-chip" data-tid="${t.id}">${t.label}${t.amount?` · ${t.amount}₽`:''}</div>`).join('')}
+        <div class="q-chip" id="q-edit-cats" style="border-style:dashed;color:var(--cyan)">⚙️ Настроить</div>
       </div>
 
       <div class="seg-bar" style="margin-top:4px">
         <div class="seg-btn active" data-qt="expense">➖ Расход</div>
         <div class="seg-btn" data-qt="income">➕ Доход</div>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin-bottom:4px">🔥 ЧАСТЫЕ КАТЕГОРИИ (НАЖМИ ДЛЯ ВЫБОРА):</div>
+        <div class="chips-scroll" id="q-freq-cats"></div>
       </div>
 
       <div class="g2">
@@ -1239,9 +1827,16 @@ class App {
     m.classList.add('show');
     c.querySelector('#q-close').onclick = closeModal;
     c.querySelector('#q-open-sync').onclick = () => { closeModal(); this._openSberSyncModal(); };
+    c.querySelector('#q-edit-cats').onclick = () => { closeModal(); this._openCategoryManagerModal('exp'); };
+    c.querySelector('#q-train-sms').onclick = () => {
+      const pasted = c.querySelector('#q-sber-txt')?.value || '';
+      closeModal();
+      this._openSmsTrainerModal(pasted);
+    };
 
     let curType = prefill?.type === 'income' ? 'income' : 'expense';
     const catSel = c.querySelector('#q-cat');
+    const freqBar = c.querySelector('#q-freq-cats');
     const mandRow = c.querySelector('#q-mand-row');
     const mandCb = c.querySelector('#q-mand');
     const amtInp = c.querySelector('#q-amt');
@@ -1250,12 +1845,32 @@ class App {
 
     const updateCats = () => {
       c.querySelectorAll('[data-qt]').forEach(b=>b.classList.toggle('active', b.dataset.qt===curType));
-      const list = curType === 'expense' ? CAT_EXP : CAT_INC;
-      catSel.innerHTML = list.map(x=>`<option value="${x}">${x}</option>`).join('');
+      const info = curType === 'expense' ? expCatInfo : incCatInfo;
+      const list = info.sorted;
+      catSel.innerHTML = list.map(x=>`<option value="${x}">${x}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
       if(prefill?.category && list.includes(prefill.category)) catSel.value = prefill.category;
       mandRow.style.display = curType === 'expense' ? 'flex' : 'none';
+
+      // Render top 6 frequent category chips
+      freqBar.innerHTML = list.slice(0, 7).map(cat => `
+        <div class="q-chip ${catSel.value===cat?'active':''}" data-fcat="${cat}">
+          <span>${cat}</span>
+        </div>
+      `).join('');
+      freqBar.querySelectorAll('[data-fcat]').forEach(ch => {
+        ch.onclick = () => {
+          catSel.value = ch.dataset.fcat;
+          freqBar.querySelectorAll('[data-fcat]').forEach(x => x.classList.toggle('active', x.dataset.fcat === catSel.value));
+          if (curType === 'expense' && MANDATORY_CATS_HINT.has(catSel.value)) {
+            mandCb.checked = true; mandRow.classList.add('on');
+          }
+        };
+      });
     };
     updateCats();
+    catSel.onchange = () => {
+      freqBar.querySelectorAll('[data-fcat]').forEach(x => x.classList.toggle('active', x.dataset.fcat === catSel.value));
+    };
     if(prefill?.isMandatory){ mandCb.checked = true; mandRow.classList.add('on'); }
 
     c.querySelectorAll('[data-qt]').forEach(btn=>{
@@ -1281,13 +1896,14 @@ class App {
       };
     });
 
-    c.querySelectorAll('#q-tpl-bar .q-chip').forEach(chip=>{
+    c.querySelectorAll('#q-tpl-bar .q-chip[data-tid]').forEach(chip=>{
       chip.onclick = () => {
         const tpl = tpls.find(x=>x.id===Number(chip.dataset.tid));
         if(!tpl) return;
         curType = 'expense';
         updateCats();
-        if(CAT_EXP.includes(tpl.category)) catSel.value = tpl.category;
+        catSel.value = tpl.category;
+        freqBar.querySelectorAll('[data-fcat]').forEach(x => x.classList.toggle('active', x.dataset.fcat === catSel.value));
         if(tpl.amount > 0 && !amtInp.value.trim()) amtInp.value = tpl.amount;
         if(!commInp.value.trim()) commInp.value = tpl.label.replace(/^[^\wа-яА-ЯёЁa-zA-Z0-9]+/, '').trim();
         mandCb.checked = !!tpl.isMandatory;
@@ -1298,12 +1914,13 @@ class App {
     const sberArea = c.querySelector('#q-sber-area');
     const sberTxt = c.querySelector('#q-sber-txt');
     const applyParsed = (txt) => {
-      const res = parseSberText(txt);
+      const res = parseSberText(txt, smsRules);
       if(!res) return;
       curType = res.type === 'income' ? 'income' : 'expense';
       updateCats();
       if(res.amount > 0) amtInp.value = res.amount;
       catSel.value = res.category;
+      freqBar.querySelectorAll('[data-fcat]').forEach(x => x.classList.toggle('active', x.dataset.fcat === catSel.value));
       if(res.dateISO) dateInp.value = res.dateISO;
       mandCb.checked = !!res.isMandatory;
       mandRow.classList.toggle('on', mandCb.checked);
@@ -1373,6 +1990,7 @@ class App {
 
     const map = {
       finance: () => this._finance(wrap),
+      loans:   () => this._loans(wrap),
       goals:   () => this._goals(wrap),
       garage:  () => this._garage(wrap),
       print:   () => this._print(wrap),
@@ -1393,7 +2011,7 @@ class App {
 
   _card(extra=''){const el=document.createElement('div');el.className='card'+extra;return el;}
 
-  /* ═══════ FINANCE (UNIFIED BALANCE) ═══════ */
+  /* ═══════ FINANCE (UNIFIED BALANCE + AI ADVISOR + EDITABLE CATEGORIES) ═══════ */
   async _finance(c){
     const balance    = await this.db.cfg('balance');
     const budgetCap  = await this.db.cfg('monthlyBudgetCap');
@@ -1402,6 +2020,13 @@ class App {
     const txs        = (await this.db.all(S.TX)).filter(t=>t.type==='expense'||t.type==='income');
     const goals      = (await this.db.all(S.GOALS)).filter(g=>g.active);
     const tpls       = await this.db.all(S.TPL);
+    const loans      = await this.db.all(S.LOANS);
+    const cars       = await this.db.all(S.CARS);
+    const svcItems   = await this.db.all(S.SVC);
+    const smsRules   = await this.db.all(S.RULES);
+    const expCatInfo = await this.db.getSortedCatsWithFreq('expense', txs);
+    const incCatInfo = await this.db.getSortedCatsWithFreq('income', txs);
+
     const now        = new Date(), todayStr=today();
     const mStart     = new Date(now.getFullYear(),now.getMonth(),1);
 
@@ -1442,7 +2067,7 @@ class App {
     balCard.innerHTML=`
       <div class="card-title">
         <span>💎 Текущий баланс (Все деньги)</span>
-        <span style="font-size:9.5px;color:var(--muted);text-transform:none">Единый счёт</span>
+        <button class="btn v sm" id="btn-manage-cats" style="padding:4px 8px">⚙️ Категории и плашки</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div class="big ${bCol}">${fmt(balance)} ₽</div>
@@ -1460,13 +2085,15 @@ class App {
         <div style="font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">⚡ Быстрая запись по шаблону:</div>
         <div class="chips-scroll" id="fin-quick-chips">
           ${tpls.map(t=>`<div class="q-chip" data-tid="${t.id}">${t.label}</div>`).join('')}
-          <div class="q-chip" id="add-tpl-chip" style="border-style:dashed;color:var(--cyan)">+ Шаблон</div>
+          <div class="q-chip" id="add-tpl-chip" style="border-style:dashed;color:var(--cyan)">+ Настроить</div>
         </div>
       </div>
     `;
     c.appendChild(balCard);
 
     balCard.querySelector('#btn-sync-bal').onclick = () => this._openSberSyncModal();
+    balCard.querySelector('#btn-manage-cats').onclick = () => this._openCategoryManagerModal('exp');
+    balCard.querySelector('#add-tpl-chip').onclick = () => this._openCategoryManagerModal('tpl');
     balCard.querySelector('#set-bal').onclick = () => {
       const ed = balCard.querySelector('#bal-ed');
       if(ed.innerHTML){ ed.innerHTML=''; return; }
@@ -1485,30 +2112,36 @@ class App {
         if(tpl) this._openQuickActionModal({ type:'expense', category:tpl.category, amount:tpl.amount||'', comment:tpl.label.replace(/^[^\wа-яА-ЯёЁa-zA-Z0-9]+/, '').trim(), isMandatory:tpl.isMandatory });
       };
     });
-    balCard.querySelector('#add-tpl-chip').onclick = () => {
-      const m = document.getElementById('global-modal');
-      const mc = document.getElementById('global-modal-content');
-      mc.innerHTML = `
-        <div class="card-title"><span>Новый быстрый шаблон</span><button class="del-btn" id="tc-x">✕</button></div>
-        <div class="ig"><label class="lbl">Название кнопки (с эмодзи)</label><input id="nt-lbl" placeholder="☕ Кофе"></div>
-        <div class="g2">
-          <div class="ig"><label class="lbl">Категория</label><select id="nt-cat">${CAT_EXP.map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
-          <div class="ig"><label class="lbl">Сумма по умолч. (оставь пустым, если разная)</label><input type="text" inputmode="decimal" id="nt-amt" placeholder="Необязательно"></div>
-        </div>
-        <button class="btn c full" id="nt-save">Сохранить шаблон</button>
-      `;
-      m.classList.add('show');
-      mc.querySelector('#tc-x').onclick = closeModal;
-      mc.querySelector('#nt-save').onclick = async () => {
-        const lbl = mc.querySelector('#nt-lbl').value.trim();
-        if(!lbl) return;
-        await this.db.add(S.TPL, { label:lbl, category:mc.querySelector('#nt-cat').value, amount:parseMoney(mc.querySelector('#nt-amt').value), isMandatory:false });
-        closeModal();
-        this._render(true);
-      };
-    };
 
-    // 2. BUDGET & PAYDAYS
+    // 2. SENTINEL AI FINANCIAL ADVISOR WIDGET
+    {
+      const intel = buildFinancialIntelligence({
+        balance, budgetCap, txs, goals, loans, svcItems, carOdo: cars[0]?.odo || 0
+      });
+      const sCol = intel.score >= 75 ? 'var(--green)' : intel.score >= 50 ? 'var(--cyan)' : 'var(--orange)';
+      const topInsight = intel.insights[0];
+      const aiCard = this._card();
+      aiCard.innerHTML = `
+        <div class="card-title">
+          <span>🧠 AI-Советник Sentinel (Индекс: ${intel.score}/100)</span>
+          <button class="btn c sm" id="btn-open-ai" style="padding:4px 9px">Аудит и Симулятор ›</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div class="ai-score-ring" style="width:48px;height:48px;border-color:${sCol};color:${sCol}">
+            <span style="font-size:16px">${intel.score}</span>
+          </div>
+          <div style="flex:1;min-width:0;font-size:11px;line-height:1.45">
+            <div style="font-weight:800;color:var(--text)">Запас прочности: <span style="color:${sCol}">${intel.runwayMonths.toFixed(1)} мес.</span> · Прогноз 30д: <span style="color:var(--cyan)">${fmtI(intel.forecast30)} ₽</span></div>
+            <div style="color:var(--muted);margin-top:2px">Комфортный лимит кредита: до <b>${fmtI(intel.maxSafeLoanPayment)} ₽/мес</b></div>
+          </div>
+        </div>
+        ${topInsight ? `<div class="ai-insight ${topInsight.level}" style="margin-bottom:0"><b>${topInsight.title}</b><br>${topInsight.text}</div>` : ''}
+      `;
+      c.appendChild(aiCard);
+      aiCard.querySelector('#btn-open-ai').onclick = () => this._openAiAdvisorModal();
+    }
+
+    // 3. BUDGET & PAYDAYS
     const dayCol=remainToday<0?'#ff4d5e':remainToday<200?'#ffa040':'#00ff95';
     const budCard=this._card();
     budCard.innerHTML=`<div class="card-title">Бюджет и выплаты (ЗП · Аванс · Премия)</div>
@@ -1552,13 +2185,16 @@ class App {
       this._render(true);
     };
 
-    // 3. INLINE NEW TRANSACTION CARD
+    // 4. INLINE NEW TRANSACTION CARD (WITH FREQUENT CATEGORY CHIPS & EDITABLE CATEGORIES)
     const txCard=this._card();
     const allGoals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     txCard.innerHTML=`
       <div class="card-title">
         <span>✍️ Записать транзакцию</span>
-        <button class="btn c sm" id="tx-paste-btn">📋 Вставить текст из Сбера</button>
+        <div style="display:flex;gap:5px">
+          <button class="btn c sm" id="tx-paste-btn">📋 Из Сбера</button>
+          <button class="btn v sm" id="tx-edit-cats" title="Изменить или добавить категории">✏️ Категории</button>
+        </div>
       </div>
       <div id="inline-sber-box" style="display:none;margin-bottom:10px">
         <textarea id="inline-sber-txt" placeholder="Вставь сюда СМС из Сбера (например: Накопительный счет *7231 Выплатили проценты 854,84р или покупку)..." style="min-height:56px;font-size:12px"></textarea>
@@ -1566,6 +2202,10 @@ class App {
       <div class="seg-bar">
         <div class="seg-btn active" data-it="expense">➖ Расход</div>
         <div class="seg-btn" data-it="income">➕ Доход</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin-bottom:4px">🔥 ЧАСТО ИСПОЛЬЗУЕМЫЕ КАТЕГОРИИ:</div>
+        <div class="chips-scroll" id="inline-freq-cats"></div>
       </div>
       <div class="g2">
         <div class="ig">
@@ -1579,7 +2219,7 @@ class App {
           </div>
         </div>
         <div class="ig">
-          <label class="lbl">Категория</label>
+          <label class="lbl">Все категории</label>
           <select id="tx-cat"></select>
         </div>
       </div>
@@ -1612,24 +2252,41 @@ class App {
 
     let inlineType = 'expense';
     const catEl=txCard.querySelector('#tx-cat');
+    const inlineFreqBar=txCard.querySelector('#inline-freq-cats');
     const mandWrap=txCard.querySelector('#mandatory-wrap');
     const mandRow=txCard.querySelector('#mand-row');
     const mandCb=txCard.querySelector('#tx-mandatory');
     const txAmtEl=txCard.querySelector('#tx-amt');
     const txDateEl=txCard.querySelector('#tx-date');
 
+    txCard.querySelector('#tx-edit-cats').onclick = () => this._openCategoryManagerModal(inlineType === 'income' ? 'inc' : 'exp');
+
     const fillCats=()=>{
       txCard.querySelectorAll('[data-it]').forEach(b=>b.classList.toggle('active', b.dataset.it===inlineType));
+      const info = inlineType === 'expense' ? expCatInfo : incCatInfo;
+      const list = info.sorted;
       if(inlineType==='expense'){
         mandWrap.style.display='block';
-        let html=CAT_EXP.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}</option>`).join('');
+        let html=list.map(x=>`<option value="${x}">${x}${MANDATORY_CATS_HINT.has(x)?' ★':''}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
         if(allGoals.length){html+='<option disabled>── Цели ──</option>';allGoals.forEach(g=>{html+=`<option value="ЦЕЛЬ:${g.name}">🎯 ${g.name}</option>`;});}
         catEl.innerHTML=html;
       } else {
         mandWrap.style.display='none';
         mandCb.checked=false;mandRow.classList.remove('on');
-        catEl.innerHTML=CAT_INC.map(x=>`<option value="${x}">${x}</option>`).join('');
+        catEl.innerHTML=list.map(x=>`<option value="${x}">${x}${info.counts[x]?` (${info.counts[x]})`:''}</option>`).join('');
       }
+      inlineFreqBar.innerHTML = list.slice(0, 8).map(cat => `
+        <div class="q-chip ${catEl.value===cat?'active':''}" data-ifcat="${cat}">${cat}</div>
+      `).join('');
+      inlineFreqBar.querySelectorAll('[data-ifcat]').forEach(ch => {
+        ch.onclick = () => {
+          catEl.value = ch.dataset.ifcat;
+          inlineFreqBar.querySelectorAll('[data-ifcat]').forEach(x => x.classList.toggle('active', x.dataset.ifcat === catEl.value));
+          if(inlineType==='expense' && MANDATORY_CATS_HINT.has(catEl.value)){
+            mandCb.checked=true; mandRow.classList.add('on');
+          }
+        };
+      });
     };
     fillCats();
 
@@ -1637,6 +2294,7 @@ class App {
       btn.onclick=()=>{ inlineType=btn.dataset.it; fillCats(); };
     });
     catEl.onchange=()=>{
+      inlineFreqBar.querySelectorAll('[data-ifcat]').forEach(x => x.classList.toggle('active', x.dataset.ifcat === catEl.value));
       if(inlineType==='expense' && MANDATORY_CATS_HINT.has(catEl.value)){
         mandCb.checked=true; mandRow.classList.add('on');
       }
@@ -1658,12 +2316,13 @@ class App {
     const inlineSberBox = txCard.querySelector('#inline-sber-box');
     const inlineSberTxt = txCard.querySelector('#inline-sber-txt');
     const applyInlineParsed = (txt) => {
-      const parsed = parseSberText(txt);
+      const parsed = parseSberText(txt, smsRules);
       if(!parsed) return;
       inlineType = parsed.type === 'income' ? 'income' : 'expense';
       fillCats();
       if(parsed.amount > 0) txAmtEl.value = parsed.amount;
       catEl.value = parsed.category;
+      inlineFreqBar.querySelectorAll('[data-ifcat]').forEach(x => x.classList.toggle('active', x.dataset.ifcat === catEl.value));
       if(parsed.dateISO) txDateEl.value = parsed.dateISO;
       txCard.querySelector('#tx-comment').value = parsed.comment;
       mandCb.checked = !!parsed.isMandatory;
@@ -1704,7 +2363,7 @@ class App {
       this._render(true);
     };
 
-    // 4. MANDATORY PAYMENTS SUMMARY
+    // 5. MANDATORY PAYMENTS SUMMARY
     {
       const mandCard=this._card();
       const catEntries=Object.entries(mandByCat).sort((a,b)=>b[1]-a[1]);
@@ -1728,7 +2387,9 @@ class App {
 
   async _renderTxHistory(c, txs, goals){
     const histCard=this._card();
-    const allCats=[...new Set([...CAT_EXP,...CAT_INC,'Цель'])];
+    const customExp = await this.db.getCats('expense');
+    const customInc = await this.db.getCats('income');
+    const allCats=[...new Set([...customExp,...customInc,...CAT_EXP,...CAT_INC,'Кредиты и рассрочки','Цель'])];
 
     histCard.innerHTML=`
       <div class="card-title">
@@ -1885,7 +2546,468 @@ class App {
     renderList();
   }
 
-  /* ═══════ 3D PRINT PRO STUDIO — CLEAR 4-TAB INTERFACE WITH LIVE PROFIT & MANUAL PRICE INPUT ═══════ */
+  /* ═══════ LOANS & INSTALLMENTS CENTER (UNIVERSAL CALCULATOR + AI STRESS-TEST + TRACKER) ═══════ */
+  async _loans(c) {
+    const balance = await this.db.cfg('balance');
+    const budgetCap = await this.db.cfg('monthlyBudgetCap');
+    const txs = await this.db.all(S.TX);
+    const goals = (await this.db.all(S.GOALS)).filter(g => g.active);
+    const loans = await this.db.all(S.LOANS);
+    const cars = await this.db.all(S.CARS);
+    const svcItems = await this.db.all(S.SVC);
+
+    const intel = buildFinancialIntelligence({
+      balance, budgetCap, txs, goals, loans, svcItems, carOdo: cars[0]?.odo || 0
+    });
+
+    const activeLoans = loans.filter(l => !l.closed);
+    const totalDebt = activeLoans.reduce((s, l) => s + (Number(l.remainingDebt) || 0), 0);
+    const totalMonthlyPay = activeLoans.reduce((s, l) => s + (Number(l.monthlyPayment) || 0), 0);
+
+    const navCard = this._card(' glow');
+    navCard.innerHTML = `
+      <div class="card-title">
+        <span>🏦 Центр кредитов, автокредитов и рассрочек</span>
+        <span style="font-size:10px;color:var(--cyan);text-transform:none">ПДН: ${intel.dtiPct}%</span>
+      </div>
+      <div class="seg-bar" style="margin-bottom:0">
+        <div class="seg-btn ${this.loanSubTab==='sim'?'active':''}" data-lst="sim">🧮 Калькулятор и AI-Подбор</div>
+        <div class="seg-btn ${this.loanSubTab==='active'?'active':''}" data-lst="active">📑 Мои кредиты (${activeLoans.length})</div>
+      </div>
+    `;
+    c.appendChild(navCard);
+
+    navCard.querySelectorAll('[data-lst]').forEach(btn => {
+      btn.onclick = () => {
+        this.loanSubTab = btn.dataset.lst;
+        this._render(true);
+      };
+    });
+
+    // ─── SUB-TAB 1: UNIVERSAL LOAN / INSTALLMENT SIMULATOR + AI STRESS TEST ───
+    if (this.loanSubTab === 'sim') {
+      const simCard = this._card();
+      const safeDownPaymentFromBal = Math.max(0, Math.round((balance - intel.totalMonthlyOutflow * 1.5) / 1000) * 1000);
+
+      simCard.innerHTML = `
+        <div class="card-title">
+          <span>🧮 Универсальный расчёт кредита / рассрочки</span>
+          <span style="font-size:9.5px;color:var(--muted);text-transform:none">Авто · Техника · Наличные · Ипотека</span>
+        </div>
+
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px">БЫСТРЫЕ ПРЕСЕТЫ (ИЛИ ВВЕДИ СВОИ ПАРАМЕТРЫ НИЖЕ):</div>
+        <div class="chips-scroll" id="loan-presets" style="margin-bottom:10px">
+          <div class="q-chip" data-lp="auto">🚗 Автокредит</div>
+          <div class="q-chip" data-lp="zero">🛍️ Рассрочка 0%</div>
+          <div class="q-chip" data-lp="cash">💳 Потребкредит</div>
+          <div class="q-chip" data-lp="equip">🖨️ Оборудование / 3D</div>
+        </div>
+
+        <div class="ig">
+          <label class="lbl">Название цели / кредита (необязательно)</label>
+          <input id="ln-name" placeholder="Например: Покупка автомобиля / Рассрочка Ozon">
+        </div>
+
+        <div class="g2">
+          <div class="ig">
+            <label class="lbl">Стоимость покупки / объекта (₽)</label>
+            <input type="text" inputmode="decimal" id="ln-price" placeholder="Напр: 750000" style="font-weight:800;color:var(--cyan)">
+            <div class="mini-pills">
+              <span class="mini-pill" data-lpprice="100000">100к</span>
+              <span class="mini-pill" data-lpprice="350000">350к</span>
+              <span class="mini-pill" data-lpprice="600000">600к</span>
+              <span class="mini-pill" data-lpprice="1000000">1 млн</span>
+            </div>
+          </div>
+          <div class="ig">
+            <label class="lbl">Первоначальный взнос (₽)</label>
+            <input type="text" inputmode="decimal" id="ln-down" placeholder="0 ₽">
+            <div class="mini-pills">
+              <span class="mini-pill" data-lpdown="0">0%</span>
+              <span class="mini-pill" data-lpdown="20">20%</span>
+              <span class="mini-pill" data-lpdown="30">30%</span>
+              <span class="mini-pill" data-lpdown="bal" title="Безопасная сумма из текущего баланса">Из баланса (${fmtI(safeDownPaymentFromBal)})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="g3">
+          <div class="ig">
+            <label class="lbl">Ставка (% годовых, 0 = рассрочка)</label>
+            <input type="text" inputmode="decimal" id="ln-rate" placeholder="18.5">
+          </div>
+          <div class="ig">
+            <label class="lbl">Срок (месяцев)</label>
+            <input type="text" inputmode="numeric" id="ln-term" placeholder="36">
+          </div>
+          <div class="ig">
+            <label class="lbl">Тип платежа</label>
+            <select id="ln-type">
+              <option value="annuity">Аннуитетный (равный)</option>
+              <option value="diff">Дифференцированный</option>
+            </select>
+          </div>
+        </div>
+        <div class="mini-pills" style="margin-top:-4px;margin-bottom:10px">
+          <span style="font-size:10px;color:var(--muted);align-self:center;margin-right:4px">Быстрый срок:</span>
+          <span class="mini-pill" data-lpterm="6">6 мес</span>
+          <span class="mini-pill" data-lpterm="12">1 год (12)</span>
+          <span class="mini-pill" data-lpterm="24">2 года (24)</span>
+          <span class="mini-pill" data-lpterm="36">3 года (36)</span>
+          <span class="mini-pill" data-lpterm="48">4 года (48)</span>
+          <span class="mini-pill" data-lpterm="60">5 лет (60)</span>
+        </div>
+
+        <div class="g2">
+          <div class="ig">
+            <label class="lbl">Досрочное погашение (+₽/мес к платежу)</label>
+            <input type="text" inputmode="decimal" id="ln-extra" placeholder="Необязательно (напр: 5000)">
+          </div>
+          <div class="ig">
+            <label class="lbl">Страховка / доп. расходы (₽ за весь срок)</label>
+            <input type="text" inputmode="decimal" id="ln-ins" placeholder="Необязательно">
+          </div>
+        </div>
+
+        <button class="btn c full" id="ln-calc-btn" style="padding:13px;font-size:13px">🧮 Рассчитать кредит и проверить нагрузку на бюджет</button>
+        <div id="ln-sim-res" style="display:none;margin-top:14px"></div>
+      `;
+      c.appendChild(simCard);
+
+      const priceInp = simCard.querySelector('#ln-price');
+      const downInp  = simCard.querySelector('#ln-down');
+      const rateInp  = simCard.querySelector('#ln-rate');
+      const termInp  = simCard.querySelector('#ln-term');
+      const nameInp  = simCard.querySelector('#ln-name');
+
+      simCard.querySelectorAll('#loan-presets .q-chip').forEach(ch => {
+        ch.onclick = () => {
+          const p = ch.dataset.lp;
+          if (p === 'auto') {
+            nameInp.value = 'Автокредит';
+            if (!priceInp.value) priceInp.value = 650000;
+            if (!downInp.value) downInp.value = safeDownPaymentFromBal > 0 ? safeDownPaymentFromBal : 100000;
+            rateInp.value = 19.5;
+            termInp.value = 48;
+          } else if (p === 'zero') {
+            nameInp.value = 'Рассрочка 0%';
+            if (!priceInp.value) priceInp.value = 60000;
+            downInp.value = '';
+            rateInp.value = 0;
+            termInp.value = 12;
+          } else if (p === 'cash') {
+            nameInp.value = 'Потребительский кредит';
+            if (!priceInp.value) priceInp.value = 250000;
+            downInp.value = '';
+            rateInp.value = 22;
+            termInp.value = 24;
+          } else if (p === 'equip') {
+            nameInp.value = 'Покупка оборудования';
+            if (!priceInp.value) priceInp.value = 90000;
+            downInp.value = '';
+            rateInp.value = 12;
+            termInp.value = 12;
+          }
+        };
+      });
+
+      simCard.querySelectorAll('[data-lpprice]').forEach(p => {
+        p.onclick = () => { priceInp.value = p.dataset.lpprice; };
+      });
+      simCard.querySelectorAll('[data-lpdown]').forEach(p => {
+        p.onclick = () => {
+          const pr = parseMoney(priceInp.value);
+          if (p.dataset.lpdown === 'bal') downInp.value = safeDownPaymentFromBal;
+          else if (pr > 0) downInp.value = Math.round(pr * (Number(p.dataset.lpdown) / 100));
+        };
+      });
+      simCard.querySelectorAll('[data-lpterm]').forEach(p => {
+        p.onclick = () => { termInp.value = p.dataset.lpterm; };
+      });
+
+      simCard.querySelector('#ln-calc-btn').onclick = () => {
+        const totalPrice = parseMoney(priceInp.value);
+        const downPay = parseMoney(downInp.value);
+        const annualRate = parseMoney(rateInp.value);
+        const termMonths = Math.max(1, Math.round(parseMoney(termInp.value)) || 12);
+        const payType = simCard.querySelector('#ln-type').value;
+        const extraMonthly = parseMoney(simCard.querySelector('#ln-extra').value);
+        const insFee = parseMoney(simCard.querySelector('#ln-ins').value);
+
+        const resEl = simCard.querySelector('#ln-sim-res');
+        resEl.style.display = 'block';
+
+        const principal = Math.max(0, totalPrice - downPay) + insFee;
+        if (principal <= 0) {
+          resEl.innerHTML = `<div class="reminder red">⚠ Укажи стоимость покупки больше первоначального взноса</div>`;
+          return;
+        }
+
+        const r = (annualRate / 100) / 12;
+        let baseMonthly = 0;
+        let firstMonthly = 0;
+        let lastMonthly = 0;
+        let totalInterest = 0;
+        const schedule = [];
+
+        if (payType === 'annuity') {
+          if (r <= 0) {
+            baseMonthly = principal / termMonths;
+          } else {
+            const pow = Math.pow(1 + r, termMonths);
+            baseMonthly = principal * ((r * pow) / (pow - 1));
+          }
+          firstMonthly = baseMonthly;
+          lastMonthly = baseMonthly;
+          totalInterest = (baseMonthly * termMonths) - principal;
+        } else {
+          // Differentiated
+          const bodyPart = principal / termMonths;
+          let rem = principal;
+          for (let m = 1; m <= termMonths; m++) {
+            const intPart = rem * r;
+            const p = bodyPart + intPart;
+            if (m === 1) firstMonthly = p;
+            if (m === termMonths) lastMonthly = p;
+            totalInterest += intPart;
+            rem -= bodyPart;
+          }
+          baseMonthly = firstMonthly;
+        }
+
+        // Simulate actual schedule with extraMonthly (early payoff)
+        let remDebt = principal;
+        let actualMonths = 0;
+        let actualInterest = 0;
+        const fixedBodyDiff = principal / termMonths;
+
+        while (remDebt > 0.5 && actualMonths < 600) {
+          actualMonths++;
+          const intMonth = remDebt * r;
+          actualInterest += intMonth;
+          let regPay = payType === 'annuity' ? baseMonthly : (fixedBodyDiff + intMonth);
+          let totalPayThisMonth = regPay + extraMonthly;
+          let bodyPay = totalPayThisMonth - intMonth;
+          if (bodyPay <= 0) bodyPay = remDebt / termMonths;
+          if (bodyPay >= remDebt) {
+            bodyPay = remDebt;
+            totalPayThisMonth = bodyPay + intMonth;
+          }
+          remDebt = Math.max(0, remDebt - bodyPay);
+          schedule.push({
+            m: actualMonths,
+            pay: totalPayThisMonth,
+            body: bodyPay,
+            int: intMonth,
+            rem: remDebt
+          });
+        }
+
+        const savedMonths = Math.max(0, termMonths - actualMonths);
+        const savedInterest = Math.max(0, totalInterest - actualInterest);
+        const overpayPct = principal > 0 ? Math.round((actualInterest / principal) * 100) : 0;
+
+        // AI Stress Test against user's real budget
+        const newTotalDebtLoad = totalMonthlyPay + baseMonthly + extraMonthly;
+        const newDtiPct = intel.avgMonthlyInc > 0 ? Math.round(((newTotalDebtLoad + (intel.totalMonthlyOutflow - intel.avgMonthlyExp)) / intel.avgMonthlyInc) * 100) : 0;
+        const ptiPct = intel.avgMonthlyInc > 0 ? Math.round(((baseMonthly + extraMonthly) / intel.avgMonthlyInc) * 100) : 0;
+        const freeAfterLoanMonth = intel.avgMonthlyInc - intel.totalMonthlyOutflow - (baseMonthly + extraMonthly);
+        const freeDailyWithLoan = Math.max(0, (intel.avgMonthlyInc - (baseMonthly + extraMonthly)) / 30);
+
+        let aiStatus = 'good';
+        let aiTitle = '✅ AI-Вердикт: Комфортная нагрузка на бюджет';
+        let aiText = `Платёж займёт <b>${ptiPct}%</b> от твоего среднего дохода (${fmtI(intel.avgMonthlyInc)} ₽/мес). После всех твоих обычных расходов и выплаты кредита у тебя будет оставаться ещё <b>+${fmtI(Math.max(0, freeAfterLoanMonth))} ₽/мес</b> свободного резерва.`;
+
+        if (ptiPct > 40 || freeAfterLoanMonth < -3000) {
+          aiStatus = 'low';
+          const recTerm = Math.min(84, Math.ceil(termMonths * 1.5));
+          aiTitle = `🔴 AI-Вердикт: Высокая долговая нагрузка (${ptiPct}% от дохода)`;
+          aiText = `Платёж ${fmtI(baseMonthly)} ₽/мес съест почти половину дохода — при твоих средних расходах (${fmtI(intel.avgMonthlyExp)} ₽/мес) бюджет уйдёт в дефицит на <b>${fmtI(Math.abs(freeAfterLoanMonth))} ₽/мес</b>. <br>💡 <b>Рекомендация AI:</b> увеличь срок до <b>${recTerm} мес.</b> или первоначальный взнос до <b>${fmtI(downPay + Math.min(safeDownPaymentFromBal, 100000))} ₽</b>, чтобы снизить платёж до безопасных ${fmtI(intel.maxSafeLoanPayment)} ₽/мес.`;
+        } else if (ptiPct > 25 || freeAfterLoanMonth < 5000) {
+          aiStatus = 'high';
+          aiTitle = `🟠 AI-Вердикт: Умеренно-плотная нагрузка (${ptiPct}% от дохода)`;
+          aiText = `Кредит посильный, но потребует дисциплины: свободный остаток после всех трат составит <b>${freeAfterLoanMonth>=0?'+':''}${fmtI(freeAfterLoanMonth)} ₽/мес</b>. Рекомендуем держать на балансе неприкосновенный запас минимум в 2 платежа (${fmtI(baseMonthly * 2)} ₽).`;
+        }
+
+        resEl.innerHTML = `
+          <div class="calc-result">
+            <div class="b-row"><span class="b-key">Тело кредита (за вычетом взноса):</span><span class="b-val" style="color:var(--cyan)">${fmtI(principal)} ₽</span></div>
+            <div class="b-row"><span class="b-key">Ежемесячный платёж:</span><span class="b-val" style="color:var(--green);font-size:16px">${payType==='annuity' ? fmt(baseMonthly) + ' ₽/мес' : fmtI(firstMonthly) + ' → ' + fmtI(lastMonthly) + ' ₽'}</span></div>
+            <div class="b-row"><span class="b-key">Переплата по процентам:</span><span class="b-val" style="color:var(--orange)">${fmtI(actualInterest)} ₽ (${overpayPct}%)</span></div>
+            <div class="b-row"><span class="b-key">Полная стоимость кредита (с взносом):</span><span class="b-val">${fmtI(downPay + principal + actualInterest)} ₽</span></div>
+            ${extraMonthly > 0 ? `
+              <div style="margin-top:8px;padding:8px 10px;background:rgba(0,255,149,.08);border:1px solid rgba(0,255,149,.28);border-radius:10px;font-size:11px;color:var(--green)">
+                ⚡ <b>Эффект досрочки (+${fmtI(extraMonthly)} ₽/мес):</b> закроешь за <b>${actualMonths} мес.</b> вместо ${termMonths} мес. (быстрее на <b>${savedMonths} мес.</b>) и сэкономишь <b>+${fmtI(savedInterest)} ₽</b> на процентах!
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="advisor-box ${aiStatus}">
+            <div style="font-weight:800;margin-bottom:4px">${aiTitle}</div>
+            <div>${aiText}</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn g full" id="ln-save-active">➕ Сохранить в мои активные кредиты / рассрочки</button>
+          </div>
+
+          <details style="margin-top:10px">
+            <summary>📅 Помесячный график платежей (${actualMonths} мес.)</summary>
+            <div class="hist-list" style="max-height:240px;margin-top:6px">
+              ${schedule.map(row => `
+                <div class="b-row" style="font-size:10.5px;padding:5px 0">
+                  <span><b>Мес. ${row.m}</b>: ${fmtI(row.pay)} ₽</span>
+                  <span style="color:var(--muted)">долг: ${fmtI(row.body)} · %: ${fmtI(row.int)}</span>
+                  <span style="color:var(--cyan);font-weight:700">ост: ${fmtI(row.rem)} ₽</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        `;
+
+        resEl.querySelector('#ln-save-active').onclick = async () => {
+          const title = nameInp.value.trim() || (annualRate > 0 ? 'Кредит' : 'Рассрочка');
+          await this.db.add(S.LOANS, {
+            name: title,
+            totalAmount: principal,
+            remainingDebt: principal,
+            rate: annualRate,
+            termMonths: actualMonths,
+            monthlyPayment: Math.round(baseMonthly + extraMonthly),
+            payDay: 15,
+            startDate: today(),
+            closed: false
+          });
+          this.loanSubTab = 'active';
+          this._render(true);
+        };
+      };
+    }
+
+    // ─── SUB-TAB 2: ACTIVE LOANS & INSTALLMENTS TRACKER ───
+    if (this.loanSubTab === 'active') {
+      const topCard = this._card();
+      topCard.innerHTML = `
+        <div class="card-title">
+          <span>📑 Мои кредиты и рассрочки</span>
+          <button class="btn c sm" id="add-manual-loan">+ Добавить вручную</button>
+        </div>
+        <div class="g2">
+          <div class="stat"><div class="v" style="color:var(--orange)">${fmtI(totalDebt)} ₽</div><div class="l">Общий остаток долга</div></div>
+          <div class="stat"><div class="v" style="color:var(--cyan)">${fmtI(totalMonthlyPay)} ₽/мес</div><div class="l">Сумма платежей в месяц</div></div>
+        </div>
+        <div id="manual-loan-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
+          <div class="g2">
+            <div class="ig"><label class="lbl">Название</label><input id="ml-name" placeholder="Автокредит / Рассрочка Ozon"></div>
+            <div class="ig"><label class="lbl">Остаток долга (₽)</label><input type="text" inputmode="decimal" id="ml-rem" placeholder="350000"></div>
+            <div class="ig"><label class="lbl">Ежемесячный платёж (₽)</label><input type="text" inputmode="decimal" id="ml-pay" placeholder="14500"></div>
+            <div class="ig"><label class="lbl">Ставка (% годовых)</label><input type="text" inputmode="decimal" id="ml-rate" placeholder="18"></div>
+          </div>
+          <button class="btn c full" id="ml-save">Сохранить кредит</button>
+        </div>
+      `;
+      c.appendChild(topCard);
+
+      topCard.querySelector('#add-manual-loan').onclick = () => {
+        const f = topCard.querySelector('#manual-loan-form');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+      };
+      topCard.querySelector('#ml-save').onclick = async () => {
+        const name = topCard.querySelector('#ml-name').value.trim();
+        const rem = parseMoney(topCard.querySelector('#ml-rem').value);
+        const pay = parseMoney(topCard.querySelector('#ml-pay').value);
+        const rate = parseMoney(topCard.querySelector('#ml-rate').value);
+        if (!name || rem <= 0) return;
+        await this.db.add(S.LOANS, {
+          name, totalAmount: rem, remainingDebt: rem, rate,
+          monthlyPayment: pay || Math.round(rem / 12),
+          payDay: 15, startDate: today(), closed: false
+        });
+        this._render(true);
+      };
+
+      if (!loans.length) {
+        const emptyCard = this._card();
+        emptyCard.innerHTML = `<div style="color:var(--muted);text-align:center;padding:18px;font-size:12px">У тебя пока нет активных кредитов или рассрочек. Можешь рассчитать любой вариант во вкладке «🧮 Калькулятор и AI-Подбор»!</div>`;
+        c.appendChild(emptyCard);
+      } else {
+        loans.forEach(ln => {
+          const paid = Math.max(0, (ln.totalAmount || ln.remainingDebt) - ln.remainingDebt);
+          const pct = ln.totalAmount > 0 ? Math.min(100, (paid / ln.totalAmount) * 100) : 0;
+          const mLeft = ln.monthlyPayment > 0 ? Math.ceil(ln.remainingDebt / ln.monthlyPayment) : 0;
+          const lc = this._card();
+          lc.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+              <div>
+                <div style="font-size:14px;font-weight:800;color:var(--cyan)">${ln.name} <span class="badge">${ln.rate || 0}% год.</span></div>
+                <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Платёж: <b>${fmtI(ln.monthlyPayment)} ₽/мес</b> · осталось ~${mLeft} мес.</div>
+              </div>
+              <button class="del-btn" data-delln="${ln.id}">×</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+              <span>Выплачено: <b>${fmtI(paid)} ₽</b> (${pct.toFixed(0)}%)</span>
+              <span style="color:var(--orange);font-weight:700">Остаток: ${fmt(ln.remainingDebt)} ₽</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+            <div class="btn-row" style="margin-top:10px">
+              <button class="btn g sm" data-payln="${ln.id}" style="flex:1">✓ Внести платёж (${fmtI(ln.monthlyPayment)} ₽)</button>
+              <button class="btn c sm" data-extraln="${ln.id}" style="flex:1">⚡ Досрочно</button>
+            </div>
+            <div id="ln-extra-box-${ln.id}" style="display:none;margin-top:8px"></div>
+          `;
+          c.appendChild(lc);
+
+          lc.querySelector(`[data-delln="${ln.id}"]`).onclick = () => confirmDel(lc.querySelector(`[data-delln="${ln.id}"]`), async () => {
+            await this.db.del(S.LOANS, ln.id);
+            this._render(true);
+          });
+
+          lc.querySelector(`[data-payln="${ln.id}"]`).onclick = async () => {
+            const payAmt = Math.min(ln.remainingDebt, ln.monthlyPayment);
+            if (payAmt <= 0) return;
+            const monthInterest = (ln.remainingDebt * ((ln.rate || 0) / 100)) / 12;
+            const principalPart = Math.max(0, payAmt - monthInterest);
+            ln.remainingDebt = Math.max(0, +(ln.remainingDebt - (principalPart > 0 ? principalPart : payAmt)).toFixed(2));
+            if (ln.remainingDebt <= 1) ln.closed = true;
+            await this.db.set(S.LOANS, ln);
+            await this.db.add(S.TX, {
+              amount: payAmt, type: 'expense', category: 'Кредиты и рассрочки',
+              comment: `Платёж по кредиту: ${ln.name}`, date: new Date().toISOString(), isMandatory: true
+            });
+            await this.db.adjustAccountBalance('expense', payAmt);
+            this._render(true);
+          };
+
+          lc.querySelector(`[data-extraln="${ln.id}"]`).onclick = () => {
+            const box = lc.querySelector(`#ln-extra-box-${ln.id}`);
+            if (box.style.display === 'block') { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            box.innerHTML = `
+              <div style="display:flex;gap:6px">
+                <input type="text" inputmode="decimal" id="lne-inp-${ln.id}" placeholder="Сумма досрочного погашения ₽" style="flex:1">
+                <button class="btn g sm" id="lne-ok-${ln.id}">Погасить</button>
+              </div>
+            `;
+            box.querySelector(`#lne-ok-${ln.id}`).onclick = async () => {
+              const amt = parseMoney(box.querySelector(`#lne-inp-${ln.id}`).value);
+              if (!amt || amt <= 0) return;
+              ln.remainingDebt = Math.max(0, +(ln.remainingDebt - amt).toFixed(2));
+              if (ln.remainingDebt <= 1) ln.closed = true;
+              await this.db.set(S.LOANS, ln);
+              await this.db.add(S.TX, {
+                amount: amt, type: 'expense', category: 'Кредиты и рассрочки',
+                comment: `Досрочное погашение: ${ln.name}`, date: new Date().toISOString(), isMandatory: false
+              });
+              await this.db.adjustAccountBalance('expense', amt);
+              this._render(true);
+            };
+          };
+        });
+      }
+    }
+  }
+
+  /* ═══════ 3D PRINT PRO STUDIO — CLEAR 4-TAB INTERFACE WITH 3D SCANNING & BATCH/SINGLE MODE ═══════ */
   async _print(c){
     const hr     = await this.db.cfg('printHourRate');
     const sf     = await this.db.cfg('printSetupFee');
@@ -2022,28 +3144,41 @@ class App {
           </div>
         </div>
 
-        <!-- STEP 2: PART WEIGHT & PRINT TIME (NO ANNOYING ZEROS!) -->
+        <!-- STEP 2: PART WEIGHT, TIME & BATCH VS SINGLE MODE -->
         <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)">
-          <div style="margin-bottom:8px"><span class="step-badge">ШАГ 2</span><b>Данные из слайсера (вес и время)</b></div>
-          <div class="g3">
+          <div style="margin-bottom:8px"><span class="step-badge">ШАГ 2</span><b>Данные из слайсера (вес, время и кол-во)</b></div>
+
+          <label class="lbl">Как указаны вес и время в слайсере?</label>
+          <div class="seg-bar" style="margin-bottom:10px">
+            <div class="seg-btn ${this._batchMode==='batch'?'active':''}" data-bmod="batch" title="Если на столе сразу несколько деталей и ты вводишь общий вес и время со слайсера">📦 Общие на весь стол / партию</div>
+            <div class="seg-btn ${this._batchMode==='single'?'active':''}" data-bmod="single" title="Если ты ввёл вес и время 1 детали, и их нужно умножить на количество">🧩 За 1 штуку (умножать на кол-во)</div>
+          </div>
+
+          <div class="g2" style="margin-bottom:8px">
             <div class="ig" style="margin-bottom:0">
-              <label class="lbl">Вес 1 детали (г)</label>
+              <label class="lbl" id="c-wg-lbl">${this._batchMode==='batch'?'Общий вес со слайсера (г)':'Вес 1 штуки (г)'}</label>
               <input type="text" inputmode="decimal" id="c-wg" placeholder="Напр: 85" style="font-weight:800;color:var(--cyan)">
             </div>
             <div class="ig" style="margin-bottom:0">
-              <label class="lbl">Часы печати</label>
+              <label class="lbl">Количество деталей (шт)</label>
+              <input type="text" inputmode="numeric" id="c-qty" placeholder="1" value="1">
+            </div>
+          </div>
+          <div class="g2">
+            <div class="ig" style="margin-bottom:0">
+              <label class="lbl">${this._batchMode==='batch'?'Общие часы печати':'Часы (на 1 шт)'}</label>
               <input type="text" inputmode="decimal" id="c-th-h" placeholder="0 ч">
             </div>
             <div class="ig" style="margin-bottom:0">
-              <label class="lbl">Минуты печати</label>
+              <label class="lbl">${this._batchMode==='batch'?'Общие минуты печати':'Минуты (на 1 шт)'}</label>
               <input type="text" inputmode="decimal" id="c-th-m" placeholder="0 мин">
             </div>
           </div>
         </div>
 
-        <!-- STEP 3: COMPLEXITY & EXTRAS -->
+        <!-- STEP 3: COMPLEXITY & EXTRAS (POST-PROCESSING, CAD, 3D SCANNING) -->
         <div>
-          <div style="margin-bottom:8px"><span class="step-badge">ШАГ 3</span><b>Сложность и доп. работа (по желанию)</b></div>
+          <div style="margin-bottom:8px"><span class="step-badge">ШАГ 3</span><b>Сложность и доп. услуги (по желанию)</b></div>
           <div class="diff-grid" id="tier-grid">
             ${Object.values(DIFF_TIERS).map(t=>`
               <div class="diff-card ${this._selTier===t.level?'active':''}" data-tier="${t.level}">
@@ -2060,9 +3195,9 @@ class App {
           </div>
 
           <div class="g3">
-            <div class="ig"><label class="lbl">Количество (шт)</label><input type="text" inputmode="numeric" id="c-qty" placeholder="1" value="1"></div>
             <div class="ig"><label class="lbl">Постобработка (₽)</label><input type="text" inputmode="decimal" id="c-post" placeholder="0 ₽"></div>
-            <div class="ig"><label class="lbl">Моделирование (₽)</label><input type="text" inputmode="decimal" id="c-cad" placeholder="0 ₽"></div>
+            <div class="ig"><label class="lbl">3D-моделирование (₽)</label><input type="text" inputmode="decimal" id="c-cad" placeholder="0 ₽"></div>
+            <div class="ig"><label class="lbl">3D-сканирование (₽)</label><input type="text" inputmode="decimal" id="c-scan" placeholder="0 ₽"></div>
           </div>
 
           <div class="g2" style="align-items:center;margin-bottom:6px">
@@ -2084,6 +3219,14 @@ class App {
         if(activeFil && activeFil.id) openSpoolModal(activeFil);
         else openSpoolModal(null);
       };
+
+      cc.querySelectorAll('[data-bmod]').forEach(btn => {
+        btn.onclick = () => {
+          this._batchMode = btn.dataset.bmod;
+          cc.querySelectorAll('[data-bmod]').forEach(b => b.classList.toggle('active', b.dataset.bmod === this._batchMode));
+          cc.querySelector('#c-wg-lbl').textContent = this._batchMode === 'batch' ? 'Общий вес со слайсера (г)' : 'Вес 1 штуки (г)';
+        };
+      });
 
       const spPInp = cc.querySelector('#c-spool-p');
       const spWInp = cc.querySelector('#c-spool-w');
@@ -2127,23 +3270,24 @@ class App {
         const qty = Math.max(1, Math.round(parseMoney(cc.querySelector('#c-qty').value)) || 1);
         const postProcFee = parseMoney(cc.querySelector('#c-post').value);
         const cadFee = parseMoney(cc.querySelector('#c-cad').value);
+        const scanFee = parseMoney(cc.querySelector('#c-scan').value);
         const isUrgent = urgCb.checked;
 
         const res = cc.querySelector('#c-res');
         res.style.display = 'block';
         if(weightG <= 0){
-          res.innerHTML = `<div class="reminder red">⚠ Укажи вес детали в граммах (в Шаге 2)</div>`;
+          res.innerHTML = `<div class="reminder red">⚠ Укажи вес в граммах (в Шаге 2)</div>`;
           return;
         }
 
         const quote = calc3DProQuote({
           weightG, timeHours, spoolPrice, spoolWeight, tierLevel:this._selTier,
-          qty, postProcFee, cadFee, isUrgent,
+          qty, batchMode:this._batchMode, postProcFee, cadFee, scanFee, isUrgent,
           hourRate:hr, setupFee:sf, minPrice:mp, elecPerHour:elec, amortPerHour:amort, markupMult:markup
         });
 
         let currentFinalPrice = quote.recPrice;
-        const health = evaluatePriceHealth(currentFinalPrice, quote, weightG, qty, postProcFee, cadFee);
+        const health = evaluatePriceHealth(currentFinalPrice, quote, quote.totalWeightG, quote.extrasTotal);
         const sliderMin = Math.max(50, Math.round(quote.totalCost * 0.8));
         const sliderMax = Math.max(quote.corridorMax * 1.8, currentFinalPrice + 1000);
 
@@ -2153,13 +3297,20 @@ class App {
               <span>Катушка: <b>${fmtI(spoolPrice)} ₽/${spoolWeight}г</b> (${quote.gramCost.toFixed(2)} ₽/г)</span>
               <span>${quote.tier.name} (×${quote.tier.mult})</span>
             </div>
+            <div class="b-row"><span class="b-key">Общий вес / время партии (${qty} шт):</span><span class="b-val">${Math.round(quote.totalWeightG)} г · ${quote.totalTimeHours.toFixed(1)} ч</span></div>
             <div class="b-row"><span class="b-key">Себестоимость пластика (с запасом на брак):</span><span class="b-val">${fmt(quote.rawMaterialCost)} ₽</span></div>
             <div class="b-row"><span class="b-key">Амортизация принтера, сопла и свет:</span><span class="b-val">${fmt(quote.machineCost)} ₽</span></div>
             <div class="b-row"><span class="b-key">Полная себестоимость партии (${qty} шт):</span><span class="b-val" style="color:var(--orange)">${fmt(quote.totalCost)} ₽</span></div>
+            ${postProcFee>0?`<div class="b-row"><span class="b-key">Постобработка:</span><span class="b-val">+${fmtI(postProcFee)} ₽</span></div>`:''}
+            ${cadFee>0?`<div class="b-row"><span class="b-key">3D-моделирование (CAD):</span><span class="b-val">+${fmtI(cadFee)} ₽</span></div>`:''}
+            ${scanFee>0?`<div class="b-row"><span class="b-key">3D-сканирование:</span><span class="b-val">+${fmtI(scanFee)} ₽</span></div>`:''}
             <div class="b-row"><span class="b-key">Оптимальная рыночная вилка:</span><span class="b-val" style="color:var(--green)">${fmtI(quote.corridorMin)} – ${fmtI(quote.corridorMax)} ₽</span></div>
 
             <div class="calc-total" style="align-items:center;gap:10px">
-              <span>Итого клиенту (₽):</span>
+              <div>
+                <div>Итого клиенту (₽):</div>
+                ${qty > 1 ? `<div id="per-unit-lbl" style="font-size:11px;color:var(--muted);font-weight:600">По ${fmtI(Math.round(currentFinalPrice/qty))} ₽ за 1 шт. (${qty} шт.)</div>` : ''}
+              </div>
               <input type="text" inputmode="decimal" id="final-price-inp" value="${currentFinalPrice}" style="width:135px;text-align:right;font-size:20px;font-weight:900;color:var(--cyan);padding:6px 10px;border-color:var(--cyan)">
             </div>
             <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-top:6px">
@@ -2188,6 +3339,7 @@ class App {
         const priceInp = res.querySelector('#final-price-inp');
         const profitLbl = res.querySelector('#net-profit-lbl');
         const gramLbl = res.querySelector('#eff-gram-lbl');
+        const perUnitLbl = res.querySelector('#per-unit-lbl');
         const adv = res.querySelector('#advisor-box');
 
         const syncCustomPrice = (newPrice, fromSlider = false) => {
@@ -2198,7 +3350,10 @@ class App {
             if(currentFinalPrice > Number(slider.max)) slider.max = Math.round(currentFinalPrice * 1.3);
             slider.value = currentFinalPrice;
           }
-          const h2 = evaluatePriceHealth(currentFinalPrice, quote, weightG, qty, postProcFee, cadFee);
+          if(perUnitLbl) {
+            perUnitLbl.textContent = `По ${fmtI(Math.round(currentFinalPrice/qty))} ₽ за 1 шт. (${qty} шт.)`;
+          }
+          const h2 = evaluatePriceHealth(currentFinalPrice, quote, quote.totalWeightG, quote.extrasTotal);
           profitLbl.style.color = h2.netProfit >= 0 ? 'var(--green)' : 'var(--red)';
           profitLbl.innerHTML = `Чистая прибыль: <b>${h2.netProfit>=0?'+':''}${fmtI(h2.netProfit)} ₽</b> (маржа ${h2.marginPct}%)`;
           gramLbl.textContent = `~${h2.effRubPerGram.toFixed(1)} ₽/г`;
@@ -2211,13 +3366,15 @@ class App {
 
         res.querySelector('#btn-copy-kp').onclick = async () => {
           const desc = cc.querySelector('#c-desc').value.trim() || 'Деталь на 3D-принтере';
-          const timeTxt = hours > 0 || minutes > 0 ? `${hours}ч ${minutes}мин` : 'по регламенту';
+          const totH = Math.floor(quote.totalTimeHours);
+          const totM = Math.round((quote.totalTimeHours - totH) * 60);
+          const timeTxt = (totH > 0 || totM > 0) ? `${totH}ч ${totM}мин` : 'по регламенту';
           const kpText =
 `🖨 Расчёт стоимости 3D-печати:
-• Деталь: ${desc} (${qty} шт.)
+• Деталь: ${desc} (${qty} шт.${qty>1 ? `, по ${fmtI(Math.round(currentFinalPrice/qty))} ₽/шт` : ''})
 • Материал: ${activeFil.name} (${quote.tier.name.split('·')[1].trim()})
-• Общий вес: ${weightG * qty} г | Время печати: ${timeTxt}
-${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}${cadFee>0?`• 3D-моделирование: ${fmtI(cadFee)} ₽\n`:''}──────────────
+• Общий вес партии: ${Math.round(quote.totalWeightG)} г | Время печати: ${timeTxt}
+${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}${cadFee>0?`• 3D-моделирование (CAD): ${fmtI(cadFee)} ₽\n`:''}${scanFee>0?`• 3D-сканирование: ${fmtI(scanFee)} ₽\n`:''}──────────────
 💰 Итого к оплате: ${fmtI(currentFinalPrice)} ₽`;
           try {
             await navigator.clipboard.writeText(kpText);
@@ -2233,7 +3390,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
             amount: currentFinalPrice,
             type: 'income',
             category: '3D-печать',
-            comment: `${desc} · ${activeFil.name} · ${weightG*qty}г (${qty}шт)`,
+            comment: `${desc} · ${activeFil.name} · ${Math.round(quote.totalWeightG)}г (${qty}шт)`,
             date: new Date().toISOString()
           });
           await this.db.adjustAccountBalance('income', currentFinalPrice);
@@ -2828,10 +3985,11 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     };
   }
 
-  /* ═══════ GARAGE (CUSTOMIZABLE PRO EDITION) ═══════ */
+  /* ═══════ GARAGE (FIXED 'ALL CARS' BUTTON + PARTS CATALOG + SERVICE BOOK EXPORT) ═══════ */
   async _garage(c){
     const cars = await this.db.all(S.CARS);
-    if(this.activeCarId === null && cars.length === 1){
+    if(!this._carAutoSelected && this.activeCarId === null && cars.length === 1){
+      this._carAutoSelected = true;
       this.activeCarId = cars[0].id;
     }
     if(this.activeCarId === null) await this._renderCarsList(c);
@@ -2840,14 +3998,17 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
 
   async _renderCarsList(c) {
     const cars = await this.db.all(S.CARS);
-    const hd = this._card();
+    const hd = this._card(' glow');
     hd.innerHTML = `<div class="card-title">
-        <span>🚗 Ваши автомобили</span>
+        <span>🚗 Ваши автомобили (${cars.length})</span>
         <button class="hdr-btn" id="add-car-btn">+ Добавить авто</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      Выбери автомобиль для просмотра сервисной книжки, базы запчастей и регламента ТО, или добавь новый:
     </div>`;
 
     if(cars.length === 0) {
-      hd.insertAdjacentHTML('beforeend', `<div style="color:var(--muted);text-align:center;padding:15px;font-size:12px;">У вас пока нет добавленных автомобилей.</div>`);
+      hd.insertAdjacentHTML('beforeend', `<div style="color:var(--muted);text-align:center;padding:15px;font-size:12px;">У вас пока нет добавленных автомобилей. Нажми «+ Добавить авто» выше!</div>`);
     } else {
       cars.forEach(car => {
         const el = document.createElement('div');
@@ -2865,11 +4026,18 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     }
 
     const addForm = document.createElement('div');
-    addForm.style.cssText = 'display:none;margin-top:15px;padding-top:15px;border-top:1px solid rgba(0,240,255,0.1)';
+    addForm.style.cssText = 'display:none;margin-top:15px;padding-top:15px;border-top:1px solid rgba(0,240,255,0.15)';
     addForm.innerHTML = `
-      <div class="ig"><label class="lbl">Название (Марка, Модель)</label><input type="text" id="new-car-name" placeholder="Например: Лада Гранта / Peugeot 206"></div>
-      <div class="ig"><label class="lbl">Текущий пробег (км)</label><input type="text" inputmode="numeric" id="new-car-odo" placeholder="248000"></div>
-      <button class="btn c full" id="save-new-car">Сохранить автомобиль</button>
+      <div class="card-title">➕ Новый автомобиль</div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Марка и Модель</label><input type="text" id="new-car-name" placeholder="Напр: Лада Гранта / Peugeot 206"></div>
+        <div class="ig"><label class="lbl">Текущий пробег (км)</label><input type="text" inputmode="numeric" id="new-car-odo" placeholder="125000"></div>
+      </div>
+      <div class="g2">
+        <div class="ig"><label class="lbl">Госномер (необязательно)</label><input type="text" id="new-car-plate" placeholder="А000АА 68"></div>
+        <div class="ig"><label class="lbl">VIN (необязательно)</label><input type="text" id="new-car-vin" placeholder="XTA..."></div>
+      </div>
+      <button class="btn c full" id="save-new-car">💾 Создать автомобиль и сервисную книжку</button>
     `;
     hd.appendChild(addForm);
     c.appendChild(hd);
@@ -2881,13 +4049,84 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     hd.querySelector('#save-new-car').onclick = async () => {
       const name = hd.querySelector('#new-car-name').value.trim();
       const odo = parseMoney(hd.querySelector('#new-car-odo').value) || 0;
+      const plate = hd.querySelector('#new-car-plate').value.trim();
+      const vin = hd.querySelector('#new-car-vin').value.trim();
       if(!name) { showInlineMsg(hd, 'Введите название автомобиля', 'var(--red)'); return; }
-      const carId = await this.db.add(S.CARS, { name, odo });
+      const carId = await this.db.add(S.CARS, { name, odo, plate, vin });
       for (const it of GENERIC_SVC_ITEMS) {
         await this.db.add(S.SVC, {...it, lastServiceOdo: odo, conditionStatus:'ok', enabled:true, car_id: carId});
       }
       this.activeCarId = carId;
       this._render(true);
+    };
+  }
+
+  async _openServiceBookExportModal(car, items, logs, parts) {
+    const m = document.getElementById('global-modal');
+    const mc = document.getElementById('global-modal-content');
+
+    const lines = [];
+    lines.push(`🚗 СЕРВИСНАЯ КНИЖКА: ${car.name.toUpperCase()}`);
+    lines.push(`📍 Текущий пробег: ${fmtI(car.odo)} км (на ${dStr(new Date())})`);
+    if (car.vin) lines.push(`🔢 VIN: ${car.vin}`);
+    if (car.plate) lines.push(`🪪 Госномер: ${car.plate}`);
+    if (car.oilSpec) lines.push(`🛢 Масло ДВС: ${car.oilSpec}`);
+    if (car.tires) lines.push(`🛞 Шины / Давление: ${car.tires}`);
+    lines.push(`──────────────────────────`);
+
+    if (logs.length > 0) {
+      lines.push(`📖 ИСТОРИЯ ОБСЛУЖИВАНИЯ И ЗАМЕН (${logs.length}):`);
+      logs.forEach(lg => {
+        lines.push(`• ${dStr(lg.date)} — ${fmtI(lg.odometer)} км: ${lg.label}${lg.comment ? ' (' + lg.comment + ')' : ''}${lg.cost ? ' — ' + fmtI(lg.cost) + ' ₽' : ''}`);
+      });
+      lines.push(`──────────────────────────`);
+    }
+
+    const kmItems = items.filter(it => !isCondOnly(it) && it.lastServiceOdo > 0);
+    if (kmItems.length > 0) {
+      lines.push(`🔧 СОСТОЯНИЕ ПО РЕГЛАМЕНТУ ТО:`);
+      kmItems.forEach(it => {
+        const done = Math.max(0, car.odo - it.lastServiceOdo);
+        const rem = Math.max(0, it.km - done);
+        lines.push(`• ${it.label}: менялось на ${fmtI(it.lastServiceOdo)} км (запас хода ещё ${fmtI(rem)} км из ${fmtI(it.km)} км)${it.notes ? ' [' + it.notes + ']' : ''}`);
+      });
+      lines.push(`──────────────────────────`);
+    }
+
+    if (parts.length > 0) {
+      lines.push(`🔩 ИСПОЛЬЗУЕМЫЕ ЗАПЧАСТИ И АРТИКУЛЫ:`);
+      parts.forEach(p => {
+        lines.push(`• ${p.name} (${p.cat || 'Авто'}): ${p.brand || ''} ${p.partNo ? 'Арт: ' + p.partNo : ''}${p.note ? ' — ' + p.note : ''}`);
+      });
+    }
+
+    const fullText = lines.join('\n');
+
+    mc.innerHTML = `
+      <div class="card-title">
+        <span>📖 Сервисная книжка (Для продажи / отправки)</span>
+        <button class="del-btn" id="sb-close">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45">
+        Готовая выписка по автомобилю. Можешь отредактировать текст прямо здесь и скопировать в 1 клик для покупателя, объявления или мастера:
+      </div>
+      <textarea id="sb-export-txt" style="min-height:230px;font-size:11.5px;font-family:monospace;line-height:1.5">${fullText}</textarea>
+      <div class="btn-row">
+        <button class="btn c full" id="sb-copy-btn">📋 Скопировать сервисную книжку в буфер</button>
+      </div>
+    `;
+    m.classList.add('show');
+    mc.querySelector('#sb-close').onclick = closeModal;
+    mc.querySelector('#sb-copy-btn').onclick = async () => {
+      const txt = mc.querySelector('#sb-export-txt').value;
+      try {
+        await navigator.clipboard.writeText(txt);
+        showInlineMsg(mc, '✓ Сервисная книжка скопирована в буфер обмена!');
+      } catch (_) {
+        mc.querySelector('#sb-export-txt').select();
+        document.execCommand('copy');
+        showInlineMsg(mc, '✓ Скопировано!');
+      }
     };
   }
 
@@ -2900,6 +4139,8 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     const hist = (await this.db.all(S.ODO)).filter(o => !o.car_id || o.car_id === car.id);
     const items = (await this.db.all(S.SVC)).filter(it => (!it.car_id || it.car_id === car.id) && it.enabled !== false).sort((a,b)=>a.id-b.id);
     const carTasks = (await this.db.all(S.CTASK)).filter(t => !t.car_id || t.car_id === car.id);
+    const carParts = (await this.db.all(S.CPARTS)).filter(p => !p.car_id || p.car_id === car.id);
+    const logs = (await this.db.all(S.GARAGE)).filter(lg => !lg.car_id || lg.car_id === car.id).sort((a, b) => new Date(b.date) - new Date(a.date));
     const allTxs = await this.db.all(S.TX);
 
     let avgDay = 25;
@@ -2910,7 +4151,6 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       if(span>0 && delta>0) avgDay = delta/span;
     }
 
-    // Check OSAGO warning
     let osagoBadge = '';
     if(car.osagoDate){
       const dLeft = Math.ceil((new Date(car.osagoDate) - new Date()) / 86400000);
@@ -2918,13 +4158,12 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       osagoBadge = `<span style="font-size:10px;color:${oCol};font-weight:700">🛡️ ОСАГО: ${dLeft > 0 ? dLeft + ' дн.' : 'ИСТЕКЛО!'}</span>`;
     }
 
-    // TOP ODOMETER & GARAGE SUB-NAVIGATION CARD
     const oc = this._card(' glow');
     oc.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-        <button class="hdr-btn" id="back-btn" style="border-color:rgba(255,255,255,0.2);color:var(--muted)">‹ Все авто</button>
+        <button class="hdr-btn" id="back-btn" style="border-color:rgba(0,240,255,0.35);color:var(--cyan)">‹ Все авто (Сменить / Добавить)</button>
         ${osagoBadge}
-        <button class="hdr-btn" id="edit-car-title-btn">✏️ Профиль авто</button>
+        <button class="hdr-btn" id="export-svc-book" style="border-color:rgba(0,255,149,.4);color:var(--green)">📖 Сервисная книжка</button>
       </div>
       <div class="card-title">
         <span>🚗 ${car.name}${car.plate ? ' · ' + car.plate : ''}</span>
@@ -2937,16 +4176,21 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       <div id="odo-ed"></div>
 
       <div class="seg-bar" style="margin-top:12px;margin-bottom:0">
-        <div class="seg-btn ${this.garageSubTab==='maint'?'active':''}" data-gst="maint">🔧 Регламент (${items.length})</div>
-        <div class="seg-btn ${this.garageSubTab==='tasks'?'active':''}" data-gst="tasks">📋 План работ (${carTasks.filter(x=>!x.done).length})</div>
+        <div class="seg-btn ${this.garageSubTab==='maint'?'active':''}" data-gst="maint">🔧 ТО (${items.length})</div>
+        <div class="seg-btn ${this.garageSubTab==='parts'?'active':''}" data-gst="parts">🔩 Запчасти (${carParts.length})</div>
+        <div class="seg-btn ${this.garageSubTab==='tasks'?'active':''}" data-gst="tasks">📋 План (${carTasks.filter(x=>!x.done).length})</div>
         <div class="seg-btn ${this.garageSubTab==='fuel'?'active':''}" data-gst="fuel">⛽ Топливо</div>
-        <div class="seg-btn ${this.garageSubTab==='info'?'active':''}" data-gst="info">🪪 Паспорт / Запчасти</div>
+        <div class="seg-btn ${this.garageSubTab==='info'?'active':''}" data-gst="info">🪪 Паспорт</div>
       </div>
     `;
     c.appendChild(oc);
 
-    oc.querySelector('#back-btn').onclick = () => { this.activeCarId = null; this._render(true); };
-    oc.querySelector('#edit-car-title-btn').onclick = () => { this.garageSubTab = 'info'; this._render(true); };
+    oc.querySelector('#back-btn').onclick = () => {
+      this._carAutoSelected = true;
+      this.activeCarId = null;
+      this._render(true);
+    };
+    oc.querySelector('#export-svc-book').onclick = () => this._openServiceBookExportModal(car, items, logs, carParts);
     oc.querySelectorAll('[data-gst]').forEach(btn => {
       btn.onclick = () => { this.garageSubTab = btn.dataset.gst; this._render(true); };
     });
@@ -2968,7 +4212,6 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       };
     };
 
-    // Modal to Add or Edit a Service Node (Узел ТО)
     const openServiceNodeModal = (nodeToEdit = null) => {
       const m = document.getElementById('global-modal');
       const mc = document.getElementById('global-modal-content');
@@ -3063,7 +4306,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       }
     };
 
-    // ─── GARAGE SUB-TAB 1: MAINTENANCE & WEAR ───
+    // ─── GARAGE SUB-TAB 1: MAINTENANCE & SERVICE BOOK ───
     if(this.garageSubTab === 'maint'){
       const wc = this._card();
       wc.innerHTML = `
@@ -3072,7 +4315,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
           <button class="btn c sm" id="add-svc-node">+ Добавить узел</button>
         </div>
         <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
-          Нажми <b>«✏️»</b> на любом узле, чтобы изменить интервал, пробег последней замены или добавить артикул.
+          Нажми <b>«✏️»</b> на любом узле, чтобы изменить интервал/пробег, или <b>«📖 Сервисная книжка»</b> вверху, чтобы скопировать полный отчёт по авто.
         </div>
       `;
       wc.querySelector('#add-svc-node').onclick = () => openServiceNodeModal(null);
@@ -3128,7 +4371,6 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
             ${it.notes ? `<div style="font-size:10px;color:#7d97ab;margin-top:2px">📌 ${it.notes}</div>` : ''}
           `;
           div.querySelector(`[data-qdone="${it.id}"]`).onclick = () => {
-            // Quick modal to confirm replacement at current odo + optional cost
             const m = document.getElementById('global-modal');
             const mc = document.getElementById('global-modal-content');
             mc.innerHTML = `
@@ -3164,7 +4406,6 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       });
       c.appendChild(wc);
 
-      // Record Maintenance Form (without annoying pre-filled 0!)
       const sc = this._card();
       const itemOpts = items.map(it => `<option value="${it.id}">${it.label}</option>`).join('');
       sc.innerHTML = `
@@ -3203,9 +4444,14 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
         this._render(true);
       };
 
-      const logs = (await this.db.all(S.GARAGE)).filter(lg => !lg.car_id || lg.car_id === car.id).sort((a, b) => new Date(b.date) - new Date(a.date));
       const jc = this._card();
-      jc.innerHTML = `<div class="card-title"><span>История обслуживания (${logs.length})</span></div>`;
+      jc.innerHTML = `
+        <div class="card-title">
+          <span>📖 Сервисная книжка: История (${logs.length})</span>
+          <button class="btn g sm" id="jc-copy-book">📋 Скопировать книжку</button>
+        </div>
+      `;
+      jc.querySelector('#jc-copy-book').onclick = () => this._openServiceBookExportModal(car, items, logs, carParts);
       if (!logs.length) {
         jc.insertAdjacentHTML('beforeend', '<div style="color:var(--muted);text-align:center;padding:16px">Записей пока нет</div>');
       } else {
@@ -3230,7 +4476,100 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       c.appendChild(jc);
     }
 
-    // ─── GARAGE SUB-TAB 2: PLANNED REPAIRS & PARTS WISHLIST ───
+    // ─── GARAGE SUB-TAB 2: MY USED PARTS CATALOG (БАЗА МОИХ ЗАПЧАСТЕЙ) ───
+    if(this.garageSubTab === 'parts'){
+      const pc = this._card();
+      const PART_CATS = ['ДВС и фильтры','Тормозная система','Подвеска и рулевое','ГРМ и ремни','Масла и жидкости','Электрика и свет','Кузов и салон','Другое'];
+      pc.innerHTML = `
+        <div class="card-title">
+          <span>🔩 База используемых запчастей (${carParts.length})</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.45">
+          Сохраняй сюда проверенные запчасти, бренды и артикулы, которые подходят на твой автомобиль, чтобы при следующем ТО скопировать артикул в 1 тап:
+        </div>
+        <div class="g2">
+          <div class="ig"><label class="lbl">Название детали</label><input id="pt-name" placeholder="Напр: Фильтр масляный"></div>
+          <div class="ig"><label class="lbl">Категория</label><select id="pt-cat">${PART_CATS.map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div>
+        </div>
+        <div class="g3">
+          <div class="ig"><label class="lbl">Бренд / Фирма</label><input id="pt-brand" placeholder="Mann / NGK / TRW"></div>
+          <div class="ig"><label class="lbl">Артикул (Партномер)</label><input id="pt-num" placeholder="W 712/83" style="font-weight:800;color:var(--cyan)"></div>
+          <div class="ig"><label class="lbl">Цена (₽)</label><input type="text" inputmode="decimal" id="pt-price" placeholder="Необяз."></div>
+        </div>
+        <div class="ig"><label class="lbl">Отзыв / Заметка (подошло, ресурс, нюансы)</label><input id="pt-note" placeholder="Например: Отличный фильтр, клапан держит"></div>
+        <button class="btn c full" id="pt-add">+ Сохранить деталь в каталог авто</button>
+
+        <div class="search-row" style="margin-top:14px;margin-bottom:8px">
+          <input type="text" id="pt-search" placeholder="🔍 Поиск по названию, бренду или артикулу...">
+        </div>
+        <div id="pt-list"></div>
+      `;
+      c.appendChild(pc);
+
+      pc.querySelector('#pt-add').onclick = async () => {
+        const name = pc.querySelector('#pt-name').value.trim();
+        if(!name) return;
+        const cat = pc.querySelector('#pt-cat').value;
+        const brand = pc.querySelector('#pt-brand').value.trim();
+        const partNo = pc.querySelector('#pt-num').value.trim();
+        const price = parseMoney(pc.querySelector('#pt-price').value);
+        const note = pc.querySelector('#pt-note').value.trim();
+        await this.db.add(S.CPARTS, { car_id: car.id, name, cat, brand, partNo, price, note });
+        this._render(true);
+      };
+
+      const renderPartsList = () => {
+        const q = (pc.querySelector('#pt-search').value || '').toLowerCase();
+        const listEl = pc.querySelector('#pt-list');
+        listEl.innerHTML = '';
+        const fil = carParts.filter(p => !q || (p.name||'').toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q) || (p.partNo||'').toLowerCase().includes(q) || (p.cat||'').toLowerCase().includes(q));
+        if(!fil.length){
+          listEl.innerHTML = `<div style="color:var(--muted);text-align:center;padding:14px;font-size:12px">В каталоге пока нет сохранённых запчастей</div>`;
+          return;
+        }
+        fil.forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'spool-card';
+          item.innerHTML = `
+            <div style="min-width:0;flex:1">
+              <div style="font-size:13px;font-weight:800;color:var(--text)">
+                ${p.name} <span class="badge" style="margin-left:5px">${p.cat||'Авто'}</span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">
+                ${p.brand ? `Бренд: <b style="color:var(--text)">${p.brand}</b> · ` : ''}
+                ${p.partNo ? `Артикул: <b style="color:var(--cyan)">${p.partNo}</b>` : 'Без артикула'}
+                ${p.price > 0 ? ` · ~<b>${fmtI(p.price)} ₽</b>` : ''}
+              </div>
+              ${p.note ? `<div style="font-size:10.5px;color:#8ab0c8;margin-top:3px">💬 ${p.note}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              ${p.partNo ? `<button class="btn c sm" data-copypn="${p.partNo}" title="Скопировать артикул">📋 Артикул</button>` : ''}
+              <button class="del-btn" data-delpt="${p.id}">×</button>
+            </div>
+          `;
+          const copyBtn = item.querySelector(`[data-copypn]`);
+          if(copyBtn){
+            copyBtn.onclick = async () => {
+              try {
+                await navigator.clipboard.writeText(p.partNo);
+                copyBtn.textContent = '✓ Скопировано';
+                setTimeout(() => { copyBtn.textContent = '📋 Артикул'; }, 1500);
+              } catch (_) {}
+            };
+          }
+          const delBtn = item.querySelector(`[data-delpt="${p.id}"]`);
+          delBtn.onclick = () => confirmDel(delBtn, async () => {
+            await this.db.del(S.CPARTS, p.id);
+            this._render(true);
+          });
+          listEl.appendChild(item);
+        });
+      };
+      renderPartsList();
+      pc.querySelector('#pt-search').oninput = renderPartsList;
+    }
+
+    // ─── GARAGE SUB-TAB 3: PLANNED REPAIRS & PARTS WISHLIST ───
     if(this.garageSubTab === 'tasks'){
       const pending = carTasks.filter(t => !t.done);
       const completed = carTasks.filter(t => t.done);
@@ -3332,7 +4671,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       }
     }
 
-    // ─── GARAGE SUB-TAB 3: FUEL & AUTO EXPENSES ANALYTICS + CALCULATOR ───
+    // ─── GARAGE SUB-TAB 4: FUEL & AUTO EXPENSES ANALYTICS + CALCULATOR ───
     if(this.garageSubTab === 'fuel'){
       const now = new Date();
       const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -3383,7 +4722,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       });
     }
 
-    // ─── GARAGE SUB-TAB 4: CAR PASSPORT (VIN, OSAGO, TIRES, FLUIDS, NOTES) ───
+    // ─── GARAGE SUB-TAB 5: CAR PASSPORT (VIN, OSAGO, TIRES, FLUIDS, NOTES) ───
     if(this.garageSubTab === 'info'){
       const ic = this._card();
       ic.innerHTML = `
@@ -3400,13 +4739,17 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
           <div class="ig"><label class="lbl">Залитое масло и объём</label><input id="cp-oil" placeholder="5W-30 · 3.2 л" value="${car.oilSpec||''}"></div>
         </div>
         <div class="ig">
-          <label class="lbl">Артикулы запчастей и заметки</label>
-          <textarea id="cp-notes" placeholder="Масляный фильтр: ...&#10;Свечи зажигания: ...&#10;Колодки передние: ..." style="min-height:110px">${car.partsNotes||''}</textarea>
+          <label class="lbl">Общие заметки по автомобилю</label>
+          <textarea id="cp-notes" placeholder="Дополнительные заметки, моменты затяжки, коды краски..." style="min-height:100px">${car.partsNotes||''}</textarea>
         </div>
-        <button class="btn c full" id="cp-save">💾 Сохранить паспорт и заметки авто</button>
+        <div class="btn-row">
+          <button class="btn c" id="cp-save" style="flex:1">💾 Сохранить паспорт авто</button>
+          <button class="btn g" id="cp-export-book" style="flex:1">📋 Скопировать сервисную книжку</button>
+        </div>
       `;
       c.appendChild(ic);
 
+      ic.querySelector('#cp-export-book').onclick = () => this._openServiceBookExportModal(car, items, logs, carParts);
       ic.querySelector('#cp-save').onclick = async () => {
         const updatedCar = {
           ...car,
@@ -3419,7 +4762,7 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
           partsNotes: ic.querySelector('#cp-notes').value
         };
         await this.db.set(S.CARS, updatedCar);
-        showInlineMsg(ic, '✓ Паспорт автомобиля и артикулы сохранены!', 'var(--green)');
+        showInlineMsg(ic, '✓ Паспорт автомобиля сохранён!', 'var(--green)');
         setTimeout(() => this._render(true), 600);
       };
 
@@ -3436,19 +4779,180 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     }
   }
 
-  /* ═══════ HUB (WITH CUSTOM USER RECIPES MANAGER!) ═══════ */
+  /* ═══════ INTERACTIVE SMS PARSER TRAINER MODAL ═══════ */
+  async _openSmsTrainerModal(sampleSms = '') {
+    const rules = await this.db.all(S.RULES);
+    const expCats = await this.db.getCats('expense');
+    const incCats = await this.db.getCats('income');
+    const m = document.getElementById('global-modal');
+    const mc = document.getElementById('global-modal-content');
+
+    mc.innerHTML = `
+      <div class="card-title">
+        <span>🤖 Обучение парсера СМС (Конструктор правил)</span>
+        <button class="del-btn" id="st-close">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45">
+        Вставь любое сообщение из банка, <b>нажми на ключевое слово</b> из текста (например, название магазина или отправителя) и укажи, к какой категории его всегда относить:
+      </div>
+      <div class="ig">
+        <label class="lbl">1. Вставь пример текста СМС или уведомления</label>
+        <textarea id="st-sample" placeholder="Например: MIR-8609 14:20 Покупка 450р SHAVERMA_24 Баланс: 1200р" style="min-height:56px;font-size:12px">${sampleSms}</textarea>
+      </div>
+      <div id="st-tokens-wrap" style="margin-bottom:10px;display:none">
+        <label class="lbl">Нажми на слово из СМС, чтобы сделать его ключевым:</label>
+        <div id="st-tokens"></div>
+      </div>
+      <div class="g2">
+        <div class="ig">
+          <label class="lbl">2. Ключевое слово / фраза из СМС</label>
+          <input id="st-kw" placeholder="Напр: SHAVERMA_24" style="font-weight:800;color:var(--cyan)">
+        </div>
+        <div class="ig">
+          <label class="lbl">Тип операции</label>
+          <select id="st-type">
+            <option value="expense">➖ Расход</option>
+            <option value="income">➕ Доход</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="ig">
+          <label class="lbl">3. Назначить категорию</label>
+          <select id="st-cat"></select>
+        </div>
+        <div class="ig">
+          <label class="lbl">Авто-комментарий (красивое имя)</label>
+          <input id="st-comm" placeholder="Напр: Шаверма 24">
+        </div>
+      </div>
+      <label class="mandatory-row" id="st-mand-row" style="margin-top:2px;margin-bottom:10px">
+        <div class="mandatory-toggle"><input type="checkbox" id="st-mand"><span class="mandatory-knob"></span></div>
+        <div class="mandatory-lbl">Считать обязательным платежом</div>
+      </label>
+      <button class="btn c full" id="st-save">💾 Сохранить правило распознавания</button>
+
+      <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px">
+        <div style="font-size:10px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">
+          📚 Мои правила распознавания СМС (${rules.length})
+        </div>
+        <div id="st-rules-list" class="hist-list" style="max-height:180px"></div>
+      </div>
+    `;
+    m.classList.add('show');
+    mc.querySelector('#st-close').onclick = closeModal;
+
+    const sampleInp = mc.querySelector('#st-sample');
+    const tokensWrap = mc.querySelector('#st-tokens-wrap');
+    const tokensEl = mc.querySelector('#st-tokens');
+    const kwInp = mc.querySelector('#st-kw');
+    const typeSel = mc.querySelector('#st-type');
+    const catSel = mc.querySelector('#st-cat');
+    const commInp = mc.querySelector('#st-comm');
+    const mandCb = mc.querySelector('#st-mand');
+    const mandRow = mc.querySelector('#st-mand-row');
+
+    const updateCatOpts = () => {
+      const list = typeSel.value === 'income' ? incCats : expCats;
+      catSel.innerHTML = list.map(x => `<option value="${x}">${x}</option>`).join('');
+      mandRow.style.display = typeSel.value === 'expense' ? 'flex' : 'none';
+    };
+    updateCatOpts();
+    typeSel.onchange = updateCatOpts;
+    mandCb.onchange = () => mandRow.classList.toggle('on', mandCb.checked);
+
+    const tokenizeSample = () => {
+      const txt = sampleInp.value.trim();
+      if (!txt) { tokensWrap.style.display = 'none'; return; }
+      tokensWrap.style.display = 'block';
+      // Extract meaningful words (ignore pure timestamps/card masks)
+      const rawTokens = txt.split(/[\s,;:"'()\[\]]+/).map(t => t.replace(/^[.*•\-]+|[.,:;!]+$/g, '')).filter(t => t.length >= 2 && !/^\d+([.,]\d+)?(р|руб|₽)?$/i.test(t) && !/^\d{2}:\d{2}$/.test(t));
+      const uniq = [...new Set(rawTokens)];
+      tokensEl.innerHTML = uniq.map(tok => `<span class="sms-token" data-tok="${tok}">${tok}</span>`).join('');
+      tokensEl.querySelectorAll('.sms-token').forEach(el => {
+        el.onclick = () => {
+          tokensEl.querySelectorAll('.sms-token').forEach(x => x.classList.remove('sel'));
+          el.classList.add('sel');
+          kwInp.value = el.dataset.tok;
+          if (!commInp.value) commInp.value = el.dataset.tok;
+        };
+      });
+    };
+    tokenizeSample();
+    sampleInp.oninput = tokenizeSample;
+
+    const renderRulesList = async () => {
+      const allR = await this.db.all(S.RULES);
+      const listEl = mc.querySelector('#st-rules-list');
+      if (!allR.length) {
+        listEl.innerHTML = `<div style="color:var(--muted);font-size:11px;padding:8px 0">Пока нет пользовательских правил. Создай первое правило выше!</div>`;
+        return;
+      }
+      listEl.innerHTML = '';
+      allR.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.innerHTML = `
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:800;color:var(--cyan)">«${r.keyword}» → <span class="badge">${r.category}</span></div>
+            <div class="log-meta">${r.type==='income'?'➕ Доход':'➖ Расход'}${r.comment ? ' · Комм: ' + r.comment : ''}${r.isMandatory ? ' · ★ Обяз.' : ''}</div>
+          </div>
+          <button class="del-btn" data-delrule="${r.id}">×</button>
+        `;
+        row.querySelector(`[data-delrule="${r.id}"]`).onclick = async () => {
+          await this.db.del(S.RULES, r.id);
+          renderRulesList();
+          this._render(true);
+        };
+        listEl.appendChild(row);
+      });
+    };
+    renderRulesList();
+
+    mc.querySelector('#st-save').onclick = async () => {
+      const keyword = kwInp.value.trim();
+      if (!keyword) { showInlineMsg(mc, '⚠ Выбери или впиши ключевое слово из СМС', 'var(--red)'); return; }
+      await this.db.add(S.RULES, {
+        keyword,
+        type: typeSel.value,
+        category: catSel.value,
+        comment: commInp.value.trim() || keyword,
+        isMandatory: typeSel.value === 'expense' && mandCb.checked
+      });
+      kwInp.value = '';
+      commInp.value = '';
+      showInlineMsg(mc, `✓ Правило для «${keyword}» сохранено!`);
+      renderRulesList();
+      this._render(true);
+    };
+  }
+
+  /* ═══════ HUB (WITH AI ADVISOR, SMS TRAINER & CUSTOM RECIPES MANAGER) ═══════ */
   async _hub(c){
     const txs=await this.db.all(S.TX);
     const goals=(await this.db.all(S.GOALS)).filter(g=>g.active);
     const recipes=await this.db.all(S.REC);
+    const smsRules=await this.db.all(S.RULES);
     const now=new Date();
     const payday=calcNextPayday(txs);
 
     const lastExp=txs.filter(t=>t.type==='expense').sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
     const daysSince=lastExp?Math.floor((now-new Date(lastExp.date))/86400000):999;
 
-    const remCard=this._card();
-    remCard.innerHTML='<div class="card-title">Центр мониторинга</div>';
+    const remCard=this._card(' glow');
+    remCard.innerHTML=`
+      <div class="card-title">
+        <span>⚡ Центр управления и ИИ-инструменты</span>
+      </div>
+      <div class="btn-row" style="margin-top:0;margin-bottom:10px">
+        <button class="btn c" id="hub-open-ai" style="flex:1">🧠 AI-Советник и Аудит</button>
+        <button class="btn v" id="hub-open-sms" style="flex:1">🤖 Обучить СМС (${smsRules.length})</button>
+      </div>
+      <div class="btn-row" style="margin-top:0;margin-bottom:8px">
+        <button class="btn g sm" id="hub-open-cats" style="flex:1">⚙️ Категории и плашки</button>
+        <button class="btn o sm" id="hub-open-loans" style="flex:1">🏦 Калькулятор кредитов</button>
+      </div>
+    `;
     let any=false;
     if(daysSince>=2){
       any=true;
@@ -3460,8 +4964,36 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       const dL=Math.ceil((dl-now)/86400000);
       if(dL>0&&dL<14&&saved<goal.targetAmount){any=true;remCard.insertAdjacentHTML('beforeend',`<div class="reminder red">🎯 "${goal.name}" — ${dL} дн. до дедлайна! Накоплено ${fmtI(saved)} из ${fmtI(goal.targetAmount)} ₽</div>`);}
     });
-    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:6px 0">✅ Все показатели актуальны!</div>');
+    if(!any) remCard.insertAdjacentHTML('beforeend','<div style="color:var(--green);font-size:12px;padding:4px 0">✅ Все финансовые показатели актуальны!</div>');
     c.appendChild(remCard);
+
+    remCard.querySelector('#hub-open-ai').onclick = () => this._openAiAdvisorModal();
+    remCard.querySelector('#hub-open-sms').onclick = () => this._openSmsTrainerModal('');
+    remCard.querySelector('#hub-open-cats').onclick = () => this._openCategoryManagerModal('exp');
+    remCard.querySelector('#hub-open-loans').onclick = () => {
+      this.tab = 'loans';
+      this._syncNavUI();
+      this._render(false);
+    };
+
+    // Quick SMS Trainer Card right in Hub
+    const smsCard = this._card();
+    smsCard.innerHTML = `
+      <div class="card-title">
+        <span>🤖 Умный анализатор СМС (Мои правила: ${smsRules.length})</span>
+        <button class="btn c sm" id="sms-add-rule-btn">+ Создать правило</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:8px">
+        Вставь любое нестандартное СМС от банка, выдели в нём ключевое слово (название сервиса, магазина или перевода) — и система навсегда запомнит, к какой категории его относить!
+      </div>
+      ${smsRules.length ? `
+        <div class="chips-scroll">
+          ${smsRules.map(r => `<div class="q-chip">${r.keyword} → <b>${r.category}</b></div>`).join('')}
+        </div>
+      ` : ''}
+    `;
+    c.appendChild(smsCard);
+    smsCard.querySelector('#sms-add-rule-btn').onclick = () => this._openSmsTrainerModal('');
 
     const sc=this._card();
     sc.innerHTML=`<div class="card-title">Календарь ближайших выплат</div>
@@ -3481,7 +5013,6 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       <div class="tip">${PRINT_TIPS[(sb+3)%PRINT_TIPS.length]}</div>`;
     c.appendChild(prCard);
 
-    // Modal for Adding / Editing a Custom Recipe
     const openRecipeModal = (recToEdit = null) => {
       const m = document.getElementById('global-modal');
       const mc = document.getElementById('global-modal-content');
@@ -3619,10 +5150,10 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
     recCard.querySelector('#rec-q').oninput=renderRec;
   }
 
-  /* ═══════ EXPORT / IMPORT (UNIFIED v8 WITH RECIPES & GARAGE TASKS) ═══════ */
+  /* ═══════ EXPORT / IMPORT (UNIFIED v9 WITH ALL STORES) ═══════ */
   async _export(){
     const data={
-      version:8,
+      version:9,
       exportedAt:new Date().toISOString(),
       transactions:await this.db.all(S.TX),
       garage_logs:await this.db.all(S.GARAGE),
@@ -3634,7 +5165,10 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
       filaments:await this.db.all(S.FIL),
       quick_templates:await this.db.all(S.TPL),
       recipes:await this.db.all(S.REC),
-      car_tasks:await this.db.all(S.CTASK)
+      car_tasks:await this.db.all(S.CTASK),
+      car_parts:await this.db.all(S.CPARTS),
+      loans:await this.db.all(S.LOANS),
+      sms_rules:await this.db.all(S.RULES)
     };
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -3657,7 +5191,8 @@ ${postProcFee>0?`• Постобработка: ${fmtI(postProcFee)} ₽\n`:''}
         transactions:S.TX, garage_logs:S.GARAGE, odo_history:S.ODO,
         service_items:S.SVC, goals:S.GOALS, settings:S.CFG,
         cars:S.CARS, filaments:S.FIL, quick_templates:S.TPL,
-        recipes:S.REC, car_tasks:S.CTASK
+        recipes:S.REC, car_tasks:S.CTASK, car_parts:S.CPARTS,
+        loans:S.LOANS, sms_rules:S.RULES
       };
       for(const [key,sn] of Object.entries(map)){
         if(!data[key]) continue;
